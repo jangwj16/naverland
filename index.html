@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>네이버 부동산 매물번호 빠른 확인</title>
+  <meta name="description" content="네이버 부동산 매물번호를 입력하면 바로 상세 페이지로 이동합니다. Android 홈화면 설치, 공유 대상(Share Target) 지원." />
+  <meta name="theme-color" content="#00c73c" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <style>
+    :root { --bg:#0b0f14; --panel:#10161c; --muted:#6b7a90; --text:#e6eef8; --accent:#00c73c; --accent2:#20e070; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:linear-gradient(180deg,#0b0f14,#0b1217);
+      color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Apple SD Gothic Neo','Noto Sans KR', Helvetica, Arial, sans-serif;
+      display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .card{
+      width:100%; max-width:720px; background:rgba(255,255,255,0.02);
+      backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,0.08);
+      border-radius:24px; padding:28px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    h1{font-size:24px; margin:0 0 6px 0; letter-spacing:-0.2px}
+    .sub{color:var(--muted); font-size:14px; margin:0 0 16px 0}
+    .row{display:flex; gap:12px; align-items:stretch; margin-top:12px}
+    .input{
+      flex:1; display:flex; background:#0f151c; border:1px solid #1a2330; border-radius:14px; padding:10px 12px;
+    }
+    textarea{
+      flex:1; width:100%; min-height:66px; resize:vertical;
+      border:none; outline:none; font-size:16px; line-height:1.4;
+      background:transparent; color:var(--text);
+    }
+    .btn{
+      appearance:none; border:none; border-radius:14px; padding:12px 16px; font-weight:600;
+      background:var(--accent); color:#0b140e; cursor:pointer; transition:.15s transform ease, .2s box-shadow;
+      box-shadow: 0 6px 16px rgba(0,199,60,.25);
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,199,60,.28); }
+    .btn.secondary{ background:#1a2330; color:var(--text); box-shadow:none; border:1px solid #232f40 }
+    .btn.ghost{ background:transparent; border:1px dashed #2a3950; color:var(--muted) }
+    .grid{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top:14px}
+    @media (min-width: 700px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+    }
+    .pill{ font-size:12px; color:#9ab; background:#0e141b; border:1px solid #203046; padding:6px 10px; border-radius:999px; display:inline-flex; gap:8px; align-items:center }
+    .list{ margin-top:10px; padding:0; list-style:none }
+    .item{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:#0f151c; border:1px solid #1a2330; border-radius:12px }
+    a.link{ color:#aee6c6; text-decoration:none; word-break:break-all }
+    .muted{ color:#9bb0c5; font-size:12px }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11px; background:#0d131a; border:1px solid #1f2a3a; border-bottom-width:2px; padding:2px 6px; border-radius:6px; color:#cfd9e6 }
+    footer{ margin-top:18px; color:#789; font-size:12px; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap }
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <h1>네이버 부동산 <strong>매물번호</strong> 빠른 확인</h1>
+    <p class="sub">번호 입력 후 <span class="kbd">Enter</span> 또는 <span class="kbd">열기</span>. 쉼표/공백/줄바꿈으로 여러 개 가능. Android 홈화면 설치 & 공유 지원.</p>
+    <div class="row">
+      <div class="input">
+        <textarea id="ids" inputmode="numeric" enterkeyhint="go"
+          autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="예) 2541088852 2539865439" autofocus></textarea>
+      </div>
+      <button id="openBtn" class="btn" title="새 탭으로 열기">열기</button>
+    </div>
+    <div class="grid">
+      <button id="copyBtn" class="btn secondary" title="링크 복사">복사</button>
+      <button id="clearBtn" class="btn ghost" title="입력 지우기">초기화</button>
+    </div>
+
+    <div style="margin-top:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+      <span class="pill">열기: <span class="kbd">Enter</span> / 모두 열기: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></span>
+      <span class="pill">링크 복사: <span class="kbd">Alt</span> + <span class="kbd">C</span></span>
+      <span class="pill">안드로이드: 홈화면 추가로 앱처럼</span>
+    </div>
+
+    <ul id="result" class="list" aria-live="polite"></ul>
+
+    <footer>
+      <div class="muted">이동 경로: <code>https://m.land.naver.com/article/info/매물번호</code></div>
+      <div class="muted">© 2025 QuickLink PWA. No scraping, just linking.</div>
+    </footer>
+  </main>
+
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const idsEl = $("#ids");
+  const resultEl = $("#result");
+  const openBtn = $("#openBtn");
+  const copyBtn = $("#copyBtn");
+  const clearBtn = $("#clearBtn");
+
+  const BASE = "https://m.land.naver.com/article/info/";
+  const HISTORY_KEY = "recent_naver_land_ids";
+
+  function parseIds(raw){
+    return (raw||"")
+      .split(/[\s,\n\t]+/)
+      .map(s=>s.trim())
+      .filter(Boolean)
+      .map(s=>s.replace(/[^0-9]/g,"")) // digits only
+      .filter(s=>s.length >= 6) // loose validation
+      .slice(0, 30); // limit
+  }
+  function buildLink(id){ return BASE + encodeURIComponent(id); }
+  function renderLinks(ids){
+    resultEl.innerHTML = "";
+    if(!ids.length) return;
+    const frag = document.createDocumentFragment();
+    ids.forEach(id=>{
+      const li = document.createElement("li");
+      li.className = "item";
+      const a = document.createElement("a");
+      a.className = "link";
+      a.href = buildLink(id);
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = a.href;
+      const small = document.createElement("span");
+      small.className = "muted";
+      small.textContent = "매물번호 " + id;
+      li.appendChild(a);
+      li.appendChild(small);
+      frag.appendChild(li);
+    });
+    resultEl.appendChild(frag);
+  }
+  function openAll(ids){
+    ids.forEach((id,i)=>{
+      const url = buildLink(id);
+      setTimeout(()=>window.open(url, "_blank", "noopener"), 30*i);
+    });
+  }
+  function copyLinks(ids){
+    const text = ids.map(buildLink).join("\n");
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(()=>{
+      copyBtn.textContent = "복사 완료!";
+      setTimeout(()=>copyBtn.textContent = "복사", 1200);
+    }).catch(()=>{ alert("복사 실패. 권한을 허용해주세요."); });
+  }
+  function saveHistory(ids){
+    try{
+      const old = JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
+      const merged = [...ids, ...old].filter(Boolean);
+      const unique = Array.from(new Set(merged)).slice(0,50);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(unique));
+    }catch(e){}
+  }
+  function handleInput(){
+    const ids = parseIds(idsEl.value);
+    renderLinks(ids);
+    return ids;
+  }
+  // Deep link support: ?id=...&auto=1 or #...
+  function initFromURL(){
+    const sp = new URLSearchParams(location.search);
+    const fromQuery = sp.get("id") || "";
+    const fromHash = location.hash ? decodeURIComponent(location.hash.slice(1)) : "";
+    const payload = fromQuery || fromHash;
+    if(payload){
+      idsEl.value = payload;
+      const ids = handleInput();
+      if(sp.get("auto")==="1" && ids.length) {
+        saveHistory(ids);
+        openAll(ids);
+      }
+    }
+  }
+
+  idsEl.addEventListener("input", handleInput);
+  openBtn.addEventListener("click", ()=>{
+    const ids = handleInput();
+    if(!ids.length){ idsEl.focus(); return; }
+    saveHistory(ids);
+    openAll(ids);
+  });
+  copyBtn.addEventListener("click", ()=>{ copyLinks(handleInput()); });
+  clearBtn.addEventListener("click", ()=>{ idsEl.value = ""; handleInput(); idsEl.focus(); });
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); openBtn.click(); }
+    else if(e.key.toLowerCase() === "c" && e.altKey){ e.preventDefault(); copyBtn.click(); }
+  });
+
+  // SW register
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+
+  // Init
+  initFromURL();
+  handleInput();
+})();
+</script>
+</body>
+</html>

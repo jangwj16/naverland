@@ -1,0 +1,25 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>공유로 받은 매물번호 열기</title>
+<style>
+  body{font-family:system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', sans-serif; margin:24px; color:#e6eef8; background:#0b0f14}
+  .box{max-width:720px; margin:auto; background:#0f151c; border:1px solid #1a2330; border-radius:16px; padding:20px}
+  a{color:#aee6c6}
+</style>
+<div class="box">
+  <h1>공유 받은 매물번호 열기</h1>
+  <p>잠시만요… 숫자를 파싱해서 네이버 부동산 상세를 엽니다.</p>
+  <p><small>팝업이 막히면 브라우저 우상단에서 팝업 허용을 눌러주세요.</small></p>
+  <p><a href="index.html">수동으로 열기</a></p>
+</div>
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const text = [params.get('text'), params.get('title'), params.get('url')].filter(Boolean).join(' ');
+  const ids = (text||'').split(/[\s,\n\t]+/).map(s=>s.replace(/\D/g,'')).filter(Boolean).slice(0,30);
+  const base = 'https://m.land.naver.com/article/info/';
+  if(ids.length){
+    ids.forEach((id,i)=>setTimeout(()=>open(base+id,'_blank','noopener'), 30*i));
+  }
+})();
+</script>
