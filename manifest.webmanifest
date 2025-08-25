@@ -1,11 +1,11 @@
 {
-  "name": "Naver Land QuickLink",
-  "short_name": "LandLink",
+  "name": "다이아부동산 QuickLink",
+  "short_name": "DIA",
   "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0b0f14",
-  "theme_color": "#00c73c",
+  "background_color": "#fdfdfd",
+  "theme_color": "#c9a040",
   "icons": [
     {
       "src": "icons/icon-192.png",
