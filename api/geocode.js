@@ -3,7 +3,6 @@ export default async function handler(req, res) {
   if (!query) {
     return res.status(400).json({ error: "Missing query" });
   }
-
   try {
     const response = await fetch(
       `https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=${encodeURIComponent(query)}`,
@@ -14,7 +13,6 @@ export default async function handler(req, res) {
         },
       }
     );
-
     const data = await response.json();
     if (data.addresses && data.addresses.length > 0) {
       const lat = data.addresses[0].y;

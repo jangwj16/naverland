@@ -5,17 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>다이아부동산 빠른 확인</title>
   <meta name="theme-color" content="#c9a040" />
-
-  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
-
-  <!-- iOS PWA 지원 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="다이아부동산">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-
   <style>
     body { font-family: sans-serif; margin:0; padding:20px; background:#fdfdfd; color:#222; text-align:center;}
     h1 { font-size:22px; margin:16px 0 20px 0; }
@@ -34,7 +29,6 @@
   <div class="logo"><img src="icons/icon-192.png" alt="DIA logo"></div>
   <h1>다이아부동산 매물 빠른 확인</h1>
 
-  <!-- 매물번호 검색 -->
   <div class="section">
     <h3>매물번호로 확인</h3>
     <div class="row">
@@ -43,7 +37,6 @@
     </div>
   </div>
 
-  <!-- 주소 검색 -->
   <div class="section">
     <h3>주소로 검색</h3>
     <div class="row">
@@ -65,7 +58,6 @@ function openById(){
     },i*200);
   });
 }
-
 async function searchByAddress(){
   const addr=document.getElementById('addr').value.trim();
   if(!addr){alert("주소를 입력하세요");return;}
@@ -82,7 +74,6 @@ async function searchByAddress(){
     alert("API 호출 오류: "+err.message);
   }
 }
-
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
 </body>
