@@ -68,7 +68,7 @@ async function searchByAddress(){
       const url=`https://m.land.naver.com/map/아파트?lat=${data.lat}&lon=${data.lon}&zoom=18`;
       window.open(url,'_blank');
     }else{
-      alert("검색 결과가 없습니다. 더 구체적으로 입력해 주세요.");
+      alert("검색 결과가 없습니다. 입력: "+addr);
     }
   }catch(err){
     alert("API 호출 오류: "+err.message);

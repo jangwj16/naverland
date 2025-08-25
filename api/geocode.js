@@ -17,9 +17,9 @@ export default async function handler(req, res) {
     if (data.addresses && data.addresses.length > 0) {
       const lat = data.addresses[0].y;
       const lon = data.addresses[0].x;
-      return res.status(200).json({ lat, lon });
+      return res.status(200).json({ lat, lon, raw: data.addresses[0] });
     } else {
-      return res.status(404).json({ error: "No result" });
+      return res.status(404).json({ error: "No result", query });
     }
   } catch (err) {
     return res.status(500).json({ error: err.message });
