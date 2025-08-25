@@ -1,6 +1,6 @@
 {
   "name": "다이아부동산 QuickLink",
-  "short_name": "DIA",
+  "short_name": "다이아부동산",
   "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
@@ -16,16 +16,11 @@
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
-  ],
-  "share_target": {
-    "action": "/share.html",
-    "method": "GET",
-    "enctype": "application/x-www-form-urlencoded",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  }
+  ]
 }

@@ -5,8 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>다이아부동산 빠른 확인</title>
   <meta name="theme-color" content="#c9a040" />
+
+  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
+
+  <!-- iOS PWA 지원 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="다이아부동산">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
   <style>
     body { font-family: sans-serif; margin:0; padding:20px; background:#fdfdfd; color:#222; text-align:center;}
     h1 { font-size:22px; margin:16px 0 20px 0; }
@@ -38,8 +47,8 @@
   <div class="section">
     <h3>주소로 검색</h3>
     <div class="row">
-      <input type="text" id="addr" placeholder="예: 고양시 덕양구 내유동 123" />
-      <button onclick="openByAddr()">검색</button>
+      <input type="text" id="addr" placeholder="예: 청초로 66" />
+      <button onclick="searchByAddress()">검색</button>
     </div>
   </div>
 
@@ -56,12 +65,24 @@ function openById(){
     },i*200);
   });
 }
-function openByAddr(){
+
+async function searchByAddress(){
   const addr=document.getElementById('addr').value.trim();
   if(!addr){alert("주소를 입력하세요");return;}
-  const url="https://m.land.naver.com/search?query="+encodeURIComponent(addr);
-  window.open(url,'_blank');
+  try{
+    const res=await fetch(`/api/geocode?query=${encodeURIComponent(addr)}`);
+    const data=await res.json();
+    if(data.lat && data.lon){
+      const url=`https://m.land.naver.com/map/아파트?lat=${data.lat}&lon=${data.lon}&zoom=18`;
+      window.open(url,'_blank');
+    }else{
+      alert("검색 결과가 없습니다. 더 구체적으로 입력해 주세요.");
+    }
+  }catch(err){
+    alert("API 호출 오류: "+err.message);
+  }
 }
+
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
 </body>
