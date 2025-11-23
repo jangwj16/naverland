@@ -26,6 +26,12 @@
   </style>
 </head>
 <body>
+<script>
+  if(sessionStorage.getItem("dia_login") !== "ok"){
+    window.location.href = "login.html";
+  }
+</script>
+
   <div class="logo"><img src="icons/icon-192.png" alt="DIA logo"></div>
   <h1>다이아부동산 매물 빠른 확인</h1>
 
