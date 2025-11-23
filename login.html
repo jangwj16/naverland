@@ -24,16 +24,16 @@
   </div>
 
   <script>
-    // 🔐 대표 계정 (원종님 필요한 대로 변경 가능)
+    // 대표 계정 (필요시 변경)
     const MASTER_ID = "dia";
-    const MASTER_PW = "0331";   // 퇴사자 생기면 여기 비밀번호만 바꾸면 끝
+    const MASTER_PW = "0331";
 
     function login(){
       const id = document.getElementById('user').value.trim();
       const pw = document.getElementById('pw').value.trim();
 
       if(id === MASTER_ID && pw === MASTER_PW){
-        localStorage.setItem("dia_login", "ok");
+        localStorage.setItem("dia_login", "ok");  // 로그인 유지
         window.location.href = "index.html";
       } else {
         alert("아이디 또는 비밀번호가 잘못되었습니다.");
