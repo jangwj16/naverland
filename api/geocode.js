@@ -1,25 +1,25 @@
+// /api/geocode.js
 export default async function handler(req, res) {
-  const query = req.query.query;
-  if (!query) {
-    return res.status(400).json({ error: "Missing query" });
-  }
+  const { query } = req.query;
+
+  const REST_API_KEY = "84cb2a6feb0a5da87adffd7daeb6efe4"; // 원종님 API 키
+
+  const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}`;
+
   try {
-    const response = await fetch(
-      `https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=${encodeURIComponent(query)}`,
-      {
-        headers: {
-          "X-NCP-APIGW-API-KEY-ID": process.env.NAVER_CLIENT_ID,
-          "X-NCP-APIGW-API-KEY": process.env.NAVER_CLIENT_SECRET,
-        },
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `KakaoAK ${REST_API_KEY}`
       }
-    );
+    });
+
     const data = await response.json();
-    if (data.addresses && data.addresses.length > 0) {
-      const lat = data.addresses[0].y;
-      const lon = data.addresses[0].x;
-      return res.status(200).json({ lat, lon, raw: data.addresses[0] });
+
+    if (data.documents && data.documents.length > 0) {
+      const { y: lat, x: lon } = data.documents[0];
+      return res.status(200).json({ lat, lon });
     } else {
-      return res.status(404).json({ error: "No result", query });
+      return res.status(404).json({ error: "주소를 찾을 수 없습니다." });
     }
   } catch (err) {
     return res.status(500).json({ error: err.message });
