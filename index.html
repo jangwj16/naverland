@@ -76,22 +76,28 @@ function openById(){
 }
 
 async function searchByAddress(){
-  const addr=document.getElementById('addr').value.trim();
-  if(!addr){alert("주소를 입력하세요");return;}
-  try{
-    const res=await fetch(`/api/geocode?query=${encodeURIComponent(addr)}`);
-    const data=await res.json();
-    if(data.lat && data.lon){
-      const url=`https://m.land.naver.com/map/아파트?lat=${data.lat}&lon=${data.lon}&zoom=18`;
-      window.open(url,'_blank');
-    }else{
-      const mapUrl=`https://map.naver.com/v5/search/${encodeURIComponent(addr)}`;
-      window.open(mapUrl,'_blank');
+  const addr = document.getElementById('addr').value.trim();
+  if(!addr){ 
+    alert("주소를 입력하세요"); 
+    return; 
+  }
+
+  try {
+    const res = await fetch(`/api/geocode?query=${encodeURIComponent(addr)}`);
+    const data = await res.json();
+
+    if (data.lat && data.lon) {
+      // 카카오맵으로 열기
+      const url = `https://map.kakao.com/link/map/${encodeURIComponent(addr)},${data.lat},${data.lon}`;
+      window.open(url, '_blank');
+    } else {
+      alert("주소를 찾을 수 없습니다.");
     }
-  }catch(err){
-    alert("API 호출 오류: "+err.message);
+  } catch(err) {
+    alert("API 오류: " + err.message);
   }
 }
+
 
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
