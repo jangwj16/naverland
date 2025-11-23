@@ -21,19 +21,29 @@
     input, textarea { flex: 1; padding: 10px; font-size: 15px; border:1px solid #ccc; border-radius:6px; }
     button { padding: 10px 16px; font-size:15px; border:none; border-radius:6px; background:#c9a040; color:#fff; cursor:pointer; }
     button:hover { background:#b38d36; }
-    h3 { margin-bottom:10px; }
+    .logout { margin-top:20px; background:#555 !important; }
     footer {margin-top:30px; font-size:12px; color:#555;}
   </style>
 </head>
 <body>
+
+<!-- 🔒 로그인 체크 -->
 <script>
-  if(sessionStorage.getItem("dia_login") !== "ok"){
+  if(localStorage.getItem("dia_login") !== "ok"){
+    window.location.href = "login.html";
+  }
+
+  function logout(){
+    localStorage.removeItem("dia_login");
     window.location.href = "login.html";
   }
 </script>
 
   <div class="logo"><img src="icons/icon-192.png" alt="DIA logo"></div>
   <h1>다이아부동산 매물 빠른 확인</h1>
+
+  <!-- 🔘 로그아웃 버튼 -->
+  <button class="logout" onclick="logout()">로그아웃</button>
 
   <div class="section">
     <h3>매물번호로 확인</h3>
@@ -64,6 +74,7 @@ function openById(){
     },i*200);
   });
 }
+
 async function searchByAddress(){
   const addr=document.getElementById('addr').value.trim();
   if(!addr){alert("주소를 입력하세요");return;}
@@ -74,7 +85,6 @@ async function searchByAddress(){
       const url=`https://m.land.naver.com/map/아파트?lat=${data.lat}&lon=${data.lon}&zoom=18`;
       window.open(url,'_blank');
     }else{
-      // fallback to Naver Map search
       const mapUrl=`https://map.naver.com/v5/search/${encodeURIComponent(addr)}`;
       window.open(mapUrl,'_blank');
     }
@@ -82,7 +92,9 @@ async function searchByAddress(){
     alert("API 호출 오류: "+err.message);
   }
 }
+
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
+
 </body>
 </html>
