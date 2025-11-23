@@ -33,7 +33,7 @@
       const pw = document.getElementById('pw').value.trim();
 
       if(id === MASTER_ID && pw === MASTER_PW){
-        sessionStorage.setItem("dia_login", "ok");
+        localStorage.setItem("dia_login", "ok");
         window.location.href = "index.html";
       } else {
         alert("아이디 또는 비밀번호가 잘못되었습니다.");
