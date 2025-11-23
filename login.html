@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>다이아부동산 직원 로그인</title>
+  <style>
+    body { font-family: sans-serif; background:#f5f5f5; text-align:center; padding-top:80px; }
+    .box { background:white; padding:30px; border-radius:10px; width:300px; margin:auto; 
+           box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    input { width:100%; padding:12px; margin:10px 0; font-size:15px; 
+            border-radius:6px; border:1px solid #ccc; }
+    button { width:100%; padding:12px; font-size:16px; background:#c9a040; color:white; 
+             border:none; border-radius:6px; cursor:pointer; }
+    button:hover { background:#b38d36; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>직원 로그인</h2>
+    <input type="text" id="user" placeholder="아이디">
+    <input type="password" id="pw" placeholder="비밀번호">
+    <button onclick="login()">로그인</button>
+  </div>
+
+  <script>
+    // 🔐 대표 계정 (원종님 필요한 대로 변경 가능)
+    const MASTER_ID = "dia";
+    const MASTER_PW = "real2025";   // 퇴사자 생기면 여기 비밀번호만 바꾸면 끝
+
+    function login(){
+      const id = document.getElementById('user').value.trim();
+      const pw = document.getElementById('pw').value.trim();
+
+      if(id === MASTER_ID && pw === MASTER_PW){
+        sessionStorage.setItem("dia_login", "ok");
+        window.location.href = "index.html";
+      } else {
+        alert("아이디 또는 비밀번호가 잘못되었습니다.");
+      }
+    }
+  </script>
+</body>
+</html>
