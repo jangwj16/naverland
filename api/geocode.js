@@ -2,7 +2,7 @@
 export default async function handler(req, res) {
   const { query } = req.query;
 
-  const REST_API_KEY = "84cb2a6feb0a5da87adffd7daeb6efe4"; // 원종님 API 키
+  const REST_API_KEY = "84cb2a6feb0a5da87adffd7daeb6efe4"; // 원종님 REST API 키
 
   const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}`;
 
