@@ -12,95 +12,257 @@
   <meta name="apple-mobile-web-app-title" content="다이아부동산">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <style>
-    body { font-family: sans-serif; margin:0; padding:20px; background:#fdfdfd; color:#222; text-align:center;}
-    h1 { font-size:22px; margin:16px 0 20px 0; }
-    .logo { margin:20px auto; }
-    .logo img { max-width:120px; height:auto; }
-    .section { margin:28px 0; text-align:left; display:inline-block; max-width:600px; width:100%; }
-    .row { display: flex; gap: 10px; }
-    input, textarea { flex: 1; padding: 10px; font-size: 15px; border:1px solid #ccc; border-radius:6px; }
-    button { padding: 10px 16px; font-size:15px; border:none; border-radius:6px; background:#c9a040; color:#fff; cursor:pointer; }
-    button:hover { background:#b38d36; }
-    .logout { margin-top:20px; background:#555 !important; }
-    footer {margin-top:30px; font-size:12px; color:#555;}
+    *{box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0;padding:0;background:#fdfdfd;color:#222}
+    .header{text-align:center;padding:16px 10px 0}
+    .logo img{max-width:80px;height:auto}
+    h1{font-size:20px;margin:10px 0 0}
+    .tabs{display:flex;background:#1a1a2e;margin-top:12px}
+    .tab-btn{flex:1;padding:12px 6px;text-align:center;color:#888;font-size:14px;font-weight:bold;cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:.2s}
+    .tab-btn.active{color:#fff;border-bottom-color:#c9a040}
+    .tab-btn:hover{color:#ccc}
+    .tab-content{display:none;padding:20px 16px;max-width:700px;margin:0 auto}
+    .tab-content.active{display:block}
+    .section{margin:20px 0;text-align:left}
+    .section h3{font-size:16px;margin-bottom:10px}
+    .row{display:flex;gap:10px}
+    input,textarea{flex:1;padding:10px;font-size:15px;border:1px solid #ccc;border-radius:6px;font-family:inherit}
+    .btn{padding:10px 20px;font-size:15px;border:none;border-radius:6px;background:#c9a040;color:#fff;cursor:pointer;font-weight:bold}
+    .btn:hover{background:#b38d36}
+    .btn-logout{background:#555;margin-top:16px}
+    .tx-card{background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:20px}
+    .tx-card h3{font-size:16px;font-weight:800;margin:0 0 14px;color:#222}
+    .tx-field{margin-bottom:14px}
+    .tx-field label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:5px}
+    .tx-field input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:white}
+    .tx-opts{display:flex;gap:6px;flex-wrap:wrap}
+    .tx-opt{flex:1;min-width:0;padding:9px 6px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;border-radius:8px;border:1px solid #ddd;background:white;color:#666;transition:.2s;white-space:nowrap}
+    .tx-opt:hover{border-color:#c9a040}
+    .tx-opt.sel{background:#fef3e2;border-color:#c9a040;color:#c9a040;font-weight:700}
+    .tx-btn{width:100%;padding:13px;background:#c9a040;color:#fff;font-size:15px;font-weight:700;border:none;border-radius:8px;cursor:pointer;margin-top:6px}
+    .tx-btn:hover{background:#b38d36}
+    .tx-result{background:#fef9f0;border:1px solid #f0d9a0;border-radius:12px;padding:20px;margin-top:16px;display:none}
+    .tx-result.show{display:block}
+    .tx-total{font-size:26px;font-weight:900;color:#c9a040;margin:8px 0 16px}
+    .tx-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+    .tx-row .tl{color:#888}.tx-row .tv{font-weight:600}
+    .tx-row.hi .tv{color:#c9a040;font-weight:700}
+    .tx-row.tot{border-top:1px dashed #ddd;margin-top:8px;padding-top:10px}
+    .tx-row.tot .tl{color:#222;font-weight:700}
+    .tx-row.tot .tv{color:#c9a040;font-weight:900;font-size:15px}
+    .tx-row.grn .tv{color:#10b981}
+    .tx-chk{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;margin-bottom:14px;cursor:pointer}
+    .tx-chk input{width:16px;height:16px;flex:none;accent-color:#10b981}
+    .tx-chk span{font-size:13px;font-weight:500;color:#059669}
+    .tx-chk .txsub{font-size:11px;color:#888;display:block;margin-top:2px;font-weight:400}
+    .tx-divider{height:2px;background:#e9ecef;margin:24px 0;border-radius:2px}
+    footer{text-align:center;margin-top:30px;padding:16px;font-size:11px;color:#999}
   </style>
 </head>
 <body>
-
-<!-- 🔒 로그인 체크 -->
 <script>
-  if(localStorage.getItem("dia_login") !== "ok"){
-    window.location.href = "login.html";
-  }
-
-  function logout(){
-    localStorage.removeItem("dia_login");
-    window.location.href = "login.html";
-  }
+  if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
+  function logout(){localStorage.removeItem("dia_login");window.location.href="login.html";}
 </script>
-
+<div class="header">
   <div class="logo"><img src="icons/icon-192.png" alt="DIA logo"></div>
-  <h1>다이아부동산 매물 빠른 확인</h1>
+  <h1>다이아부동산</h1>
+</div>
+<div class="tabs">
+  <div class="tab-btn active" onclick="switchTab('search',this)">🔍 매물검색</div>
+  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 취득세·복비</div>
+</div>
 
-  <!-- 🔘 로그아웃 버튼 -->
-  <button class="logout" onclick="logout()">로그아웃</button>
-
+<!-- ========== 매물검색 탭 ========== -->
+<div id="tab-search" class="tab-content active">
   <div class="section">
     <h3>매물번호로 확인</h3>
     <div class="row">
-      <textarea id="ids" placeholder="예: 2541088852, 2539865439" inputmode="numeric"></textarea>
-      <button onclick="openById()">열기</button>
+      <textarea id="ids" rows="2" placeholder="예: 2541088852, 2539865439" inputmode="numeric"></textarea>
+      <button class="btn" onclick="openById()">열기</button>
     </div>
   </div>
-
   <div class="section">
     <h3>주소로 검색</h3>
     <div class="row">
       <input type="text" id="addr" placeholder="예: 청초로 66" />
-      <button onclick="searchByAddress()">검색</button>
+      <button class="btn" onclick="searchByAddress()">검색</button>
     </div>
   </div>
+  <div style="text-align:center;">
+    <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+  </div>
+</div>
 
-  <footer>© 2025 다이아부동산 QuickLink PWA</footer>
+<!-- ========== 취득세·복비 탭 ========== -->
+<div id="tab-tax" class="tab-content">
+  <div style="text-align:center;margin-bottom:20px;">
+    <div style="font-size:20px;font-weight:900;color:#222;">💎 취득세 · 중개보수 계산기</div>
+    <div style="font-size:11px;color:#999;">참고용 · 정확한 금액은 세무사 확인</div>
+  </div>
+
+  <!-- 취득세 -->
+  <div class="tx-card">
+    <h3>🏠 취득세 계산</h3>
+    <div class="tx-field"><label>부동산 종류</label><div class="tx-opts">
+      <div class="tx-opt sel" onclick="txSel(this,'prop','apt')">아파트·빌라</div>
+      <div class="tx-opt" onclick="txSel(this,'prop','house')">단독주택</div>
+      <div class="tx-opt" onclick="txSel(this,'prop','officetel')">오피스텔</div>
+    </div></div>
+    <div class="tx-field"><div class="tx-opts">
+      <div class="tx-opt" onclick="txSel(this,'prop','commercial')">상가·사무실</div>
+      <div class="tx-opt" onclick="txSel(this,'prop','land')">토지</div>
+      <div class="tx-opt" onclick="txSel(this,'prop','farm')">농지</div>
+    </div></div>
+    <div class="tx-field"><label>취득자</label><div class="tx-opts">
+      <div class="tx-opt sel" onclick="txSel(this,'buyer','person')">개인</div>
+      <div class="tx-opt" onclick="txSel(this,'buyer','corp')">법인</div>
+    </div></div>
+    <div class="tx-field"><label>매매가격 (만원)</label><input type="text" id="txAcqPrice" placeholder="예: 50000 (5억)" inputmode="numeric"></div>
+    <div id="txHouseOpts">
+      <div class="tx-field"><label>취득 후 주택수</label><div class="tx-opts">
+        <div class="tx-opt sel" onclick="txSel(this,'cnt','1')">1주택</div>
+        <div class="tx-opt" onclick="txSel(this,'cnt','2')">2주택</div>
+        <div class="tx-opt" onclick="txSel(this,'cnt','3')">3주택</div>
+        <div class="tx-opt" onclick="txSel(this,'cnt','4')">4주택+</div>
+      </div></div>
+      <div id="txPersonOpts">
+        <div class="tx-field"><label>조정대상지역</label><div class="tx-opts">
+          <div class="tx-opt sel" onclick="txSel(this,'zone','N')">비조정</div>
+          <div class="tx-opt" onclick="txSel(this,'zone','Y')">조정대상지역</div>
+        </div></div>
+        <div class="tx-field"><label>전용면적</label><div class="tx-opts">
+          <div class="tx-opt sel" onclick="txSel(this,'area','S')">85㎡이하</div>
+          <div class="tx-opt" onclick="txSel(this,'area','L')">85㎡초과</div>
+        </div></div>
+        <label class="tx-chk" id="txFirstWrap"><input type="checkbox" id="txFirst"><span>🎉 생애최초 주택구입<span class="txsub">12억이하 → 최대 200만원 감면</span></span></label>
+      </div>
+    </div>
+    <button class="tx-btn" onclick="calcAcq()">취득세 계산</button>
+    <div id="resAcq" class="tx-result"></div>
+  </div>
+
+  <div class="tx-divider"></div>
+
+  <!-- 중개보수 -->
+  <div class="tx-card">
+    <h3>🤝 중개보수(복비) 계산</h3>
+    <div class="tx-field"><label>거래금액 (만원)</label><input type="text" id="txFeePrice" placeholder="예: 50000 (5억)" inputmode="numeric"></div>
+    <div class="tx-field"><label>거래유형</label><div class="tx-opts">
+      <div class="tx-opt sel" onclick="txSel(this,'deal','trade')">매매·교환</div>
+      <div class="tx-opt" onclick="txSel(this,'deal','rent')">임대차</div>
+    </div></div>
+    <div class="tx-field"><label>부동산유형</label><div class="tx-opts">
+      <div class="tx-opt sel" onclick="txSel(this,'fprop','house')">주택</div>
+      <div class="tx-opt" onclick="txSel(this,'fprop','offi')">오피스텔</div>
+      <div class="tx-opt" onclick="txSel(this,'fprop','comm')">상가·토지</div>
+    </div></div>
+    <button class="tx-btn" onclick="calcFee()">중개보수 계산</button>
+    <div id="resFee" class="tx-result"></div>
+  </div>
+
+  <div style="text-align:center;">
+    <button onclick="resetAll()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 전체 초기화</button>
+  </div>
+  <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음 · 2026.4 기준<br>다이아공인중개사</div>
+</div>
+
+<footer>© 2025 다이아부동산 QuickLink PWA</footer>
 
 <script>
+// ===== 탭 =====
+function switchTab(id,el){
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});
+  if(el) el.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ===== 매물검색 =====
 function openById(){
-  const raw=document.getElementById('ids').value;
-  const ids=raw.split(/[\s,\n]+/).filter(Boolean);
+  var raw=document.getElementById('ids').value;
+  var ids=raw.split(/[\s,\n]+/).filter(Boolean);
   if(!ids.length){alert("매물번호를 입력하세요");return;}
-  ids.forEach((id,i)=>{
-    setTimeout(()=>{
-      window.open('https://m.land.naver.com/article/info/'+encodeURIComponent(id),'_blank');
-    },i*200);
-  });
+  ids.forEach(function(id,i){setTimeout(function(){window.open('https://m.land.naver.com/article/info/'+encodeURIComponent(id),'_blank')},i*200)});
+}
+function searchByAddress(){
+  var addr=document.getElementById('addr').value.trim();
+  if(!addr){alert("주소를 입력하세요");return;}
+  window.open('https://map.kakao.com/?q='+encodeURIComponent(addr),'_blank');
 }
 
-async function searchByAddress(){
-  const addr = document.getElementById('addr').value.trim();
-  if(!addr){ 
-    alert("주소를 입력하세요"); 
-    return; 
-  }
+// ===== 세금계산기 상태 =====
+var S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house'};
 
-  try {
-    const res = await fetch(`/api/geocode?query=${encodeURIComponent(addr)}`);
-    const data = await res.json();
+function txSel(el,g,v){
+  if(el&&el.parentElement){el.parentElement.querySelectorAll('.tx-opt').forEach(function(o){o.classList.remove('sel')});el.classList.add('sel')}
+  if(g==='prop') S.prop=v;
+  else if(g==='buyer') S.buyer=(v==='person'?'personal':v);
+  else if(g==='cnt') S.cnt=v;
+  else if(g==='area') S.area=(v==='S'?'small':v==='L'?'big':v);
+  else if(g==='zone') S.zone=(v==='Y'?'adjust':v==='N'?'normal':v);
+  else if(g==='deal') S.deal=v;
+  else if(g==='fprop') S.fprop=v;
+  var h=document.getElementById('txHouseOpts'),p=document.getElementById('txPersonOpts'),f=document.getElementById('txFirstWrap');
+  if(h){var isH=['apt','house','officetel'].includes(S.prop);h.style.display=isH?'block':'none';if(p)p.style.display=(isH&&S.buyer==='personal')?'block':'none';if(f)f.style.display=(isH&&S.buyer==='personal'&&S.cnt==='1')?'flex':'none'}
+}
 
-    if (data.lat && data.lon) {
-      // 카카오맵으로 열기
-      const url = `https://map.kakao.com/link/map/${encodeURIComponent(addr)},${data.lat},${data.lon}`;
-      window.open(url, '_blank');
-    } else {
-      alert("주소를 찾을 수 없습니다.");
+function fmt(n){if(n>=100000000)return(n/100000000).toFixed(1).replace(/\.0$/,'')+'억';if(n>=10000)return Math.round(n/10000).toLocaleString()+'만';return n.toLocaleString()}
+
+// ===== 취득세 =====
+function calcAcq(){
+  var price=(parseFloat((document.getElementById('txAcqPrice').value||'0').replace(/[^0-9]/g,''))||0)*10000;
+  var r=document.getElementById('resAcq');
+  if(!price){r.className='tx-result show';r.innerHTML='<p style="color:#999;text-align:center">매매가격을 입력하세요</p>';return}
+  var fc=document.getElementById('txFirst');S.first=fc?fc.checked:false;
+  var a=0,n=0,e=0,lb='';
+  if(['apt','house','officetel'].includes(S.prop)){
+    if(S.buyer==='corp'){a=12;n=1;e=0.4;lb='법인 주택취득 12%'}
+    else{var c=S.cnt;
+      if(c==='1'){if(price<=60000*10000){a=1;lb='1주택 6억이하 1%'}else if(price<=90000*10000){a=1+(price-60000*10000)/(30000*10000)*2;lb='1주택 6~9억 '+a.toFixed(2)+'%'}else{a=3;lb='1주택 9억초과 3%'}n=0.2;e=a*0.1}
+      else if(c==='2'){if(S.zone==='adjust'){a=8;lb='조정 2주택 8%'}else{if(price<=60000*10000)a=1;else if(price<=90000*10000)a=1+(price-60000*10000)/(30000*10000)*2;else a=3;lb='비조정 2주택 '+a.toFixed(1)+'%'}n=0.2;e=0.4}
+      else if(c==='3'){if(S.zone==='adjust'){a=12;lb='조정 3주택 12%'}else{a=8;lb='비조정 3주택 8%'}n=0.6;e=0.4}
+      else{a=12;n=1;e=0.4;lb='4주택이상 12%'}
     }
-  } catch(err) {
-    alert("API 오류: " + err.message);
-  }
+  }else if(S.prop==='commercial'){a=4;n=0.2;e=0.4;lb='상가·사무실 4%'}
+  else if(S.prop==='land'){a=4;n=0.2;e=0.4;lb='토지 4%'}
+  else if(S.prop==='farm'){a=3;n=0;e=0.4;lb='농지 3%'}
+  var at=Math.round(price*a/100),nt=Math.round(price*n/100),et=Math.round(price*e/100),tot=at+nt+et,fn='';
+  if(S.first&&['apt','house','officetel'].includes(S.prop)&&S.buyer==='personal'&&S.cnt==='1'&&price<=120000*10000){var d=Math.min(at,2000000);at-=d;tot-=d;fn='<div class="tx-row grn"><span class="tl">🎉 생애최초 감면</span><span class="tv">-'+fmt(d)+'원</span></div>'}
+  var tr=(a+n+e).toFixed(2);
+  r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용세율</span><span class="tv">'+lb+' (합계 '+tr+'%)</span></div><div class="tx-row"><span class="tl">취득세 ('+a.toFixed(2)+'%)</span><span class="tv">'+fmt(at)+'원</span></div><div class="tx-row"><span class="tl">농특세 ('+n.toFixed(2)+'%)</span><span class="tv">'+fmt(nt)+'원</span></div><div class="tx-row"><span class="tl">교육세 ('+e.toFixed(2)+'%)</span><span class="tv">'+fmt(et)+'원</span></div>'+fn+'<div class="tx-row tot"><span class="tl">총 납부세액</span><span class="tv">'+fmt(tot)+'원</span></div>';
+  r.className='tx-result show';
 }
 
+// ===== 중개보수 =====
+function calcFee(){
+  var price=(parseFloat((document.getElementById('txFeePrice').value||'0').replace(/[^0-9]/g,''))||0)*10000;
+  var r=document.getElementById('resFee');
+  if(!price){r.className='tx-result show';r.innerHTML='<p style="color:#999;text-align:center">거래금액을 입력하세요</p>';return}
+  var rt=0,lm=0,lb='';
+  if(S.fprop==='house'){
+    if(S.deal==='trade'){if(price<5000*10000){rt=0.6;lm=250000;lb='주택매매 5천미만'}else if(price<20000*10000){rt=0.5;lm=800000;lb='주택매매 5천~2억'}else if(price<60000*10000){rt=0.4;lb='주택매매 2~6억'}else if(price<90000*10000){rt=0.5;lb='주택매매 6~9억'}else{rt=0.9;lb='주택매매 9억이상 (협의)'}}
+    else{if(price<5000*10000){rt=0.5;lm=200000;lb='주택임대 5천미만'}else if(price<10000*10000){rt=0.4;lm=300000;lb='주택임대 5천~1억'}else if(price<60000*10000){rt=0.3;lb='주택임대 1~6억'}else if(price<120000*10000){rt=0.4;lb='주택임대 6~12억'}else{rt=0.8;lb='주택임대 12억이상 (협의)'}}
+  }else if(S.fprop==='offi'){
+    if(S.deal==='trade'){if(price<5000*10000){rt=0.5;lm=250000;lb='오피스텔매매 5천미만'}else if(price<20000*10000){rt=0.4;lb='오피스텔매매 5천~2억'}else if(price<60000*10000){rt=0.5;lb='오피스텔매매 2~6억'}else{rt=0.9;lb='오피스텔매매 6억이상 (협의)'}}
+    else{if(price<5000*10000){rt=0.4;lm=200000;lb='오피스텔임대 5천미만'}else if(price<10000*10000){rt=0.3;lm=300000;lb='오피스텔임대 5천~1억'}else if(price<60000*10000){rt=0.4;lb='오피스텔임대 1~6억'}else{rt=0.8;lb='오피스텔임대 6억이상 (협의)'}}
+  }else{rt=0.9;lb=S.deal==='trade'?'상가·토지 매매 (협의)':'상가·토지 임대 (협의)'}
+  var fee=Math.round(price*rt/100);if(lm>0&&fee>lm)fee=lm;
+  var vat=Math.round(fee*0.1),tot=fee+vat;
+  r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용</span><span class="tv">'+lb+' ('+rt+'%)</span></div>'+(lm>0?'<div class="tx-row hi"><span class="tl">한도액</span><span class="tv">'+fmt(lm)+'원</span></div>':'')+'<div class="tx-row"><span class="tl">중개보수</span><span class="tv">'+fmt(fee)+'원</span></div><div class="tx-row"><span class="tl">VAT 10%</span><span class="tv">'+fmt(vat)+'원</span></div><div class="tx-row tot"><span class="tl">합계 (VAT포함)</span><span class="tv">'+fmt(tot)+'원</span></div>';
+  r.className='tx-result show';
+}
 
-if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+// ===== 초기화 =====
+function resetAll(){
+  ['txAcqPrice','txFeePrice'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  var fc=document.getElementById('txFirst');if(fc)fc.checked=false;
+  ['resAcq','resFee'].forEach(function(id){var el=document.getElementById(id);if(el){el.innerHTML='';el.className='tx-result'}});
+  S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house'};
+  document.querySelectorAll('.tx-opts').forEach(function(opts){opts.querySelectorAll('.tx-opt').forEach(function(o,i){o.classList.toggle('sel',i===0)})});
+}
+
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}
 </script>
-
 </body>
 </html>
