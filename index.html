@@ -72,8 +72,6 @@
   <div class="tab-btn active" onclick="switchTab('search',this)">🔍 매물검색</div>
   <div class="tab-btn" onclick="switchTab('tax',this)">🧮 취득세·복비</div>
 </div>
-
-<!-- ========== 매물검색 탭 ========== -->
 <div id="tab-search" class="tab-content active">
   <div class="section">
     <h3>매물번호로 확인</h3>
@@ -93,15 +91,11 @@
     <button class="btn btn-logout" onclick="logout()">로그아웃</button>
   </div>
 </div>
-
-<!-- ========== 취득세·복비 탭 ========== -->
 <div id="tab-tax" class="tab-content">
   <div style="text-align:center;margin-bottom:20px;">
     <div style="font-size:20px;font-weight:900;color:#222;">💎 취득세 · 중개보수 계산기</div>
     <div style="font-size:11px;color:#999;">참고용 · 정확한 금액은 세무사 확인</div>
   </div>
-
-  <!-- 취득세 -->
   <div class="tx-card">
     <h3>🏠 취득세 계산</h3>
     <div class="tx-field"><label>부동산 종류</label><div class="tx-opts">
@@ -141,13 +135,10 @@
     <button class="tx-btn" onclick="calcAcq()">취득세 계산</button>
     <div id="resAcq" class="tx-result"></div>
   </div>
-
   <div class="tx-divider"></div>
-
-  <!-- 중개보수 -->
   <div class="tx-card">
     <h3>🤝 중개보수(복비) 계산</h3>
-    <div class="tx-field"><label>거래금액 (만원)</label><input type="text" id="txFeePrice" placeholder="예: 50000 (5억)" inputmode="numeric"></div>
+    <div class="tx-field"><label>거래금액 (원)</label><input type="text" id="txFeePrice" placeholder="예: 500000000 (5억)" inputmode="numeric"></div>
     <div class="tx-field"><label>거래유형</label><div class="tx-opts">
       <div class="tx-opt sel" onclick="txSel(this,'deal','trade')">매매·교환</div>
       <div class="tx-opt" onclick="txSel(this,'deal','rent')">임대차</div>
@@ -160,25 +151,19 @@
     <button class="tx-btn" onclick="calcFee()">중개보수 계산</button>
     <div id="resFee" class="tx-result"></div>
   </div>
-
   <div style="text-align:center;">
     <button onclick="resetAll()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 전체 초기화</button>
   </div>
   <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음 · 2026.4 기준<br>다이아공인중개사</div>
 </div>
-
 <footer>© 2025 다이아부동산 QuickLink PWA</footer>
-
 <script>
-// ===== 탭 =====
 function switchTab(id,el){
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
   document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});
   if(el) el.classList.add('active');
   document.getElementById('tab-'+id).classList.add('active');
 }
-
-// ===== 매물검색 =====
 function openById(){
   var raw=document.getElementById('ids').value;
   var ids=raw.split(/[\s,\n]+/).filter(Boolean);
@@ -190,10 +175,7 @@ function searchByAddress(){
   if(!addr){alert("주소를 입력하세요");return;}
   window.open('https://map.kakao.com/?q='+encodeURIComponent(addr),'_blank');
 }
-
-// ===== 세금계산기 상태 =====
 var S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house'};
-
 function txSel(el,g,v){
   if(el&&el.parentElement){el.parentElement.querySelectorAll('.tx-opt').forEach(function(o){o.classList.remove('sel')});el.classList.add('sel')}
   if(g==='prop') S.prop=v;
@@ -206,10 +188,7 @@ function txSel(el,g,v){
   var h=document.getElementById('txHouseOpts'),p=document.getElementById('txPersonOpts'),f=document.getElementById('txFirstWrap');
   if(h){var isH=['apt','house','officetel'].includes(S.prop);h.style.display=isH?'block':'none';if(p)p.style.display=(isH&&S.buyer==='personal')?'block':'none';if(f)f.style.display=(isH&&S.buyer==='personal'&&S.cnt==='1')?'flex':'none'}
 }
-
-function fmt(n){if(n>=100000000)return(n/100000000).toFixed(1).replace(/\.0$/,'')+'억';if(n>=10000)return Math.round(n/10000).toLocaleString()+'만';return n.toLocaleString()}
-
-// ===== 취득세 =====
+function fmt(n){return n.toLocaleString()}
 function calcAcq(){
   var price=(parseFloat((document.getElementById('txAcqPrice').value||'0').replace(/[^0-9]/g,''))||0)*10000;
   var r=document.getElementById('resAcq');
@@ -233,27 +212,22 @@ function calcAcq(){
   r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용세율</span><span class="tv">'+lb+' (합계 '+tr+'%)</span></div><div class="tx-row"><span class="tl">취득세 ('+a.toFixed(2)+'%)</span><span class="tv">'+fmt(at)+'원</span></div><div class="tx-row"><span class="tl">농특세 ('+n.toFixed(2)+'%)</span><span class="tv">'+fmt(nt)+'원</span></div><div class="tx-row"><span class="tl">교육세 ('+e.toFixed(2)+'%)</span><span class="tv">'+fmt(et)+'원</span></div>'+fn+'<div class="tx-row tot"><span class="tl">총 납부세액</span><span class="tv">'+fmt(tot)+'원</span></div>';
   r.className='tx-result show';
 }
-
-// ===== 중개보수 =====
 function calcFee(){
-  var price=(parseFloat((document.getElementById('txFeePrice').value||'0').replace(/[^0-9]/g,''))||0)*10000;
+  var price=(parseFloat((document.getElementById('txFeePrice').value||'0').replace(/[^0-9]/g,''))||0);
   var r=document.getElementById('resFee');
   if(!price){r.className='tx-result show';r.innerHTML='<p style="color:#999;text-align:center">거래금액을 입력하세요</p>';return}
   var rt=0,lm=0,lb='';
   if(S.fprop==='house'){
-    if(S.deal==='trade'){if(price<5000*10000){rt=0.6;lm=250000;lb='주택매매 5천미만'}else if(price<20000*10000){rt=0.5;lm=800000;lb='주택매매 5천~2억'}else if(price<60000*10000){rt=0.4;lb='주택매매 2~6억'}else if(price<90000*10000){rt=0.5;lb='주택매매 6~9억'}else{rt=0.9;lb='주택매매 9억이상 (협의)'}}
-    else{if(price<5000*10000){rt=0.5;lm=200000;lb='주택임대 5천미만'}else if(price<10000*10000){rt=0.4;lm=300000;lb='주택임대 5천~1억'}else if(price<60000*10000){rt=0.3;lb='주택임대 1~6억'}else if(price<120000*10000){rt=0.4;lb='주택임대 6~12억'}else{rt=0.8;lb='주택임대 12억이상 (협의)'}}
+    if(S.deal==='trade'){if(price<50000000){rt=0.6;lm=250000;lb='주택매매 5천만미만'}else if(price<200000000){rt=0.5;lm=800000;lb='주택매매 5천만~2억'}else if(price<600000000){rt=0.4;lb='주택매매 2~6억'}else if(price<900000000){rt=0.5;lb='주택매매 6~9억'}else{rt=0.9;lb='주택매매 9억이상 (협의)'}}
+    else{if(price<50000000){rt=0.5;lm=200000;lb='주택임대 5천만미만'}else if(price<100000000){rt=0.4;lm=300000;lb='주택임대 5천만~1억'}else if(price<600000000){rt=0.3;lb='주택임대 1~6억'}else if(price<1200000000){rt=0.4;lb='주택임대 6~12억'}else{rt=0.8;lb='주택임대 12억이상 (협의)'}}
   }else if(S.fprop==='offi'){
-    if(S.deal==='trade'){if(price<5000*10000){rt=0.5;lm=250000;lb='오피스텔매매 5천미만'}else if(price<20000*10000){rt=0.4;lb='오피스텔매매 5천~2억'}else if(price<60000*10000){rt=0.5;lb='오피스텔매매 2~6억'}else{rt=0.9;lb='오피스텔매매 6억이상 (협의)'}}
-    else{if(price<5000*10000){rt=0.4;lm=200000;lb='오피스텔임대 5천미만'}else if(price<10000*10000){rt=0.3;lm=300000;lb='오피스텔임대 5천~1억'}else if(price<60000*10000){rt=0.4;lb='오피스텔임대 1~6억'}else{rt=0.8;lb='오피스텔임대 6억이상 (협의)'}}
+    if(S.deal==='trade'){if(price<50000000){rt=0.5;lm=250000;lb='오피스텔매매 5천만미만'}else if(price<200000000){rt=0.4;lb='오피스텔매매 5천만~2억'}else if(price<600000000){rt=0.5;lb='오피스텔매매 2~6억'}else{rt=0.9;lb='오피스텔매매 6억이상 (협의)'}}
+    else{if(price<50000000){rt=0.4;lm=200000;lb='오피스텔임대 5천만미만'}else if(price<100000000){rt=0.3;lm=300000;lb='오피스텔임대 5천만~1억'}else if(price<600000000){rt=0.4;lb='오피스텔임대 1~6억'}else{rt=0.8;lb='오피스텔임대 6억이상 (협의)'}}
   }else{rt=0.9;lb=S.deal==='trade'?'상가·토지 매매 (협의)':'상가·토지 임대 (협의)'}
   var fee=Math.floor(price*rt/100);if(lm>0&&fee>lm)fee=lm;
-  var tot=fee;
-  r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용</span><span class="tv">'+lb+' ('+rt+'%)</span></div>'+(lm>0?'<div class="tx-row hi"><span class="tl">한도액</span><span class="tv">'+fmt(lm)+'원</span></div>':'')+'<div class="tx-row tot"><span class="tl">중개보수</span><span class="tv">'+fmt(fee)+'원 (부가세별도)</span></div>';
+  r.innerHTML='<div class="tx-total">'+fmt(fee)+'원</div><div style="text-align:center;font-size:12px;color:#888;margin-top:-10px;margin-bottom:12px;">(부가세 별도)</div><div class="tx-row hi"><span class="tl">적용</span><span class="tv">'+lb+' ('+rt+'%)</span></div>'+(lm>0?'<div class="tx-row hi"><span class="tl">한도액</span><span class="tv">'+fmt(lm)+'원</span></div>':'')+'<div class="tx-row tot"><span class="tl">중개보수</span><span class="tv">'+fmt(fee)+'원 (부가세별도)</span></div>';
   r.className='tx-result show';
 }
-
-// ===== 초기화 =====
 function resetAll(){
   ['txAcqPrice','txFeePrice'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
   var fc=document.getElementById('txFirst');if(fc)fc.checked=false;
@@ -261,7 +235,6 @@ function resetAll(){
   S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house'};
   document.querySelectorAll('.tx-opts').forEach(function(opts){opts.querySelectorAll('.tx-opt').forEach(function(o,i){o.classList.toggle('sel',i===0)})});
 }
-
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}
 </script>
 </body>
