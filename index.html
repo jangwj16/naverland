@@ -248,8 +248,8 @@ function calcFee(){
     else{if(price<5000*10000){rt=0.4;lm=200000;lb='오피스텔임대 5천미만'}else if(price<10000*10000){rt=0.3;lm=300000;lb='오피스텔임대 5천~1억'}else if(price<60000*10000){rt=0.4;lb='오피스텔임대 1~6억'}else{rt=0.8;lb='오피스텔임대 6억이상 (협의)'}}
   }else{rt=0.9;lb=S.deal==='trade'?'상가·토지 매매 (협의)':'상가·토지 임대 (협의)'}
   var fee=Math.round(price*rt/100);if(lm>0&&fee>lm)fee=lm;
-  var vat=Math.round(fee*0.1),tot=fee+vat;
-  r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용</span><span class="tv">'+lb+' ('+rt+'%)</span></div>'+(lm>0?'<div class="tx-row hi"><span class="tl">한도액</span><span class="tv">'+fmt(lm)+'원</span></div>':'')+'<div class="tx-row"><span class="tl">중개보수</span><span class="tv">'+fmt(fee)+'원</span></div><div class="tx-row"><span class="tl">VAT 10%</span><span class="tv">'+fmt(vat)+'원</span></div><div class="tx-row tot"><span class="tl">합계 (VAT포함)</span><span class="tv">'+fmt(tot)+'원</span></div>';
+  var tot=fee;
+  r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용</span><span class="tv">'+lb+' ('+rt+'%)</span></div>'+(lm>0?'<div class="tx-row hi"><span class="tl">한도액</span><span class="tv">'+fmt(lm)+'원</span></div>':'')+'<div class="tx-row tot"><span class="tl">중개보수</span><span class="tv">'+fmt(fee)+'원 (부가세별도)</span></div>';
   r.className='tx-result show';
 }
 
