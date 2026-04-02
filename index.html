@@ -18,7 +18,7 @@
     .logo img{max-width:80px;height:auto}
     h1{font-size:20px;margin:10px 0 0}
     .tabs{display:flex;background:#1a1a2e;margin-top:12px}
-    .tab-btn{flex:1;padding:12px 6px;text-align:center;color:#888;font-size:14px;font-weight:bold;cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:.2s}
+    .tab-btn{flex:1;padding:12px 4px;text-align:center;color:#888;font-size:13px;font-weight:bold;cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:.2s}
     .tab-btn.active{color:#fff;border-bottom-color:#c9a040}
     .tab-btn:hover{color:#ccc}
     .tab-content{display:none;padding:20px 16px;max-width:700px;margin:0 auto}
@@ -26,7 +26,7 @@
     .section{margin:20px 0;text-align:left}
     .section h3{font-size:16px;margin-bottom:10px}
     .row{display:flex;gap:10px}
-    input,textarea{flex:1;padding:10px;font-size:15px;border:1px solid #ccc;border-radius:6px;font-family:inherit}
+    input,textarea,select{flex:1;padding:10px;font-size:15px;border:1px solid #ccc;border-radius:6px;font-family:inherit}
     .btn{padding:10px 20px;font-size:15px;border:none;border-radius:6px;background:#c9a040;color:#fff;cursor:pointer;font-weight:bold}
     .btn:hover{background:#b38d36}
     .btn-logout{background:#555;margin-top:16px}
@@ -34,7 +34,7 @@
     .tx-card h3{font-size:16px;font-weight:800;margin:0 0 14px;color:#222}
     .tx-field{margin-bottom:14px}
     .tx-field label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:5px}
-    .tx-field input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:white}
+    .tx-field input,.tx-field select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:white}
     .tx-opts{display:flex;gap:6px;flex-wrap:wrap}
     .tx-opt{flex:1;min-width:0;padding:9px 6px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;border-radius:8px;border:1px solid #ddd;background:white;color:#666;transition:.2s;white-space:nowrap}
     .tx-opt:hover{border-color:#c9a040}
@@ -56,6 +56,22 @@
     .tx-chk span{font-size:13px;font-weight:500;color:#059669}
     .tx-chk .txsub{font-size:11px;color:#888;display:block;margin-top:2px;font-weight:400}
     .tx-divider{height:2px;background:#e9ecef;margin:24px 0;border-radius:2px}
+    .loan-summary{background:#f0f7ff;border:1px solid #b3d4fc;border-radius:12px;padding:20px;margin-top:16px;display:none}
+    .loan-summary.show{display:block}
+    .loan-big{font-size:28px;font-weight:900;color:#2563eb;text-align:center;margin:8px 0}
+    .loan-sub{font-size:12px;color:#888;text-align:center;margin-bottom:12px}
+    .loan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .loan-box{background:white;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0}
+    .loan-box .lb-label{font-size:11px;color:#888;margin-bottom:4px}
+    .loan-box .lb-val{font-size:16px;font-weight:800;color:#222}
+    .loan-compare{margin-top:16px}
+    .loan-compare h4{font-size:14px;font-weight:700;margin:0 0 10px;color:#555}
+    .lc-row{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;border-radius:6px;margin-bottom:4px}
+    .lc-row:nth-child(odd){background:#f8f9fa}
+    .lc-row .lc-l{color:#555;font-weight:600}
+    .lc-row .lc-r{font-weight:700}
+    .lc-row.active{background:#e8f4fd;border:1px solid #b3d4fc}
+    .lc-row.active .lc-r{color:#2563eb}
     footer{text-align:center;margin-top:30px;padding:16px;font-size:11px;color:#999}
   </style>
 </head>
@@ -71,6 +87,7 @@
 <div class="tabs">
   <div class="tab-btn active" onclick="switchTab('search',this)">🔍 매물검색</div>
   <div class="tab-btn" onclick="switchTab('tax',this)">🧮 취득세·복비</div>
+  <div class="tab-btn" onclick="switchTab('loan',this)">🏦 대출계산</div>
 </div>
 <div id="tab-search" class="tab-content active">
   <div class="section">
@@ -152,10 +169,52 @@
     <div id="resFee" class="tx-result"></div>
   </div>
   <div style="text-align:center;">
-    <button onclick="resetAll()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 전체 초기화</button>
+    <button onclick="resetTax()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 전체 초기화</button>
   </div>
   <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음 · 2026.4 기준<br>다이아공인중개사</div>
 </div>
+
+<!-- ========== 대출계산기 탭 ========== -->
+<div id="tab-loan" class="tab-content">
+  <div style="text-align:center;margin-bottom:20px;">
+    <div style="font-size:20px;font-weight:900;color:#222;">🏦 대출 상환 계산기</div>
+    <div style="font-size:11px;color:#999;">월 상환금액 · 총 이자 · 상환방식 비교</div>
+  </div>
+  <div class="tx-card">
+    <div class="tx-field"><label>대출금액 (만원)</label><input type="text" id="loanAmt" placeholder="예: 30000 (3억)" inputmode="numeric"></div>
+    <div class="tx-field"><label>대출금리 (연 %)</label><input type="text" id="loanRate" placeholder="예: 4.5" inputmode="decimal"></div>
+    <div class="tx-field"><label>대출기간</label>
+      <div class="tx-opts">
+        <div class="tx-opt" onclick="txSel(this,'loanYr','10')">10년</div>
+        <div class="tx-opt" onclick="txSel(this,'loanYr','20')">20년</div>
+        <div class="tx-opt sel" onclick="txSel(this,'loanYr','30')">30년</div>
+        <div class="tx-opt" onclick="txSel(this,'loanYr','40')">40년</div>
+      </div>
+    </div>
+    <div class="tx-field"><label>거치기간</label>
+      <div class="tx-opts">
+        <div class="tx-opt sel" onclick="txSel(this,'loanGrace','0')">없음</div>
+        <div class="tx-opt" onclick="txSel(this,'loanGrace','12')">1년</div>
+        <div class="tx-opt" onclick="txSel(this,'loanGrace','24')">2년</div>
+        <div class="tx-opt" onclick="txSel(this,'loanGrace','36')">3년</div>
+      </div>
+    </div>
+    <div class="tx-field"><label>상환방식</label>
+      <div class="tx-opts">
+        <div class="tx-opt sel" onclick="txSel(this,'loanType','equal')">원리금균등</div>
+        <div class="tx-opt" onclick="txSel(this,'loanType','principal')">원금균등</div>
+        <div class="tx-opt" onclick="txSel(this,'loanType','bullet')">만기일시</div>
+      </div>
+    </div>
+    <button class="tx-btn" onclick="calcLoan()">대출 상환금 계산</button>
+  </div>
+  <div id="resLoan" class="loan-summary"></div>
+  <div style="text-align:center;margin-top:16px;">
+    <button onclick="resetLoan()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 초기화</button>
+  </div>
+  <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 실제 대출조건은 금융기관 확인<br>다이아공인중개사</div>
+</div>
+
 <footer>© 2025 다이아부동산 QuickLink PWA</footer>
 <script>
 function switchTab(id,el){
@@ -175,7 +234,7 @@ function searchByAddress(){
   if(!addr){alert("주소를 입력하세요");return;}
   window.open('https://map.kakao.com/?q='+encodeURIComponent(addr),'_blank');
 }
-var S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house'};
+var S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house',loanYr:'30',loanGrace:'0',loanType:'equal'};
 function txSel(el,g,v){
   if(el&&el.parentElement){el.parentElement.querySelectorAll('.tx-opt').forEach(function(o){o.classList.remove('sel')});el.classList.add('sel')}
   if(g==='prop') S.prop=v;
@@ -185,6 +244,9 @@ function txSel(el,g,v){
   else if(g==='zone') S.zone=(v==='Y'?'adjust':v==='N'?'normal':v);
   else if(g==='deal') S.deal=v;
   else if(g==='fprop') S.fprop=v;
+  else if(g==='loanYr') S.loanYr=v;
+  else if(g==='loanGrace') S.loanGrace=v;
+  else if(g==='loanType') S.loanType=v;
   var h=document.getElementById('txHouseOpts'),p=document.getElementById('txPersonOpts'),f=document.getElementById('txFirstWrap');
   if(h){var isH=['apt','house','officetel'].includes(S.prop);h.style.display=isH?'block':'none';if(p)p.style.display=(isH&&S.buyer==='personal')?'block':'none';if(f)f.style.display=(isH&&S.buyer==='personal'&&S.cnt==='1')?'flex':'none'}
 }
@@ -228,12 +290,98 @@ function calcFee(){
   r.innerHTML='<div class="tx-total">'+fmt(fee)+'원</div><div style="text-align:center;font-size:12px;color:#888;margin-top:-10px;margin-bottom:12px;">(부가세 별도)</div><div class="tx-row hi"><span class="tl">적용</span><span class="tv">'+lb+' ('+rt+'%)</span></div>'+(lm>0?'<div class="tx-row hi"><span class="tl">한도액</span><span class="tv">'+fmt(lm)+'원</span></div>':'')+'<div class="tx-row tot"><span class="tl">중개보수</span><span class="tv">'+fmt(fee)+'원 (부가세별도)</span></div>';
   r.className='tx-result show';
 }
-function resetAll(){
+
+// ===== 대출계산기 =====
+function calcLoan(){
+  var amt=(parseFloat((document.getElementById('loanAmt').value||'0').replace(/[^0-9]/g,''))||0)*10000;
+  var rate=parseFloat(document.getElementById('loanRate').value)||0;
+  var r=document.getElementById('resLoan');
+  if(!amt||!rate){r.className='loan-summary show';r.innerHTML='<p style="color:#999;text-align:center">대출금액과 금리를 입력하세요</p>';return}
+  var yr=parseInt(S.loanYr)||30;
+  var grace=parseInt(S.loanGrace)||0;
+  var totalMon=yr*12;
+  var repayMon=totalMon-grace;
+  var mr=rate/100/12;
+  var typeName={'equal':'원리금균등','principal':'원금균등','bullet':'만기일시'};
+  // 각 방식별 계산
+  var results={};
+  // 원리금균등
+  var graceInt=Math.round(amt*mr);
+  if(repayMon>0&&mr>0){
+    var mp=Math.round(amt*mr*Math.pow(1+mr,repayMon)/(Math.pow(1+mr,repayMon)-1));
+    var ti=mp*repayMon+graceInt*grace-amt;
+    results.equal={monthly:mp,totalInterest:ti,totalPay:amt+ti,graceMonthly:graceInt};
+  }else{
+    results.equal={monthly:0,totalInterest:0,totalPay:amt,graceMonthly:graceInt};
+  }
+  // 원금균등
+  if(repayMon>0){
+    var prinPer=Math.round(amt/repayMon);
+    var firstPay=prinPer+graceInt;
+    var lastPay=prinPer+Math.round((amt-prinPer*(repayMon-1))*mr);
+    var avgPay=Math.round((firstPay+lastPay)/2);
+    var tiP=0;
+    var rem=amt;
+    for(var i=0;i<repayMon;i++){var intI=Math.round(rem*mr);tiP+=intI;rem-=prinPer}
+    tiP+=graceInt*grace;
+    results.principal={monthly:firstPay,avgMonthly:avgPay,lastMonthly:lastPay,totalInterest:tiP,totalPay:amt+tiP,graceMonthly:graceInt};
+  }else{
+    results.principal={monthly:0,avgMonthly:0,lastMonthly:0,totalInterest:0,totalPay:amt,graceMonthly:graceInt};
+  }
+  // 만기일시
+  var tiB=Math.round(amt*mr)*totalMon;
+  results.bullet={monthly:Math.round(amt*mr),totalInterest:tiB,totalPay:amt+tiB,graceMonthly:graceInt};
+
+  var cur=results[S.loanType];
+  var curName=typeName[S.loanType];
+  var monthlyShow=S.loanType==='principal'?cur.monthly:cur.monthly;
+  var h='<div class="loan-big">월 '+fmt(monthlyShow)+'원</div>';
+  h+='<div class="loan-sub">'+curName+' · '+yr+'년 · 금리 '+rate+'%'+(grace>0?' · 거치 '+grace+'개월':'')+'</div>';
+  h+='<div class="loan-grid">';
+  h+='<div class="loan-box"><div class="lb-label">대출원금</div><div class="lb-val">'+fmt(amt)+'원</div></div>';
+  h+='<div class="loan-box"><div class="lb-label">총 이자</div><div class="lb-val">'+fmt(cur.totalInterest)+'원</div></div>';
+  h+='<div class="loan-box"><div class="lb-label">총 상환금액</div><div class="lb-val">'+fmt(cur.totalPay)+'원</div></div>';
+  if(grace>0) h+='<div class="loan-box"><div class="lb-label">거치기간 월 이자</div><div class="lb-val">'+fmt(cur.graceMonthly)+'원</div></div>';
+  h+='</div>';
+  // 상환방식 비교
+  h+='<div class="loan-compare"><h4>📊 상환방식 비교</h4>';
+  var types=[['equal','원리금균등'],['principal','원금균등'],['bullet','만기일시']];
+  for(var t=0;t<types.length;t++){
+    var k=types[t][0],nm=types[t][1],d=results[k];
+    var isActive=k===S.loanType;
+    var mShow=k==='principal'?d.monthly+'~'+fmt(d.lastMonthly):fmt(d.monthly);
+    if(k==='principal') mShow=fmt(d.monthly)+'~'+fmt(d.lastMonthly);
+    else mShow=fmt(d.monthly);
+    h+='<div class="lc-row'+(isActive?' active':'')+'">';
+    h+='<span class="lc-l">'+(isActive?'✅ ':'')+nm+'</span>';
+    h+='<span class="lc-r">월 '+mShow+'원</span>';
+    h+='</div>';
+    h+='<div class="lc-row'+(isActive?' active':'')+'" style="padding-top:0;font-size:11px;">';
+    h+='<span class="lc-l" style="color:#aaa">총이자</span>';
+    h+='<span class="lc-r" style="color:#888;font-weight:500">'+fmt(d.totalInterest)+'원</span>';
+    h+='</div>';
+  }
+  h+='</div>';
+  r.innerHTML=h;
+  r.className='loan-summary show';
+}
+function resetTax(){
   ['txAcqPrice','txFeePrice'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
   var fc=document.getElementById('txFirst');if(fc)fc.checked=false;
   ['resAcq','resFee'].forEach(function(id){var el=document.getElementById(id);if(el){el.innerHTML='';el.className='tx-result'}});
-  S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house'};
-  document.querySelectorAll('.tx-opts').forEach(function(opts){opts.querySelectorAll('.tx-opt').forEach(function(o,i){o.classList.toggle('sel',i===0)})});
+  S.prop='apt';S.buyer='personal';S.cnt='1';S.area='small';S.zone='normal';S.first=false;S.deal='trade';S.fprop='house';
+  document.querySelectorAll('#tab-tax .tx-opts').forEach(function(opts){opts.querySelectorAll('.tx-opt').forEach(function(o,i){o.classList.toggle('sel',i===0)})});
+}
+function resetLoan(){
+  ['loanAmt','loanRate'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  var r=document.getElementById('resLoan');if(r){r.innerHTML='';r.className='loan-summary'}
+  S.loanYr='30';S.loanGrace='0';S.loanType='equal';
+  document.querySelectorAll('#tab-loan .tx-opts').forEach(function(opts){opts.querySelectorAll('.tx-opt').forEach(function(o,i){
+    var defaults={'10':false,'20':false,'30':true,'40':false,'0':true,'12':false,'24':false,'36':false,'equal':true,'principal':false,'bullet':false};
+    var txt=o.textContent.trim();
+    if(txt==='30년'||txt==='없음'||txt==='원리금균등') o.classList.add('sel');
+    else o.classList.remove('sel');
+  })});
 }
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}
 </script>
