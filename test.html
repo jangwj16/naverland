@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>API 테스트</title></head>
+<body style="font-family:sans-serif;padding:20px;background:#111;color:#fff">
+<h2>API 테스트</h2>
+<button onclick="test1()" style="padding:15px 30px;font-size:18px;margin:10px">매물검색 테스트</button>
+<button onclick="test2()" style="padding:15px 30px;font-size:18px;margin:10px">건축물대장 테스트</button>
+<pre id="result" style="background:#222;padding:15px;margin-top:20px;white-space:pre-wrap;word-break:break-all;font-size:14px">결과가 여기에 표시됩니다</pre>
+<script>
+var R=document.getElementById("result");
+
+function test1(){
+  R.textContent="매물검색 호출 중...";
+  var url="https://diahouse.kr/nrank-api/listings?page=1&size=3&trade_type=%EB%A7%A4%EB%A7%A4";
+  R.textContent="URL: "+url+"\n\n호출 중...";
+  fetch(url,{cache:"no-store"})
+    .then(function(r){
+      R.textContent="HTTP Status: "+r.status+"\nHeaders:\n";
+      r.headers.forEach(function(v,k){R.textContent+=k+": "+v+"\n";});
+      return r.json();
+    })
+    .then(function(data){
+      R.textContent+="\n총 "+data.total+"건\n첫번째: "+(data.items&&data.items[0]?data.items[0].address:"없음");
+    })
+    .catch(function(e){
+      R.textContent="오류: "+e.message+"\n"+e.toString();
+    });
+}
+
+function test2(){
+  R.textContent="건축물대장 호출 중...";
+  var url="https://diahouse.kr/api/pwa/addr-search?q=%EB%8D%95%EC%9D%80%EB%8F%99692&token=dia2026pwa";
+  fetch(url,{cache:"no-store"})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      R.textContent="결과: "+JSON.stringify(data,null,2);
+    })
+    .catch(function(e){
+      R.textContent="오류: "+e.message;
+    });
+}
+</script>
+</body></html>
