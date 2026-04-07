@@ -90,13 +90,42 @@ tbody tr{cursor:pointer;}
 .loading-bar.on{display:block;}
 
 @media (max-width: 600px) {
-  .filter-bar { padding: 8px !important; gap: 6px !important; }
-  .chip { font-size: 13px !important; padding: 6px 10px !important; }
+  .filter-bar { padding: 8px 10px !important; }
+  .filter-row { gap: 5px !important; }
+  .f-chip { padding: 6px 12px !important; font-size: 13px !important; }
+  .f-panel {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    border-radius: 0 !important;
+    z-index: 9999 !important;
+    overflow-y: auto !important;
+    padding: 20px 16px !important;
+    box-sizing: border-box !important;
+  }
+  .price-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; }
+  .price-btn { padding: 10px 4px !important; font-size: 13px !important; }
+  .price-range { flex-wrap: wrap; gap: 6px !important; }
+  .price-range input { width: 70px !important; font-size: 13px !important; }
+  .region-cols { flex-direction: column !important; gap: 8px !important; }
+  .region-col { max-height: 180px !important; }
+  .region-col-title { font-size: 13px !important; padding: 8px 10px !important; }
+  .region-item { padding: 10px 14px !important; font-size: 15px !important; }
+  .type-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .type-btn { padding: 12px 8px !important; font-size: 14px !important; }
+  .count-btn { padding: 10px 14px !important; font-size: 14px !important; }
+  .f-panel-title { font-size: 17px !important; }
+  .f-apply { padding-top: 12px !important; }
+  .btn-sm { padding: 10px 20px !important; font-size: 14px !important; }
   #resultTable th, #resultTable td { font-size: 12px !important; padding: 6px 4px !important; }
-  .search-bar { flex-direction: column; }
-  .search-bar input { width: 100% !important; }
+  .addr-cell { max-width: 160px !important; }
+  .feature-cell { max-width: 120px !important; }
   body { font-size: 14px; }
-  h2, h3 { font-size: 16px !important; }
 }
 </style>
 </head>
@@ -238,8 +267,23 @@ function buildPricePanel(){
   addApply(p,resetPrice,applyPrice);
 }
 function fmtUk(v){return v>=10000?(v/10000)+"억":(v/1000)+"천";}
-var prTarget="pr_min";
-function clickPr(v){document.getElementById(prTarget).value=v;}
+var prSt=0;
+function clickPr(v){
+  if(prSt===0){document.getElementById("pr_min").value=v;prSt=1;}
+  else{document.getElementById("pr_max").value=v;prSt=0;}
+  document.querySelectorAll(".price-btn").forEach(function(b){b.classList.remove("sel");});
+  var mn=parseInt(document.getElementById("pr_min").value)||0;
+  var mx=parseInt(document.getElementById("pr_max").value)||0;
+  if(mn&&mx&&mn>mx){var t=mn;document.getElementById("pr_min").value=mx;document.getElementById("pr_max").value=t;}
+  document.querySelectorAll(".price-btn").forEach(function(b){
+    var bv=parseInt(b.textContent.replace(/[^0-9]/g,""))*10000||0;
+    if(bv===0){var m=b.textContent.match(/([0-9.]+)/);if(m)bv=parseFloat(m[1])*10000;}
+    var cmin=parseInt(document.getElementById("pr_min").value)||0;
+    var cmax=parseInt(document.getElementById("pr_max").value)||0;
+    if(cmin&&bv===cmin)b.classList.add("sel");
+    if(cmax&&bv===cmax)b.classList.add("sel");
+  });
+}
 function applyPrice(){F.pmin=document.getElementById("pr_min").value;F.pmax=document.getElementById("pr_max").value;var l="가격대";if(F.pmin&&F.pmax)l=fmtUk(+F.pmin)+"~"+fmtUk(+F.pmax);else if(F.pmin)l=fmtUk(+F.pmin)+"이상";else if(F.pmax)l=fmtUk(+F.pmax)+"이하";updChip("price",l);closeP("price");if(searched)doSearch(1);}
 function resetPrice(){document.getElementById("pr_min").value="";document.getElementById("pr_max").value="";F.pmin="";F.pmax="";updChip("price","가격대");prSt=0;}
 
