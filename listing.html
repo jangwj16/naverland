@@ -158,7 +158,7 @@ tbody tr{cursor:pointer;}
 <div class="pagination" id="pagination"></div>
 <script>
 var API="https://diahouse.kr/nrank-api/listings",PS=50,cp=1,searched=false;
-var F={trade:"매매",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:""};
+var F={trade:"매매",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[]};
 var allItems=[],sortCol="",sortDir="asc",dedupCount=0;
 
 var REGIONS={"경기도":{"고양시 덕양구":["덕은동","향동동","삼송동","성석동","내유동","동산동","행신동","화정동","풍동","원흥동","지축동","신원동","대장동","토당동","원당동","창릉동"],"고양시 일산동구":["식사동","백석동","마두동","정발산동","장항동","중산동"],"고양시 일산서구":["대화동","주엽동","탄현동","일산동","덕이동"],"파주시":["야당동","금촌동","교하동","운정동","목동동","와동동","문발동","당하동","하지석동","상지석동","동패동"],"김포시":["장기동","구래동","풍무동","걸포동","사우동","마산동"],"부천시 원미구":["상동","중동","심곡동","역곡동","원미동","도당동"],"부천시 소사구":["소사본동","범박동","심곡본동","옥길동"],"부천시 오정구":["오정동","내동","여월동","원종동","고강동"],"안산시 상록구":["사동","본오동","일동","이동","성포동","선부동"],"안산시 단원구":["고잔동","원곡동","초지동"],"양주시":["옥정동","회정동","덕정동"]},"서울시":{"은평구":["응암동","역촌동","갈현동","구산동","신사동","불광동","녹번동","대조동","증산동","수색동","진관동"],"서대문구":["홍은동","북가좌동","남가좌동","연희동","홍제동"],"마포구":["상암동","성산동","연남동","합정동","서교동","망원동","공덕동"],"강서구":[],"구로구":[],"강북구":[],"도봉구":[],"중랑구":[]},"인천시":{"서구":[],"미추홀구":[],"남동구":[],"부평구":[],"강화군":[]},"충청남도":{"서천군":[],"아산시":[]}};
@@ -196,7 +196,7 @@ function buildFilterBar(){
   var row=document.getElementById("filterRow");
   var chips=[
     {id:"trade",label:"매매"},{id:"price",label:"가격대"},{id:"region",label:"지역"},
-    {id:"type",label:"매물유형"},{id:"room",label:"방/욕실"},{id:"area",label:"면적"},{id:"year",label:"사용승인일"}
+    {id:"type",label:"매물유형"},{id:"room",label:"방/욕실"},{id:"area",label:"면적"},{id:"year",label:"사용승인일"},{id:"fac",label:"시설옵션"}
   ];
   row.innerHTML="";
   chips.forEach(function(c){
@@ -228,7 +228,7 @@ function buildFilterBar(){
 }
 
 function buildAllPanels(){
-  buildTradePanel();buildPricePanel();buildRegionPanel();buildTypePanel();buildRoomPanel();buildAreaPanel();buildYearPanel();
+  buildTradePanel();buildPricePanel();buildRegionPanel();buildTypePanel();buildRoomPanel();buildAreaPanel();buildYearPanel();buildFacPanel();
 }
 
 function toggleP(e,name){e.stopPropagation();var p=document.getElementById("panel-"+name);var was=p.classList.contains("open");document.querySelectorAll(".f-panel").forEach(function(x){x.classList.remove("open");});if(!was)p.classList.add("open");}
@@ -239,7 +239,7 @@ function adjV(id,delta){var el=document.getElementById(id);var v=parseInt(el.val
 function addPmBtn(parent,targetId,delta){var b=document.createElement("button");b.className="pm-btn";b.textContent=delta<0?"\u2212":"+";b.onclick=function(e){e.stopPropagation();adjV(targetId,delta);};parent.appendChild(b);}
 function addInput(parent,id,ph){var inp=document.createElement("input");inp.type="number";inp.id=id;inp.placeholder=ph;inp.style.cssText="width:80px;padding:6px 8px;border:1px solid var(--bor);border-radius:6px;font-size:13px;text-align:center;font-family:inherit;";inp.onfocus=function(){if(id==="pr_min"||id==="pr_max")prTarget=id;};parent.appendChild(inp);}
 function addSpan(parent,text,style){var s=document.createElement("span");s.textContent=text;if(style)s.style.cssText=style;parent.appendChild(s);}
-function updChip(n,label){var c=document.getElementById("chip-"+n);var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일"};c.querySelector(".chip-text").textContent=label;label===defs[n]?c.classList.remove("has-value"):c.classList.add("has-value");}
+function updChip(n,label){var c=document.getElementById("chip-"+n);var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};c.querySelector(".chip-text").textContent=label;label===defs[n]?c.classList.remove("has-value"):c.classList.add("has-value");}
 
 // ===== 거래유형 =====
 function buildTradePanel(){
@@ -443,6 +443,18 @@ function buildYearPanel(){
     closeP("year");if(searched)doSearch(1);
   });
 }
+function buildFacPanel(){
+  var p=document.getElementById("panel-fac");p.innerHTML="";
+  addTitle(p,"시설옵션 (중복선택)","fac");
+  var g=document.createElement("div");g.className="type-grid";g.id="facGrid";p.appendChild(g);
+  var FAC_LIST=["신축","역세권","테라스","주차","급매","즉시입주","복층","특가","마당","풀옵션","엘리베이터","CCTV","베란다"];
+  FAC_LIST.forEach(function(f){
+    var btn=document.createElement("div");btn.className="type-btn"+(F.facs.indexOf(f)>=0?" sel":"");btn.textContent=f;
+    btn.onclick=function(e){e.stopPropagation();var idx=F.facs.indexOf(f);if(idx>=0){F.facs.splice(idx,1);btn.classList.remove("sel");}else{F.facs.push(f);btn.classList.add("sel");}};
+    g.appendChild(btn);
+  });
+  addApply(p,function(){F.facs=[];buildFacPanel();updChip("fac","시설옵션");},function(){updChip("fac",F.facs.length?F.facs.join(","):"시설옵션");closeP("fac");if(searched)doSearch(1);});
+}
 function highlightYearBtns(){
   var v=parseInt(F.yearMax)||0;
   var yearVals=[0,2,4,10,15,20,25,30];
@@ -493,6 +505,8 @@ function doSearch(page){
     allItems=data.items||[];
     // 매물유형 다중 필터 (서버에서 1개만 지원하므로 클라이언트에서 추가 필터)
     if(F.types.length>0){allItems=allItems.filter(function(item){return F.types.indexOf(item.type_normalized)>=0;});}
+    // 시설옵션 필터
+    if(F.facs.length>0){allItems=allItems.filter(function(item){var ft=(item.feature||"")+(item.facilities||"");return F.facs.every(function(fac){return ft.indexOf(fac)>=0;});});}
     // 중복 제거 (같은 주소+금액+면적)
     var before=allItems.length;
     // 같은 동+번지+금액+면적 중 최신 매물만 유지
@@ -604,10 +618,10 @@ function renderPg(cur,total){
 }
 
 function resetAll(){
-  F={trade:"",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:""};
+  F={trade:"",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[]};
   document.getElementById("s_keyword").value="";
-  ["trade","price","region","type","room","area","year"].forEach(function(n){
-    var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일"};
+  ["trade","price","region","type","room","area","year","fac"].forEach(function(n){
+    var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};
     updChip(n,defs[n]);
   });
   allItems=[];sortCol="";sortDir="asc";searched=false;
