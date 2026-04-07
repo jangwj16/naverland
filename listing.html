@@ -547,6 +547,35 @@ function doSearch(page){
         return F.bathMode==="gte"?cnt>=bn:cnt===bn;
       });
     }
+    // 가격 필터 (프론트)
+    if(F.pmin||F.pmax){
+      var pmin=F.pmin?parseInt(F.pmin):0;
+      var pmax=F.pmax?parseInt(F.pmax):999999999;
+      allItems=allItems.filter(function(item){
+        var p=item.price||0;
+        if(item.trade_type==="월세")p=item.deposit||0;
+        return p>=pmin&&p<=pmax;
+      });
+    }
+    // 면적 필터 (프론트)
+    if(F.amin||F.amax){
+      var amin=F.amin?parseFloat(F.amin):0;
+      var amax=F.amax?parseFloat(F.amax):999999;
+      allItems=allItems.filter(function(item){
+        var a=item.net_area||item.total_area||0;
+        return a>=amin&&a<=amax;
+      });
+    }
+    // 사용승인일 필터 (프론트)
+    if(F.yearMax){
+      var cutoff=parseInt(F.yearMax);
+      allItems=allItems.filter(function(item){
+        var ad=item.approval_date||"";
+        if(!ad)return false;
+        var y=parseInt(ad.substring(0,4))||0;
+        return y>=cutoff;
+      });
+    }
     dedupCount=before-allItems.length;
     document.getElementById("totalCount").textContent=allItems.length.toLocaleString();
     document.getElementById("dedupInfo").textContent=dedupCount>0?"(중복 "+dedupCount+"건 제외)":"";
