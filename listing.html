@@ -422,7 +422,7 @@ function doSearch(page){
   document.getElementById("pagination").innerHTML="";
 
   var params=new URLSearchParams();
-  params.set("page","1");params.set("size","5000");
+  params.set("page","1");params.set("size","2000");
   if(F.trade)params.set("trade_type",F.trade);
   if(F.types.length===1)params.set("type_normalized",F.types[0]);
   if(F.rl)params.set("region_large",F.rl);
@@ -433,7 +433,7 @@ function doSearch(page){
   var kw=document.getElementById("s_keyword").value.trim();
   if(kw)params.set("search",kw);
 
-  var fetchUrl=API+"?"+params.toString();fetch(fetchUrl).then(function(r){if(!r.ok){throw new Error("HTTP "+r.status);}return r.json();}).then(function(data){
+  var fetchUrl=API+"?"+params.toString();fetch(fetchUrl,{cache:'no-store'}).then(function(r){if(!r.ok){throw new Error("HTTP "+r.status);}return r.json();}).then(function(data){
     document.getElementById("loadingBar").classList.remove("on");
     allItems=data.items||[];
     // 매물유형 다중 필터 (서버에서 1개만 지원하므로 클라이언트에서 추가 필터)
