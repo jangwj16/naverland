@@ -78,7 +78,7 @@ tbody tr{cursor:pointer;}
 .price-cell{font-weight:700;white-space:nowrap;}
 .addr-cell{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;}
 .feature-cell{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt2);font-size:12.5px;text-align:left;}
-.pagination{max-width:1400px;margin:0 auto;padding:10px 16px 20px;display:flex;justify-content:center;gap:4px;}
+.pagination{max-width:1400px;margin:0 auto;padding:10px 16px 80px;display:flex;justify-content:center;gap:4px;}
 .pg-btn{padding:6px 11px;border:1px solid var(--bor);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;font-family:inherit;}
 .pg-btn:hover{background:var(--inp);}
 .pg-btn.active{background:var(--pri);color:#fff;border-color:var(--pri);}
@@ -573,8 +573,17 @@ function renderItems(){
     var n=start+i+1;
     var addrFull = (item.address||"");
     var bldName = item.building_name||"";
-    var area = item.net_area ? item.net_area+"m" : "-";
-    tr.innerHTML="<td>"+n+"</td><td style='font-size:11px;'>"+(item.trade_type||"-")+"<br><span style='color:#888;font-size:10px;'>"+(item.type_normalized||"")+"</span></td><td class='addr-cell' style='text-align:left;white-space:normal;'><div style='font-size:12px;font-weight:600;color:#2563eb;'>"+bldName+"</div><div style='font-size:11px;color:#ccc;'>"+addrFull+"</div></td><td style='text-align:right;white-space:nowrap;'><div class='price-cell'>"+fmtPr(item)+"</div><div style='font-size:10px;color:#888;'>"+area+"</div></td>";
+    var area = item.net_area ? item.net_area+"\u33A1" : "";
+    var ft = (item.feature||"")+(item.address||"");
+    var rmMatch = ft.match(/\u0028(\d)\uBC29/) || ft.match(/(\d)\uB8F8/) || ft.match(/(\d)room/i) || ft.match(/\uBC29(\d)/);
+    var btMatch = ft.match(/\u0028(\d)\uC695/) || ft.match(/\uD654(\d)/) || ft.match(/\uC695\uC2E4(\d)/);
+    var roomInfo = "";
+    if(rmMatch) roomInfo += "\uBC29"+rmMatch[1];
+    if(btMatch) roomInfo += " \uC695"+btMatch[1];
+    if(roomInfo) roomInfo = "<span style='color:#10b981;font-size:10px;'>"+roomInfo+"</span>";
+    var areaInfo = area ? "<span style='color:#888;font-size:10px;'>"+area+"</span>" : "";
+    var subInfo = [areaInfo, roomInfo].filter(function(x){return x;}).join(" ");
+    tr.innerHTML="<td>"+n+"</td><td style='font-size:11px;'>"+(item.trade_type||"-")+"<br><span style='color:#888;font-size:10px;'>"+(item.type_normalized||"")+"</span></td><td class='addr-cell' style='text-align:left;white-space:normal;'><div style='font-size:12px;font-weight:600;color:#2563eb;'>"+bldName+"</div><div style='font-size:11px;color:#ccc;'>"+addrFull+"</div></td><td style='text-align:right;white-space:nowrap;'><div class='price-cell'>"+fmtPr(item)+"</div><div>"+subInfo+"</div></td>";
     tbody.appendChild(tr);
   });
   renderPg(cp,tp);
