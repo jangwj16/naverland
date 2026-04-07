@@ -568,7 +568,7 @@ function renderItems(){
     var n=start+i+1;
     var addrFull = (item.address||"");
     var bldName = item.building_name ? "<div style='font-size:11px;color:#2563eb;font-weight:600;'>"+item.building_name+"</div>" : "";
-    tr.innerHTML="<td>"+n+"</td><td><span class='badge "+tc+"'>"+(item.trade_type||"-")+"</span></td><td><span class='type-badge'>"+(item.type_normalized||"-")+"</span></td><td class='addr-cell' style='text-align:left;max-width:220px;' title='"+addrFull+"'>"+bldName+"<div style='font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+addrFull+"</div></td><td class='price-cell'>"+fmtPrice(item.price,item.trade_type,item.monthly_rent)+"</td><td>"+(item.net_area||"-")+"</td>";
+    tr.innerHTML="<td>"+n+"</td><td><span class='badge "+tc+"'>"+(item.trade_type||"-")+"</span></td><td><span class='type-badge'>"+(item.type_normalized||"-")+"</span></td><td class='addr-cell' style='text-align:left;max-width:220px;' title='"+addrFull+"'>"+bldName+"<div style='font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+addrFull+"</div></td><td class='price-cell'>"+fmtPr(item)+"</td><td>"+(item.net_area||"-")+"</td>";
     tbody.appendChild(tr);
   });
   renderPg(cp,tp);
