@@ -15,23 +15,40 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
 .label { font-size: 13px; color: #666; font-weight: 600; }
 .btn-blue { background: #2563eb; color: white; border: none; cursor: pointer; font-weight: bold; }
 .btn-blue:hover { background: #1d4ed8; }
-        .bd-api-btn { padding:8px 16px; border:2px solid #2563eb; background:white; color:#2563eb; border-radius:6px; cursor:pointer; font-size:13px; transition:0.2s; }
-        .bd-api-btn.active, .bd-api-btn:hover { background:#2563eb; color:white; }
-        .bd-api-btn[data-api='getBrViolBldInfo'].active, .bd-api-btn[data-api='getBrViolBldInfo']:hover { background:#dc3545; color:white; border-color:#dc3545; }
-        .bd-card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr)); gap:15px; margin-top:15px; }
-        .bd-card-wide { grid-column:1/-1; }
-        .bd-card-inner { display:grid; grid-template-columns:1fr 1fr; gap:4px 30px; }
-        .bd-card { background:#f8f9fa; border-radius:10px; padding:18px; border-left:4px solid #2563eb; }
-        .bd-card-title { font-weight:bold; color:#333; margin-bottom:12px; font-size:15px; padding-bottom:8px; border-bottom:1px solid #e0e0e0; }
-        .bd-card-item { display:flex; margin-bottom:8px; font-size:15px; }
-        .bd-card-label { width:120px; color:#666; flex-shrink:0; font-weight:500; }
-        .bd-card-value { color:#333; font-weight:500; }
-        .bd-summary { background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%); border-radius:10px; padding:22px; margin-bottom:15px; color:white; }
-        .bd-summary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
-        .bd-summary-item { background:rgba(255,255,255,0.15); padding:12px; border-radius:8px; }
-        .bd-summary-label { font-size:11px; opacity:0.8; margin-bottom:4px; }
-        .bd-summary-value { font-size:14px; font-weight:bold; }
-        .bd-addr-item { padding:12px 16px; cursor:pointer; border-bottom:1px solid #f0f0f0; transition:0.1s; }
+        .bd-api-btn { padding:8px 16px; border:2px solid #2563eb; background:white; color:#2563eb; border-radius:6px; cursor:pointer; font-size:13px; transition:0.2s; }
+
+        .bd-api-btn.active, .bd-api-btn:hover { background:#2563eb; color:white; }
+
+        .bd-api-btn[data-api='getBrViolBldInfo'].active, .bd-api-btn[data-api='getBrViolBldInfo']:hover { background:#dc3545; color:white; border-color:#dc3545; }
+
+        .bd-card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr)); gap:15px; margin-top:15px; }
+
+        .bd-card-wide { grid-column:1/-1; }
+
+        .bd-card-inner { display:grid; grid-template-columns:1fr 1fr; gap:4px 30px; }
+
+        .bd-card { background:#f8f9fa; border-radius:10px; padding:18px; border-left:4px solid #2563eb; }
+
+        .bd-card-title { font-weight:bold; color:#333; margin-bottom:12px; font-size:15px; padding-bottom:8px; border-bottom:1px solid #e0e0e0; }
+
+        .bd-card-item { display:flex; margin-bottom:8px; font-size:15px; }
+
+        .bd-card-label { width:120px; color:#666; flex-shrink:0; font-weight:500; }
+
+        .bd-card-value { color:#333; font-weight:500; }
+
+        .bd-summary { background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%); border-radius:10px; padding:22px; margin-bottom:15px; color:white; }
+
+        .bd-summary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+
+        .bd-summary-item { background:rgba(255,255,255,0.15); padding:12px; border-radius:8px; }
+
+        .bd-summary-label { font-size:11px; opacity:0.8; margin-bottom:4px; }
+
+        .bd-summary-value { font-size:14px; font-weight:bold; }
+
+        .bd-addr-item { padding:12px 16px; cursor:pointer; border-bottom:1px solid #f0f0f0; transition:0.1s; }
+
 </style>
 </head>
 <body>
@@ -67,233 +84,460 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
   </div>
 </div>
 <script>
-        // [건축물대장] 기능 로직 (API키는 서버에서 관리)
-        // =========================================
-        var bdSelectedApi = 'getBrRecapTitleInfo';
-        var bdAddrTimer = null;
-        
-
-        function bdAddrKeyup(e) {
-            if(e.key==='Enter'){bdAddrSearch();return;}
-            clearTimeout(bdAddrTimer);
-            bdAddrTimer = setTimeout(function(){bdAddrSearch();}, 500);
-        }
-        async function bdAddrSearch() {
-            var q = document.getElementById('bd-addr').value.trim();
-            var listDiv = document.getElementById('bd-addr-list');
-            if(!q||q.length<2){listDiv.style.display='none';return;}
-            try {
-                var resp = await fetch('https://diahouse.kr/api/pwa/addr-search?token=dia2026pwa&q='+encodeURIComponent(q));
-                var data = await resp.json();
-                if(!data.success||!data.documents||data.documents.length===0){listDiv.innerHTML='<div style="padding:15px;color:#666;text-align:center;">검색 결과가 없습니다</div>';listDiv.style.display='block';return;}
-                var html='';
-                data.documents.forEach(function(doc){
-                    var addr = doc.address;
-                    if(!addr) return;
-                    var bcode = addr.b_code || '';
-                    var sigunguCd = bcode.substring(0,5);
-                    var bjdongCd = bcode.substring(5,10);
-                    var mainNo = addr.main_address_no || '';
-                    var subNo = addr.sub_address_no || '0';
-                    var display = addr.address_name || doc.address_name;
-                    var roadAddr = doc.road_address ? doc.road_address.address_name : '';
-                    html += '<div class="bd-addr-item" data-sg="'+sigunguCd+'" data-bj="'+bjdongCd+'" data-mn="'+mainNo+'" data-sn="'+subNo+'" data-dp="'+display.replace(/"/g,'&quot;')+'" onclick="bdSelectAddr(this.dataset.sg,this.dataset.bj,this.dataset.mn,this.dataset.sn,this.dataset.dp)">';
-                    html += '<div style="font-size:14px;font-weight:bold;color:#333;">' + display + '</div>';
-                    if(roadAddr) html += '<div style="font-size:12px;color:#888;margin-top:3px;">' + roadAddr + '</div>';
-                    html += '</div>';
-                });
-                listDiv.innerHTML = html;
-                listDiv.style.display = 'block';
-            } catch(e) { listDiv.innerHTML='<div style="padding:15px;color:#dc3545;">검색 오류: '+e.message+'</div>'; listDiv.style.display='block'; }
-        }
-        function bdSelectAddr(sigunguCd, bjdongCd, mainNo, subNo, display) {
-            document.getElementById('bd-sido').value = sigunguCd.substring(0,2);
-            document.getElementById('bd-sigungu').value = sigunguCd.substring(2,5);
-            document.getElementById('bd-bjdong').value = bjdongCd;
-            document.getElementById('bd-bun').value = mainNo;
-            document.getElementById('bd-ji').value = subNo || '0';
-            document.getElementById('bd-addr-list').style.display = 'none';
-            document.getElementById('bd-selected-addr').style.display = 'block';
-            document.getElementById('bd-selected-addr').innerHTML = '✅ <strong>'+display+'</strong> 선택됨 — 아래 조회항목 선택 후 조회됩니다';
-            bdSearch();
-        }
-        function bdSelectApi(btn) {
-            document.querySelectorAll('.bd-api-btn').forEach(function(b){b.classList.remove('active');});
-            btn.classList.add('active');
-            bdSelectedApi = btn.dataset.api;
-            if(document.getElementById('bd-bun').value) bdSearch();
-        }
-        async function bdSearch() {
-            var rd = document.getElementById('bd-result');
-            var sigunguCd = document.getElementById('bd-sido').value + document.getElementById('bd-sigungu').value;
-            var bjdong = document.getElementById('bd-bjdong').value;
-            var bun = document.getElementById('bd-bun').value;
-            var ji = document.getElementById('bd-ji').value || '0';
-            if(!sigunguCd||sigunguCd.length<5||!bun){rd.innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">주소를 검색하고 선택해주세요.</div>';return;}
-            rd.innerHTML='<div style="text-align:center;padding:40px;color:#666;">조회 중입니다... ⏳</div>';
-            var bp=bun.padStart(4,'0'), jp=ji.padStart(4,'0');
-            var stHtml='<div style="background:#f0f0f0;padding:10px 15px;border-radius:8px;margin-bottom:12px;font-size:12px;color:#666;">📍 시군구:'+sigunguCd+' | 법정동:'+bjdong+' | 본번:'+bp+' | 부번:'+jp+'</div>';
-            window._bdQuery={sigunguCd:sigunguCd,bjdong:bjdong,bp:bp,jp:jp,stHtml:stHtml};
-            try {
-                if(bdSelectedApi==='getBrExposPubuseAreaInfo'){
-                    var tUrl='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType=getBrTitleInfo&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
-                    if(bjdong) tUrl+='&bjdongCd='+bjdong;
-                    var tResp=await fetch(tUrl);
-                    var tTxt=await tResp.text();
-                    var tXml=new DOMParser().parseFromString(tTxt,'text/xml');
-                    var tItems=tXml.querySelectorAll('item');
-                    var dongMap={};
-                    tItems.forEach(function(it){
-                        var dn=it.querySelector('dongNm');var rg=it.querySelector('regstrGbCdNm');
-                        var bn=it.querySelector('bldNm');
-                        var d=dn?dn.textContent.trim():'';
-                        var b=bn?bn.textContent.trim():'';
-                        if(d&&!dongMap[d]&&/^[A-Za-z0-9]/.test(d))dongMap[d]=b;
-                    });
-                    var dongs=Object.keys(dongMap).sort(function(a,b){return a.localeCompare(b,'ko');});
-                    if(dongs.length>1){
-                        var html=stHtml;
-                        html+='<div style="font-size:18px;font-weight:bold;color:#333;margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid #7c3aed;">🏢 동 선택 ('+dongs.length+'개 동)</div>';
-                        html+='<div class="bd-card-grid">';
-                        dongs.forEach(function(d,i){
-                            html+='<div class="bd-card bd-dong-card" data-dongname="'+d+'" style="cursor:pointer;transition:transform 0.1s;">';
-                            html+='<div class="bd-card-title" style="color:#7c3aed;">🏢 '+d+'</div>';
-                            if(dongMap[d])html+='<div class="bd-card-item"><span class="bd-card-label">건물명</span><span class="bd-card-value">'+dongMap[d]+'</span></div>';
-                            html+='<div style="text-align:center;margin-top:8px;color:#2563eb;font-size:13px;">클릭하여 호실 조회 →</div>';
-                            html+='</div>';
-                        });
-                        html+='</div>';
-                        rd.innerHTML=html;
-                        document.querySelectorAll('.bd-dong-card').forEach(function(c){
-                            c.addEventListener('click',function(){bdLoadDong(this.dataset.dongname);});
-                            c.addEventListener('mouseover',function(){this.style.transform='scale(1.02)';this.style.borderColor='#7c3aed';});
-                            c.addEventListener('mouseout',function(){this.style.transform='';this.style.borderColor='';});
-                        });
-                        return;
-                    }
-                    var singleDong=dongs.length===1?dongs[0]:'';
-                    await bdLoadDong(singleDong);
-                    return;
-                }
-                var url='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType='+bdSelectedApi+'&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
-                if(bjdong) url+='&bjdongCd='+bjdong;
-                var resp=await fetch(url);
-                if(!resp.ok){var err=await resp.json().catch(function(){return{message:'서버 오류'};});throw new Error(err.message);}
-                var txt=await resp.text();
-                var parser=new DOMParser();
-                var xml=parser.parseFromString(txt,'text/xml');
-                if(xml.querySelector('parsererror')) throw new Error('XML 파싱 오류');
-                var rc=xml.querySelector('resultCode');
-                if(rc&&rc.textContent!=='00'){var rm=xml.querySelector('resultMsg');throw new Error('API오류['+rc.textContent+']: '+(rm?rm.textContent:''));}
-                var items=xml.querySelectorAll('item');
-                if(items.length===0){rd.innerHTML=stHtml+'<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">조회 결과가 없습니다.<br>💡 다른 조회항목을 시도해보세요.</div>';return;}
-                bdDisplayResults(items,stHtml);
-            } catch(e){rd.innerHTML=stHtml+'<div style="color:#dc3545;background:#fff3f3;padding:15px;border-radius:8px;border-left:4px solid #dc3545;"><strong>조회 실패:</strong> '+e.message+'</div>';}
-        }
-        async function bdLoadDong(dongNm){
-            var q=window._bdQuery;if(!q)return;
-            var rd=document.getElementById('bd-result');
-            rd.innerHTML=q.stHtml+'<div style="text-align:center;padding:40px;color:#666;">'+(dongNm||'')+' 호실 조회 중... ⏳</div>';
-            try{
-                var url='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType=getBrExposPubuseAreaInfo&sigunguCd='+q.sigunguCd+'&bun='+q.bp+'&ji='+q.jp;
-                if(q.bjdong)url+='&bjdongCd='+q.bjdong;
-                if(dongNm)url+='&dongNm='+encodeURIComponent(dongNm);
-                var resp=await fetch(url);
-                if(!resp.ok)throw new Error('서버 오류');
-                var txt=await resp.text();
-                var xml=new DOMParser().parseFromString(txt,'text/xml');
-                var items=xml.querySelectorAll('item');
-                if(items.length===0){rd.innerHTML=q.stHtml+'<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">호실 데이터가 없습니다.</div>';return;}
-                bdDisplayResults(items,q.stHtml,dongNm);
-            }catch(e){rd.innerHTML=q.stHtml+'<div style="color:#dc3545;background:#fff3f3;padding:15px;border-radius:8px;border-left:4px solid #dc3545;"><strong>조회 실패:</strong> '+e.message+'</div>';}
-        }
-        function bdDisplayResults(items,stHtml) {
-            var rd=document.getElementById('bd-result'), html=stHtml;
-            var fm={'getBrTitleInfo':{t:'표제부',f:[{k:'platPlc',l:'대지위치'},{k:'newPlatPlc',l:'도로명주소'},{k:'bldNm',l:'건물명'},{k:'mainPurpsCdNm',l:'주용도'},{k:'etcPurps',l:'기타용도'},{k:'strctCdNm',l:'구조'},{k:'grndFlrCnt',l:'지상층수'},{k:'ugrndFlrCnt',l:'지하층수'},{k:'platArea',l:'대지면적(㎡)'},{k:'archArea',l:'건축면적(㎡)'},{k:'bcRat',l:'건폐율(%)'},{k:'totArea',l:'연면적(㎡)'},{k:'vlRat',l:'용적률(%)'},{k:'hhldCnt',l:'세대수'},{k:'fmlyCnt',l:'가구수'},{k:'useAprDay',l:'사용승인일'},{k:'pmsDay',l:'허가일'},{k:'regstrKindCdNm',l:'대장종류'},{k:'indrAutoUtcnt',l:'옥내기계식주차'},{k:'indrMechUtcnt',l:'옥내자주식주차'},{k:'oudrAutoUtcnt',l:'옥외기계식주차'},{k:'oudrMechUtcnt',l:'옥외자주식주차'},{k:'totPkngCnt',l:'총주차대수'},{k:'indrAutoArea',l:'전기차(옥내)'},{k:'oudrAutoArea',l:'전기차(옥외)'}]},'getBrFlrOulnInfo':{t:'층별개요',f:[{k:'platPlc',l:'대지위치'},{k:'flrNo',l:'층번호'},{k:'flrNoNm',l:'층명칭'},{k:'flrGbCdNm',l:'층구분'},{k:'mainPurpsCdNm',l:'주용도'},{k:'etcPurps',l:'기타용도'},{k:'strctCdNm',l:'구조'},{k:'area',l:'면적(㎡)'}]},'getBrExposPubuseAreaInfo':{t:'전유공용면적',f:[{k:'platPlc',l:'대지위치'},{k:'dongNm',l:'동명칭'},{k:'hoNm',l:'호명칭'},{k:'flrNo',l:'층번호'},{k:'exposPubuseGbCdNm',l:'전유공용구분'},{k:'mainPurpsCdNm',l:'주용도'},{k:'area',l:'면적(㎡)'}]},'getBrRecapTitleInfo':{t:'총괄표제부',f:[{k:'platPlc',l:'대지위치'},{k:'newPlatPlc',l:'도로명주소'},{k:'mainPurpsCdNm',l:'주용도'},{k:'platArea',l:'대지면적(㎡)'},{k:'archArea',l:'건축면적(㎡)'},{k:'bcRat',l:'건폐율(%)'},{k:'totArea',l:'연면적(㎡)'},{k:'vlRat',l:'용적률(%)'},{k:'hhldCnt',l:'세대수'},{k:'mainBldCnt',l:'주건축물수'},{k:'atchBldCnt',l:'부속건축물수'}]},'getBrJijiguInfo':{t:'지역지구구역',f:[{k:'platPlc',l:'대지위치'},{k:'jijiguGbCdNm',l:'지역지구구역구분'},{k:'jijiguCdNm',l:'지역지구구역명'},{k:'etcJijigu',l:'기타지역지구구역'}]},'getBrViolBldInfo':{t:'위반건축물',f:[{k:'platPlc',l:'대지위치'},{k:'newPlatPlc',l:'도로명주소'},{k:'bldNm',l:'건물명'},{k:'violBldCdNm',l:'위반건축물구분'},{k:'violDtlCdNm',l:'위반상세'},{k:'violArea',l:'위반면적(㎡)'},{k:'violAmt',l:'위반금액'},{k:'violContent',l:'위반내용'},{k:'crtnDay',l:'적발일'},{k:'isrtDay',l:'시정일'}]}};
-            var mp=fm[bdSelectedApi]||fm['getBrTitleInfo'];
-            if(bdSelectedApi==='getBrTitleInfo'&&items.length>0){var f=items[0];html+='<div class="bd-summary"><div style="font-size:17px;font-weight:bold;margin-bottom:12px;">📊 건물 요약</div><div class="bd-summary-grid">';html+='<div class="bd-summary-item"><div class="bd-summary-label">건물명</div><div class="bd-summary-value">'+(bdG(f,'bldNm')||'-')+'</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">주용도</div><div class="bd-summary-value">'+(bdG(f,'mainPurpsCdNm')||'-')+'</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">연면적</div><div class="bd-summary-value">'+bdN(bdG(f,'totArea'))+'㎡</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">층수</div><div class="bd-summary-value">지상'+(bdG(f,'grndFlrCnt')||'0')+'/지하'+(bdG(f,'ugrndFlrCnt')||'0')+'층</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">건폐율</div><div class="bd-summary-value">'+bdN(bdG(f,'bcRat'))+'%</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">용적률</div><div class="bd-summary-value">'+bdN(bdG(f,'vlRat'))+'%</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">사용승인</div><div class="bd-summary-value">'+bdD(bdG(f,'useAprDay'))+'</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">구조</div><div class="bd-summary-value">'+(bdG(f,'strctCdNm')||'-')+'</div></div>';var pkTotal=(parseInt(bdG(f,'indrAutoUtcnt'))||0)+(parseInt(bdG(f,'indrMechUtcnt'))||0)+(parseInt(bdG(f,'oudrAutoUtcnt'))||0)+(parseInt(bdG(f,'oudrMechUtcnt'))||0);html+='<div class="bd-summary-item"><div class="bd-summary-label">총주차</div><div class="bd-summary-value">'+pkTotal+'대</div></div>';html+='</div></div>';}
-            if(bdSelectedApi==='getBrExposPubuseAreaInfo'){
-                var groups={};
-                items.forEach(function(item){
-                    var dong=bdG(item,'dongNm').trim()||'본동';
-                    var ho=bdG(item,'hoNm').trim()||'공용';
-                    var gb=bdG(item,'exposPubuseGbCdNm')||'';
-                    var area=parseFloat(bdG(item,'area'))||0;
-                    var purps=bdG(item,'mainPurpsCdNm')||'';var etcP=bdG(item,'etcPurps')||'';if(etcP&&etcP.trim())purps=etcP;
-                    var key=dong+'_'+ho;
-                    if(!groups[key])groups[key]={dong:dong,ho:ho,purps:"",jeonyu:0,gongyong:0};
-                    if(gb.indexOf('전유')!==-1){groups[key].jeonyu+=area;if(purps)groups[key].purps=purps;}
-                    else groups[key].gongyong+=area;
-                });
-                var keys=Object.keys(groups).sort(function(a,b){
-                    var ga=groups[a],gb2=groups[b];
-                    if(ga.dong!==gb2.dong)return ga.dong.localeCompare(gb2.dong,'ko');
-                    var hoA=ga.ho.replace(/[^0-9]/g,''),hoB=gb2.ho.replace(/[^0-9]/g,'');
-                    if(hoA&&hoB)return parseInt(hoA)-parseInt(hoB);
-                    return ga.ho.localeCompare(gb2.ho,'ko');
-                });
-                var curDong=arguments.length>2?arguments[2]:'';
-                if(curDong){html+='<div style="margin-bottom:12px;"><button onclick="bdSearch()" style="padding:8px 16px;border:2px solid #7c3aed;border-radius:6px;background:#f5f0ff;color:#7c3aed;font-weight:bold;cursor:pointer;font-size:14px;">← 동 선택으로</button></div>';}
-                html+='<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid #2563eb;">';
-                html+='<span style="font-size:18px;font-weight:bold;color:#333;">'+(curDong?curDong+' ':'')+'호실별 ('+keys.length+'개 호실)</span>';
-                html+='<select id="bd-ho-select" onchange="bdFilterHo()" style="padding:8px 12px;border:2px solid #2563eb;border-radius:6px;font-size:14px;cursor:pointer;">';
-                html+='<option value="all">전체 호실 보기</option>';
-                keys.forEach(function(key){var g=groups[key];html+='<option value="'+key+'">'+g.ho+'</option>';});
-                html+='</select></div>';
-                html+='<div class="bd-card-grid">';
-                keys.forEach(function(key,idx){
-                    var g=groups[key];
-                    var total=g.jeonyu+g.gongyong;
-                    html+='<div class="bd-card bd-ho-card" data-ho="'+key+'">';
-                    html+='<div class="bd-card-title" style="display:flex;justify-content:space-between;align-items:center;">';
-                    html+='<span>🏠 '+g.ho+'</span>';
-                    html+='<span style="color:#2563eb;font-size:14px;">합계 '+parseFloat(total.toFixed(5))+'㎡</span></div>';
-                    if(g.purps)html+='<div class="bd-card-item"><span class="bd-card-label">용도</span><span class="bd-card-value">'+g.purps+'</span></div>';
-                    if(g.jeonyu)html+='<div class="bd-card-item"><span class="bd-card-label">전유면적</span><span class="bd-card-value" style="color:#2563eb;font-weight:bold;">'+parseFloat(g.jeonyu.toFixed(5))+'㎡ ('+(g.jeonyu*0.3025).toFixed(5)+'평)</span></div>';
-                    if(g.gongyong)html+='<div class="bd-card-item"><span class="bd-card-label">공용면적</span><span class="bd-card-value" style="color:#7c3aed;">'+parseFloat(g.gongyong.toFixed(5))+'㎡ ('+(g.gongyong*0.3025).toFixed(5)+'평)</span></div>';
-                    html+='</div>';
-                });
-                html+='</div>';rd.innerHTML=html;return;
-            }
-            html+='<div style="font-size:18px;font-weight:bold;color:#333;margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid #2563eb;">'+mp.t+' ('+items.length+'건)</div><div class="bd-card-grid">';
-            items.forEach(function(item,idx){
-                var isTitle=(bdSelectedApi==='getBrTitleInfo');
-                html+='<div class="bd-card'+(isTitle?' bd-card-wide':'')+'"><div class="bd-card-title">#'+(idx+1)+' '+(bdG(item,'bldNm')||bdG(item,'platPlc')||'')+'</div>';
-                if(isTitle)html+='<div class="bd-card-inner">';
-                mp.f.forEach(function(fld){
-                    var v=bdG(item,fld.k);
-                    var isPark=(fld.k.indexOf('Utcnt')!==-1||fld.k.indexOf('PkngCnt')!==-1||fld.k.indexOf('Efcnt')!==-1);
-                    if(v||isPark){
-                        if(!v&&isPark)v='0';
-                        if(fld.k.indexOf('Area')!==-1||fld.k.indexOf('Rat')!==-1)v=bdN(v);
-                        if(fld.k.indexOf('Day')!==-1)v=bdD(v);
-                        if(isPark)v=v+'대';
-                        html+='<div class="bd-card-item"><span class="bd-card-label">'+fld.l+'</span><span class="bd-card-value">'+v+'</span></div>';
-                    }
-                });
-                if(isTitle)html+='</div>';
-                html+='</div>';
-            });
-            html+='</div>';rd.innerHTML=html;
-        }
-        function bdG(item,key){var el=item.querySelector(key);return el?el.textContent.trim():'';}
-        function bdN(v){if(!v)return'-';var n=parseFloat(v);return isNaN(n)?v:n.toLocaleString('ko-KR',{maximumFractionDigits:2});}
-        function bdD(v){if(!v||v.length!==8)return v||'-';return v.substring(0,4)+'-'+v.substring(4,6)+'-'+v.substring(6,8);}
-        function bdFilterDong(){}
-        function bdFilterHo(){
-            var sel=document.getElementById('bd-ho-select');
-            if(!sel)return;
-            var val=sel.value;
-            document.querySelectorAll('.bd-ho-card').forEach(function(card){
-                if(val==='all') card.style.display='';
-                else card.style.display=(card.dataset.ho===val)?'':'none';
-            });
-        }
-        function bdClearForm(){document.getElementById('bd-addr').value='';document.getElementById('bd-addr-list').style.display='none';document.getElementById('bd-selected-addr').style.display='none';document.getElementById('bd-sido').value='';document.getElementById('bd-sigungu').value='';document.getElementById('bd-bjdong').value='';document.getElementById('bd-bun').value='';document.getElementById('bd-ji').value='';document.getElementById('bd-result').innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">주소를 검색하고 선택해주세요.</div>';}
-        function bdInitSido(){}
-        function bdLoadSigungu(){}
-        function bdLoadBjdong(){}
-        function bdClearForm(){document.getElementById('bd-sido').value='';document.getElementById('bd-sigungu').innerHTML='<option value="">선택</option>';document.getElementById('bd-bjdong').innerHTML='<option value="">선택 (없으면 생략)</option>';document.getElementById('bd-bun').value='';document.getElementById('bd-ji').value='';document.getElementById('bd-result').innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">시도 → 시군구 → 읍면동 선택 후 본번 입력하고 조회하세요.</div>';}
+        // [건축물대장] 기능 로직 (API키는 서버에서 관리)
+
+        // =========================================
+
+        var bdSelectedApi = 'getBrRecapTitleInfo';
+
+        var bdAddrTimer = null;
+
+        
+
+
+
+        function bdAddrKeyup(e) {
+
+            if(e.key==='Enter'){bdAddrSearch();return;}
+
+            clearTimeout(bdAddrTimer);
+
+            bdAddrTimer = setTimeout(function(){bdAddrSearch();}, 500);
+
+        }
+
+        async function bdAddrSearch() {
+
+            var q = document.getElementById('bd-addr').value.trim();
+
+            var listDiv = document.getElementById('bd-addr-list');
+
+            if(!q||q.length<2){listDiv.style.display='none';return;}
+
+            try {
+
+                var resp = await fetch('https://diahouse.kr/api/pwa/addr-search?token=dia2026pwa&q='+encodeURIComponent(q));
+
+                var data = await resp.json();
+
+                if(!data.success||!data.documents||data.documents.length===0){listDiv.innerHTML='<div style="padding:15px;color:#666;text-align:center;">검색 결과가 없습니다</div>';listDiv.style.display='block';return;}
+
+                var html='';
+
+                data.documents.forEach(function(doc){
+
+                    var addr = doc.address;
+
+                    if(!addr) return;
+
+                    var bcode = addr.b_code || '';
+
+                    var sigunguCd = bcode.substring(0,5);
+
+                    var bjdongCd = bcode.substring(5,10);
+
+                    var mainNo = addr.main_address_no || '';
+
+                    var subNo = addr.sub_address_no || '0';
+
+                    var display = addr.address_name || doc.address_name;
+
+                    var roadAddr = doc.road_address ? doc.road_address.address_name : '';
+
+                    html += '<div class="bd-addr-item" data-sg="'+sigunguCd+'" data-bj="'+bjdongCd+'" data-mn="'+mainNo+'" data-sn="'+subNo+'" data-dp="'+display.replace(/"/g,'&quot;')+'" onclick="bdSelectAddr(this.dataset.sg,this.dataset.bj,this.dataset.mn,this.dataset.sn,this.dataset.dp)">';
+
+                    html += '<div style="font-size:14px;font-weight:bold;color:#333;">' + display + '</div>';
+
+                    if(roadAddr) html += '<div style="font-size:12px;color:#888;margin-top:3px;">' + roadAddr + '</div>';
+
+                    html += '</div>';
+
+                });
+
+                listDiv.innerHTML = html;
+
+                listDiv.style.display = 'block';
+
+            } catch(e) { listDiv.innerHTML='<div style="padding:15px;color:#dc3545;">검색 오류: '+e.message+'</div>'; listDiv.style.display='block'; }
+
+        }
+
+        function bdSelectAddr(sigunguCd, bjdongCd, mainNo, subNo, display) {
+
+            document.getElementById('bd-sido').value = sigunguCd.substring(0,2);
+
+            document.getElementById('bd-sigungu').value = sigunguCd.substring(2,5);
+
+            document.getElementById('bd-bjdong').value = bjdongCd;
+
+            document.getElementById('bd-bun').value = mainNo;
+
+            document.getElementById('bd-ji').value = subNo || '0';
+
+            document.getElementById('bd-addr-list').style.display = 'none';
+
+            document.getElementById('bd-selected-addr').style.display = 'block';
+
+            document.getElementById('bd-selected-addr').innerHTML = '✅ <strong>'+display+'</strong> 선택됨 — 아래 조회항목 선택 후 조회됩니다';
+
+            bdSearch();
+
+        }
+
+        function bdSelectApi(btn) {
+
+            document.querySelectorAll('.bd-api-btn').forEach(function(b){b.classList.remove('active');});
+
+            btn.classList.add('active');
+
+            bdSelectedApi = btn.dataset.api;
+
+            if(document.getElementById('bd-bun').value) bdSearch();
+
+        }
+
+        async function bdSearch() {
+
+            var rd = document.getElementById('bd-result');
+
+            var sigunguCd = document.getElementById('bd-sido').value + document.getElementById('bd-sigungu').value;
+
+            var bjdong = document.getElementById('bd-bjdong').value;
+
+            var bun = document.getElementById('bd-bun').value;
+
+            var ji = document.getElementById('bd-ji').value || '0';
+
+            if(!sigunguCd||sigunguCd.length<5||!bun){rd.innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">주소를 검색하고 선택해주세요.</div>';return;}
+
+            rd.innerHTML='<div style="text-align:center;padding:40px;color:#666;">조회 중입니다... ⏳</div>';
+
+            var bp=bun.padStart(4,'0'), jp=ji.padStart(4,'0');
+
+            var stHtml='<div style="background:#f0f0f0;padding:10px 15px;border-radius:8px;margin-bottom:12px;font-size:12px;color:#666;">📍 시군구:'+sigunguCd+' | 법정동:'+bjdong+' | 본번:'+bp+' | 부번:'+jp+'</div>';
+
+            window._bdQuery={sigunguCd:sigunguCd,bjdong:bjdong,bp:bp,jp:jp,stHtml:stHtml};
+
+            try {
+
+                if(bdSelectedApi==='getBrExposPubuseAreaInfo'){
+
+                    var tUrl='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType=getBrTitleInfo&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
+
+                    if(bjdong) tUrl+='&bjdongCd='+bjdong;
+
+                    var tResp=await fetch(tUrl);
+
+                    var tTxt=await tResp.text();
+
+                    var tXml=new DOMParser().parseFromString(tTxt,'text/xml');
+
+                    var tItems=tXml.querySelectorAll('item');
+
+                    var dongMap={};
+
+                    tItems.forEach(function(it){
+
+                        var dn=it.querySelector('dongNm');var rg=it.querySelector('regstrGbCdNm');
+
+                        var bn=it.querySelector('bldNm');
+
+                        var d=dn?dn.textContent.trim():'';
+
+                        var b=bn?bn.textContent.trim():'';
+
+                        if(d&&!dongMap[d]&&/^[A-Za-z0-9]/.test(d))dongMap[d]=b;
+
+                    });
+
+                    var dongs=Object.keys(dongMap).sort(function(a,b){return a.localeCompare(b,'ko');});
+
+                    if(dongs.length>1){
+
+                        var html=stHtml;
+
+                        html+='<div style="font-size:18px;font-weight:bold;color:#333;margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid #7c3aed;">🏢 동 선택 ('+dongs.length+'개 동)</div>';
+
+                        html+='<div class="bd-card-grid">';
+
+                        dongs.forEach(function(d,i){
+
+                            html+='<div class="bd-card bd-dong-card" data-dongname="'+d+'" style="cursor:pointer;transition:transform 0.1s;">';
+
+                            html+='<div class="bd-card-title" style="color:#7c3aed;">🏢 '+d+'</div>';
+
+                            if(dongMap[d])html+='<div class="bd-card-item"><span class="bd-card-label">건물명</span><span class="bd-card-value">'+dongMap[d]+'</span></div>';
+
+                            html+='<div style="text-align:center;margin-top:8px;color:#2563eb;font-size:13px;">클릭하여 호실 조회 →</div>';
+
+                            html+='</div>';
+
+                        });
+
+                        html+='</div>';
+
+                        rd.innerHTML=html;
+
+                        document.querySelectorAll('.bd-dong-card').forEach(function(c){
+
+                            c.addEventListener('click',function(){bdLoadDong(this.dataset.dongname);});
+
+                            c.addEventListener('mouseover',function(){this.style.transform='scale(1.02)';this.style.borderColor='#7c3aed';});
+
+                            c.addEventListener('mouseout',function(){this.style.transform='';this.style.borderColor='';});
+
+                        });
+
+                        return;
+
+                    }
+
+                    var singleDong=dongs.length===1?dongs[0]:'';
+
+                    await bdLoadDong(singleDong);
+
+                    return;
+
+                }
+
+                var url='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType='+bdSelectedApi+'&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
+
+                if(bjdong) url+='&bjdongCd='+bjdong;
+
+                var resp=await fetch(url);
+
+                if(!resp.ok){var err=await resp.json().catch(function(){return{message:'서버 오류'};});throw new Error(err.message);}
+
+                var txt=await resp.text();
+
+                var parser=new DOMParser();
+
+                var xml=parser.parseFromString(txt,'text/xml');
+
+                if(xml.querySelector('parsererror')) throw new Error('XML 파싱 오류');
+
+                var rc=xml.querySelector('resultCode');
+
+                if(rc&&rc.textContent!=='00'){var rm=xml.querySelector('resultMsg');throw new Error('API오류['+rc.textContent+']: '+(rm?rm.textContent:''));}
+
+                var items=xml.querySelectorAll('item');
+
+                if(items.length===0){rd.innerHTML=stHtml+'<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">조회 결과가 없습니다.<br>💡 다른 조회항목을 시도해보세요.</div>';return;}
+
+                bdDisplayResults(items,stHtml);
+
+            } catch(e){rd.innerHTML=stHtml+'<div style="color:#dc3545;background:#fff3f3;padding:15px;border-radius:8px;border-left:4px solid #dc3545;"><strong>조회 실패:</strong> '+e.message+'</div>';}
+
+        }
+
+        async function bdLoadDong(dongNm){
+
+            var q=window._bdQuery;if(!q)return;
+
+            var rd=document.getElementById('bd-result');
+
+            rd.innerHTML=q.stHtml+'<div style="text-align:center;padding:40px;color:#666;">'+(dongNm||'')+' 호실 조회 중... ⏳</div>';
+
+            try{
+
+                var url='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType=getBrExposPubuseAreaInfo&sigunguCd='+q.sigunguCd+'&bun='+q.bp+'&ji='+q.jp;
+
+                if(q.bjdong)url+='&bjdongCd='+q.bjdong;
+
+                if(dongNm)url+='&dongNm='+encodeURIComponent(dongNm);
+
+                var resp=await fetch(url);
+
+                if(!resp.ok)throw new Error('서버 오류');
+
+                var txt=await resp.text();
+
+                var xml=new DOMParser().parseFromString(txt,'text/xml');
+
+                var items=xml.querySelectorAll('item');
+
+                if(items.length===0){rd.innerHTML=q.stHtml+'<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">호실 데이터가 없습니다.</div>';return;}
+
+                bdDisplayResults(items,q.stHtml,dongNm);
+
+            }catch(e){rd.innerHTML=q.stHtml+'<div style="color:#dc3545;background:#fff3f3;padding:15px;border-radius:8px;border-left:4px solid #dc3545;"><strong>조회 실패:</strong> '+e.message+'</div>';}
+
+        }
+
+        function bdDisplayResults(items,stHtml) {
+
+            var rd=document.getElementById('bd-result'), html=stHtml;
+
+            var fm={'getBrTitleInfo':{t:'표제부',f:[{k:'platPlc',l:'대지위치'},{k:'newPlatPlc',l:'도로명주소'},{k:'bldNm',l:'건물명'},{k:'mainPurpsCdNm',l:'주용도'},{k:'etcPurps',l:'기타용도'},{k:'strctCdNm',l:'구조'},{k:'grndFlrCnt',l:'지상층수'},{k:'ugrndFlrCnt',l:'지하층수'},{k:'platArea',l:'대지면적(㎡)'},{k:'archArea',l:'건축면적(㎡)'},{k:'bcRat',l:'건폐율(%)'},{k:'totArea',l:'연면적(㎡)'},{k:'vlRat',l:'용적률(%)'},{k:'hhldCnt',l:'세대수'},{k:'fmlyCnt',l:'가구수'},{k:'useAprDay',l:'사용승인일'},{k:'pmsDay',l:'허가일'},{k:'regstrKindCdNm',l:'대장종류'},{k:'indrAutoUtcnt',l:'옥내기계식주차'},{k:'indrMechUtcnt',l:'옥내자주식주차'},{k:'oudrAutoUtcnt',l:'옥외기계식주차'},{k:'oudrMechUtcnt',l:'옥외자주식주차'},{k:'totPkngCnt',l:'총주차대수'},{k:'indrAutoArea',l:'전기차(옥내)'},{k:'oudrAutoArea',l:'전기차(옥외)'}]},'getBrFlrOulnInfo':{t:'층별개요',f:[{k:'platPlc',l:'대지위치'},{k:'flrNo',l:'층번호'},{k:'flrNoNm',l:'층명칭'},{k:'flrGbCdNm',l:'층구분'},{k:'mainPurpsCdNm',l:'주용도'},{k:'etcPurps',l:'기타용도'},{k:'strctCdNm',l:'구조'},{k:'area',l:'면적(㎡)'}]},'getBrExposPubuseAreaInfo':{t:'전유공용면적',f:[{k:'platPlc',l:'대지위치'},{k:'dongNm',l:'동명칭'},{k:'hoNm',l:'호명칭'},{k:'flrNo',l:'층번호'},{k:'exposPubuseGbCdNm',l:'전유공용구분'},{k:'mainPurpsCdNm',l:'주용도'},{k:'area',l:'면적(㎡)'}]},'getBrRecapTitleInfo':{t:'총괄표제부',f:[{k:'platPlc',l:'대지위치'},{k:'newPlatPlc',l:'도로명주소'},{k:'mainPurpsCdNm',l:'주용도'},{k:'platArea',l:'대지면적(㎡)'},{k:'archArea',l:'건축면적(㎡)'},{k:'bcRat',l:'건폐율(%)'},{k:'totArea',l:'연면적(㎡)'},{k:'vlRat',l:'용적률(%)'},{k:'hhldCnt',l:'세대수'},{k:'mainBldCnt',l:'주건축물수'},{k:'atchBldCnt',l:'부속건축물수'},{k:'totPkngCnt',l:'총주차대수'},{k:'indrAutoUtcnt',l:'옥내자주식주차'},{k:'indrMechUtcnt',l:'옥내기계식주차'},{k:'oudrAutoUtcnt',l:'옥외자주식주차'},{k:'oudrMechUtcnt',l:'옥외기계식주차'}]},'getBrJijiguInfo':{t:'지역지구구역',f:[{k:'platPlc',l:'대지위치'},{k:'jijiguGbCdNm',l:'지역지구구역구분'},{k:'jijiguCdNm',l:'지역지구구역명'},{k:'etcJijigu',l:'기타지역지구구역'}]},'getBrViolBldInfo':{t:'위반건축물',f:[{k:'platPlc',l:'대지위치'},{k:'newPlatPlc',l:'도로명주소'},{k:'bldNm',l:'건물명'},{k:'violBldCdNm',l:'위반건축물구분'},{k:'violDtlCdNm',l:'위반상세'},{k:'violArea',l:'위반면적(㎡)'},{k:'violAmt',l:'위반금액'},{k:'violContent',l:'위반내용'},{k:'crtnDay',l:'적발일'},{k:'isrtDay',l:'시정일'}]}};
+
+            var mp=fm[bdSelectedApi]||fm['getBrTitleInfo'];
+
+            if(bdSelectedApi==='getBrTitleInfo'&&items.length>0){var f=items[0];html+='<div class="bd-summary"><div style="font-size:17px;font-weight:bold;margin-bottom:12px;">📊 건물 요약</div><div class="bd-summary-grid">';html+='<div class="bd-summary-item"><div class="bd-summary-label">건물명</div><div class="bd-summary-value">'+(bdG(f,'bldNm')||'-')+'</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">주용도</div><div class="bd-summary-value">'+(bdG(f,'mainPurpsCdNm')||'-')+'</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">연면적</div><div class="bd-summary-value">'+bdN(bdG(f,'totArea'))+'㎡</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">층수</div><div class="bd-summary-value">지상'+(bdG(f,'grndFlrCnt')||'0')+'/지하'+(bdG(f,'ugrndFlrCnt')||'0')+'층</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">건폐율</div><div class="bd-summary-value">'+bdN(bdG(f,'bcRat'))+'%</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">용적률</div><div class="bd-summary-value">'+bdN(bdG(f,'vlRat'))+'%</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">사용승인</div><div class="bd-summary-value">'+bdD(bdG(f,'useAprDay'))+'</div></div>';html+='<div class="bd-summary-item"><div class="bd-summary-label">구조</div><div class="bd-summary-value">'+(bdG(f,'strctCdNm')||'-')+'</div></div>';var pkTotal=(parseInt(bdG(f,'indrAutoUtcnt'))||0)+(parseInt(bdG(f,'indrMechUtcnt'))||0)+(parseInt(bdG(f,'oudrAutoUtcnt'))||0)+(parseInt(bdG(f,'oudrMechUtcnt'))||0);html+='<div class="bd-summary-item"><div class="bd-summary-label">총주차</div><div class="bd-summary-value">'+pkTotal+'대</div></div>';html+='</div></div>';}
+
+            if(bdSelectedApi==='getBrExposPubuseAreaInfo'){
+
+                var groups={};
+
+                items.forEach(function(item){
+
+                    var dong=bdG(item,'dongNm').trim()||'본동';
+
+                    var ho=bdG(item,'hoNm').trim()||'공용';
+
+                    var gb=bdG(item,'exposPubuseGbCdNm')||'';
+
+                    var area=parseFloat(bdG(item,'area'))||0;
+
+                    var purps=bdG(item,'mainPurpsCdNm')||'';var etcP=bdG(item,'etcPurps')||'';if(etcP&&etcP.trim())purps=etcP;
+
+                    var key=dong+'_'+ho;
+
+                    if(!groups[key])groups[key]={dong:dong,ho:ho,purps:"",jeonyu:0,gongyong:0};
+
+                    if(gb.indexOf('전유')!==-1){groups[key].jeonyu+=area;if(purps)groups[key].purps=purps;}
+
+                    else groups[key].gongyong+=area;
+
+                });
+
+                var keys=Object.keys(groups).sort(function(a,b){
+
+                    var ga=groups[a],gb2=groups[b];
+
+                    if(ga.dong!==gb2.dong)return ga.dong.localeCompare(gb2.dong,'ko');
+
+                    var hoA=ga.ho.replace(/[^0-9]/g,''),hoB=gb2.ho.replace(/[^0-9]/g,'');
+
+                    if(hoA&&hoB)return parseInt(hoA)-parseInt(hoB);
+
+                    return ga.ho.localeCompare(gb2.ho,'ko');
+
+                });
+
+                var curDong=arguments.length>2?arguments[2]:'';
+
+                if(curDong){html+='<div style="margin-bottom:12px;"><button onclick="bdSearch()" style="padding:8px 16px;border:2px solid #7c3aed;border-radius:6px;background:#f5f0ff;color:#7c3aed;font-weight:bold;cursor:pointer;font-size:14px;">← 동 선택으로</button></div>';}
+
+                html+='<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid #2563eb;">';
+
+                html+='<span style="font-size:18px;font-weight:bold;color:#333;">'+(curDong?curDong+' ':'')+'호실별 ('+keys.length+'개 호실)</span>';
+
+                html+='<select id="bd-ho-select" onchange="bdFilterHo()" style="padding:8px 12px;border:2px solid #2563eb;border-radius:6px;font-size:14px;cursor:pointer;">';
+
+                html+='<option value="all">전체 호실 보기</option>';
+
+                keys.forEach(function(key){var g=groups[key];html+='<option value="'+key+'">'+g.ho+'</option>';});
+
+                html+='</select></div>';
+
+                html+='<div class="bd-card-grid">';
+
+                keys.forEach(function(key,idx){
+
+                    var g=groups[key];
+
+                    var total=g.jeonyu+g.gongyong;
+
+                    html+='<div class="bd-card bd-ho-card" data-ho="'+key+'">';
+
+                    html+='<div class="bd-card-title" style="display:flex;justify-content:space-between;align-items:center;">';
+
+                    html+='<span>🏠 '+g.ho+'</span>';
+
+                    html+='<span style="color:#2563eb;font-size:14px;">합계 '+parseFloat(total.toFixed(5))+'㎡</span></div>';
+
+                    if(g.purps)html+='<div class="bd-card-item"><span class="bd-card-label">용도</span><span class="bd-card-value">'+g.purps+'</span></div>';
+
+                    if(g.jeonyu)html+='<div class="bd-card-item"><span class="bd-card-label">전유면적</span><span class="bd-card-value" style="color:#2563eb;font-weight:bold;">'+parseFloat(g.jeonyu.toFixed(5))+'㎡ ('+(g.jeonyu*0.3025).toFixed(5)+'평)</span></div>';
+
+                    if(g.gongyong)html+='<div class="bd-card-item"><span class="bd-card-label">공용면적</span><span class="bd-card-value" style="color:#7c3aed;">'+parseFloat(g.gongyong.toFixed(5))+'㎡ ('+(g.gongyong*0.3025).toFixed(5)+'평)</span></div>';
+
+                    html+='</div>';
+
+                });
+
+                html+='</div>';rd.innerHTML=html;return;
+
+            }
+
+            html+='<div style="font-size:18px;font-weight:bold;color:#333;margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid #2563eb;">'+mp.t+' ('+items.length+'건)</div><div class="bd-card-grid">';
+
+            items.forEach(function(item,idx){
+
+                var isTitle=(bdSelectedApi==='getBrTitleInfo');
+
+                html+='<div class="bd-card'+(isTitle?' bd-card-wide':'')+'"><div class="bd-card-title">#'+(idx+1)+' '+(bdG(item,'bldNm')||bdG(item,'platPlc')||'')+'</div>';
+
+                if(isTitle)html+='<div class="bd-card-inner">';
+
+                mp.f.forEach(function(fld){
+
+                    var v=bdG(item,fld.k);
+
+                    var isPark=(fld.k.indexOf('Utcnt')!==-1||fld.k.indexOf('PkngCnt')!==-1||fld.k.indexOf('Efcnt')!==-1);
+
+                    if(v||isPark){
+
+                        if(!v&&isPark)v='0';
+
+                        if(fld.k.indexOf('Area')!==-1||fld.k.indexOf('Rat')!==-1)v=bdN(v);
+
+                        if(fld.k.indexOf('Day')!==-1)v=bdD(v);
+
+                        if(isPark)v=v+'대';
+
+                        html+='<div class="bd-card-item"><span class="bd-card-label">'+fld.l+'</span><span class="bd-card-value">'+v+'</span></div>';
+
+                    }
+
+                });
+
+                if(isTitle)html+='</div>';
+
+                html+='</div>';
+
+            });
+
+            html+='</div>';rd.innerHTML=html;
+
+        }
+
+        function bdG(item,key){var el=item.querySelector(key);return el?el.textContent.trim():'';}
+
+        function bdN(v){if(!v)return'-';var n=parseFloat(v);return isNaN(n)?v:n.toLocaleString('ko-KR',{maximumFractionDigits:2});}
+
+        function bdD(v){if(!v||v.length!==8)return v||'-';return v.substring(0,4)+'-'+v.substring(4,6)+'-'+v.substring(6,8);}
+
+        function bdFilterDong(){}
+
+        function bdFilterHo(){
+
+            var sel=document.getElementById('bd-ho-select');
+
+            if(!sel)return;
+
+            var val=sel.value;
+
+            document.querySelectorAll('.bd-ho-card').forEach(function(card){
+
+                if(val==='all') card.style.display='';
+
+                else card.style.display=(card.dataset.ho===val)?'':'none';
+
+            });
+
+        }
+
+        function bdClearForm(){document.getElementById('bd-addr').value='';document.getElementById('bd-addr-list').style.display='none';document.getElementById('bd-selected-addr').style.display='none';document.getElementById('bd-sido').value='';document.getElementById('bd-sigungu').value='';document.getElementById('bd-bjdong').value='';document.getElementById('bd-bun').value='';document.getElementById('bd-ji').value='';document.getElementById('bd-result').innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">주소를 검색하고 선택해주세요.</div>';}
+
+        function bdInitSido(){}
+
+        function bdLoadSigungu(){}
+
+        function bdLoadBjdong(){}
+
+        function bdClearForm(){document.getElementById('bd-sido').value='';document.getElementById('bd-sigungu').innerHTML='<option value="">선택</option>';document.getElementById('bd-bjdong').innerHTML='<option value="">선택 (없으면 생략)</option>';document.getElementById('bd-bun').value='';document.getElementById('bd-ji').value='';document.getElementById('bd-result').innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">시도 → 시군구 → 읍면동 선택 후 본번 입력하고 조회하세요.</div>';}
+
 
 </script>
 </body>
