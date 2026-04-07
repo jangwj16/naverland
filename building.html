@@ -83,11 +83,12 @@
     </div>
     <script>
         const API_BASE = 'https://diahouse.kr';
+        const PWA_TOKEN = 'dia2026pwa';
         async function searchAddress() {
             const query = document.getElementById('addressInput').value.trim();
             if (!query) { alert('주소를 입력해주세요.'); return; }
             try {
-                const response = await fetch(API_BASE + '/api/search-address?query=' + encodeURIComponent(query));
+                const response = await fetch(API_BASE + '/api/pwa/addr-search?q=' + encodeURIComponent(query) + '&token=' + PWA_TOKEN);
                 const data = await response.json();
                 if (!data.success || !data.results || data.results.length === 0) { alert('검색 결과가 없습니다.'); return; }
                 const listDiv = document.getElementById('addressList');
@@ -120,7 +121,7 @@
             unitList.innerHTML = '<p style="color:#666;">호실 목록 로딩중...</p>';
             unitBox.style.display = 'block';
             try {
-                const url = API_BASE + '/api/building-units?sigunguCd=' + sigunguCd + '&bjdongCd=' + bjdongCd + '&bun=' + bun + '&ji=' + ji;
+                const url = API_BASE + '/api/pwa/building-units?sigunguCd=' + sigunguCd + '&bjdongCd=' + bjdongCd + '&bun=' + bun + '&ji=' + ji + '&token=' + PWA_TOKEN;
                 const response = await fetch(url);
                 const data = await response.json();
                 if (data.success && data.units && data.units.length > 0) {
@@ -147,7 +148,7 @@
             const selectedUnits = [];
             document.querySelectorAll('.unit-check:checked').forEach(cb => { selectedUnits.push({ ho: cb.value, dong: cb.dataset.dong || '' }); });
             try {
-                const url = API_BASE + '/api/building-all?sigunguCd=' + sigunguCd + '&bjdongCd=' + bjdongCd + '&bun=' + bun + '&ji=' + ji;
+                const url = API_BASE + '/api/pwa/building-all?sigunguCd=' + sigunguCd + '&bjdongCd=' + bjdongCd + '&bun=' + bun + '&ji=' + ji + '&token=' + PWA_TOKEN;
                 const response = await fetch(url);
                 const data = await response.json();
                 if (data.success && data.data) { displayResults(data.data, selectedUnits); }
