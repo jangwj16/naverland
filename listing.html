@@ -422,7 +422,7 @@ function doSearch(page){
   document.getElementById("pagination").innerHTML="";
 
   var params=new URLSearchParams();
-  params.set("page","1");params.set("size","100000");
+  params.set("page","1");params.set("size","5000");
   if(F.trade)params.set("trade_type",F.trade);
   if(F.types.length===1)params.set("type_normalized",F.types[0]);
   if(F.rl)params.set("region_large",F.rl);
@@ -487,7 +487,6 @@ function doSearch(page){
   }).catch(function(err){
     document.getElementById("loadingBar").classList.remove("on");
     document.getElementById("emptyState").style.display="block";
-    alert('API오류: '+err.message+'\nURL: '+fetchUrl);
   });
 }
 
