@@ -542,6 +542,7 @@ function doSearch(page){
 }
 
 function renderItems(){
+  try{
   var items=allItems.slice();
   // 정렬
   if(sortCol){
@@ -572,6 +573,7 @@ function renderItems(){
     tbody.appendChild(tr);
   });
   renderPg(cp,tp);
+  }catch(e){alert("렌더링오류: "+e.message);}
 }
 
 function fmtPr(item){var p=item.price||0;if(item.trade_type==="월세")return fmtM(item.deposit||0)+"/"+fmtM(item.monthly_rent||0);return fmtM(p);}
