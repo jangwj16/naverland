@@ -91,10 +91,12 @@
   <div class="logo"><img src="icons/icon-192.png" alt="DIA logo"></div>
   <h1>다이아부동산</h1>
 </div>
-<div class="tabs">
-  <div class="tab-btn active" onclick="switchTab('search',this)">🔍 매물검색</div>
-  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 취득세·복비</div>
-  <div class="tab-btn" onclick="switchTab('loan',this)">🏦 대출계산</div>
+<div class="tabs" style="flex-wrap:wrap">
+  <div class="tab-btn active" onclick="switchTab('search',this)">🔍 매물확인</div>
+  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 취득세</div>
+  <div class="tab-btn" onclick="switchTab('loan',this)">🏦 대출</div>
+  <div class="tab-btn" onclick="location.href='listing.html'">🏠 매물검색</div>
+  <div class="tab-btn" onclick="location.href='building.html'">🏛️ 건축물대장</div>
 </div>
 <div id="tab-search" class="tab-content active">
   <div class="section"><h3>매물번호로 확인</h3><div class="row">
