@@ -11,7 +11,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
 .header a { color: #c9a040; text-decoration: none; font-size: 20px; }
 .header span { color: #fff; font-size: 16px; font-weight: bold; }
 .container { max-width: 700px; margin: 0 auto; padding: 15px; }
-.section { margin-bottom: 20px; }
 .sec-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
 .label { font-size: 13px; color: #666; font-weight: 600; }
 .btn-blue { background: #2563eb; color: white; border: none; cursor: pointer; font-weight: bold; }
@@ -41,32 +40,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
   <span>&#127970; 건축물대장</span>
 </div>
 <div class="container">
-  <div class="section">
-    <div class="sec-title">&#127970; 건축물대장 조회</div>
-    <div style="background:#f0f4ff; padding:20px; border-radius:10px; margin-bottom:20px;">
-      <div style="margin-bottom:12px;"><span class="label">주소 검색 (동 + 번지)</span></div>
-      <div style="position:relative;">
-        <div>
-          <input type="text" id="bd-addr" placeholder="예: 응암동 91-3" style="width:100%;padding:14px 16px;border:2px solid #2563eb;border-radius:8px;font-size:16px;box-sizing:border-box;margin-bottom:10px;" onkeyup="bdAddrKeyup(event)" autocomplete="off">
-          <button class="btn-blue" style="width:100%;border-radius:8px;padding:12px;font-size:16px;" onclick="bdAddrSearch()">&#128269; 검색</button>
-        </div>
-        <div id="bd-addr-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;max-height:300px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+  <div class="sec-title">&#127970; 건축물대장 조회</div>
+  <div style="background:#f0f4ff; padding:20px; border-radius:10px; margin-bottom:20px;">
+    <div style="margin-bottom:12px;"><span class="label">주소 검색 (동 + 번지)</span></div>
+    <div style="position:relative;">
+      <div>
+        <input type="text" id="bd-addr" placeholder="예: 응암동 91-3" style="width:100%;padding:14px 16px;border:2px solid #2563eb;border-radius:8px;font-size:16px;box-sizing:border-box;margin-bottom:10px;" onkeyup="bdAddrKeyup(event)" autocomplete="off">
+        <button class="btn-blue" style="width:100%;border-radius:8px;padding:12px;font-size:16px;" onclick="bdAddrSearch()">&#128269; 검색</button>
       </div>
-      <div id="bd-selected-addr" style="display:none;margin-top:12px;padding:12px 16px;background:#e8f0fe;border-radius:8px;font-size:14px;color:#1a56db;"></div>
-      <input type="hidden" id="bd-sido"><input type="hidden" id="bd-sigungu"><input type="hidden" id="bd-bjdong"><input type="hidden" id="bd-bun"><input type="hidden" id="bd-ji">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:15px;border-top:1px solid #ddd;">
-        <span style="color:#666;margin-right:5px;line-height:36px;">조회항목:</span>
-        <button class="bd-api-btn active" data-api="getBrRecapTitleInfo" onclick="bdSelectApi(this)">총괄표제부</button>
-        <button class="bd-api-btn" data-api="getBrTitleInfo" onclick="bdSelectApi(this)">표제부</button>
-        <button class="bd-api-btn" data-api="getBrExposPubuseAreaInfo" onclick="bdSelectApi(this)">호실별</button>
-        <button class="bd-api-btn" data-api="getBrFlrOulnInfo" onclick="bdSelectApi(this)">층별개요</button>
-        <button class="bd-api-btn" data-api="getBrJijiguInfo" onclick="bdSelectApi(this)">지역지구구역</button>
-        <button class="bd-api-btn" data-api="getBrViolBldInfo" onclick="bdSelectApi(this)" style="border-color:#dc3545;color:#dc3545;">위반건축물</button>
-      </div>
+      <div id="bd-addr-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;max-height:300px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
     </div>
-    <div id="bd-result" style="margin-top:15px;">
-      <div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">주소를 검색하고 선택해주세요.</div>
+    <div id="bd-selected-addr" style="display:none;margin-top:12px;padding:12px 16px;background:#e8f0fe;border-radius:8px;font-size:14px;color:#1a56db;"></div>
+    <input type="hidden" id="bd-sido"><input type="hidden" id="bd-sigungu"><input type="hidden" id="bd-bjdong"><input type="hidden" id="bd-bun"><input type="hidden" id="bd-ji">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:15px;border-top:1px solid #ddd;">
+      <span style="color:#666;margin-right:5px;line-height:36px;">조회항목:</span>
+      <button class="bd-api-btn active" data-api="getBrRecapTitleInfo" onclick="bdSelectApi(this)">총괄표제부</button>
+      <button class="bd-api-btn" data-api="getBrTitleInfo" onclick="bdSelectApi(this)">표제부</button>
+      <button class="bd-api-btn" data-api="getBrExposPubuseAreaInfo" onclick="bdSelectApi(this)">호실별</button>
+      <button class="bd-api-btn" data-api="getBrFlrOulnInfo" onclick="bdSelectApi(this)">층별개요</button>
+      <button class="bd-api-btn" data-api="getBrJijiguInfo" onclick="bdSelectApi(this)">지역지구구역</button>
+      <button class="bd-api-btn" data-api="getBrViolBldInfo" onclick="bdSelectApi(this)" style="border-color:#dc3545;color:#dc3545;">위반건축물</button>
     </div>
+  </div>
+  <div id="bd-result" style="margin-top:15px;">
+    <div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">주소를 검색하고 선택해주세요.</div>
   </div>
 </div>
 <script>
@@ -297,16 +294,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
         function bdLoadSigungu(){}
         function bdLoadBjdong(){}
         function bdClearForm(){document.getElementById('bd-sido').value='';document.getElementById('bd-sigungu').innerHTML='<option value="">선택</option>';document.getElementById('bd-bjdong').innerHTML='<option value="">선택 (없으면 생략)</option>';document.getElementById('bd-bun').value='';document.getElementById('bd-ji').value='';document.getElementById('bd-result').innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">시도 → 시군구 → 읍면동 선택 후 본번 입력하고 조회하세요.</div>';}
-
-    
-        function loadRankBoard() {
-            var el = document.getElementById('rank-board-content');
-            el.innerHTML = '<p style="text-align:center; color:#999;">⏳ 불러오는 중...</p>';
-            fetch('/api/me').then(function(mr){return mr.json()}).then(function(md){
-                if(!md.logged_in){el.innerHTML='<p style="color:red;">로그인이 필요합니다.</p>';return Promise.reject('no');}
-                return fetch('/nrank-api/rank/board-data');
-            }).then(function(r){return r.json()}).then(function(data){
-                if(!data.regions||data.regions.length===0){el.innerHTML='<p style="text-align:center;color:#999;">아직 순위 체크 결과가 없습니다.</p>';return;}
 
 </script>
 </body>
