@@ -22,5 +22,11 @@
       "sizes": "180x180",
       "type": "image/png"
     }
+  ],
+  "id": "/",
+  "description": "다이아부동산 매물확인/검색/계산기/건축물대장",
+  "categories": [
+    "business",
+    "productivity"
   ]
 }
