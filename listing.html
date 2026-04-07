@@ -91,6 +91,12 @@ tbody tr{cursor:pointer;}
 
 @media (max-width: 600px) {
   .filter-bar { padding: 8px 10px !important; }
+  table { font-size: 12px !important; }
+  tbody td { padding: 8px 4px !important; }
+  thead th { padding: 8px 4px !important; font-size: 11px !important; }
+  .addr-cell { max-width: none !important; white-space: normal !important; }
+  .price-cell { font-size: 12px !important; }
+  .badge, .type-badge { font-size: 9px !important; padding: 1px 4px !important; }
   .filter-row { gap: 5px !important; }
   .f-chip { padding: 6px 12px !important; font-size: 13px !important; }
   .f-panel {
@@ -162,10 +168,8 @@ var TYPES=["빌라/연립","아파트","단독/다가구","오피스텔","상가
 var COLS=[
   {key:"_num",label:"#",sortable:false},
   {key:"trade_type",label:"거래",sortable:true},
-  {key:"type_normalized",label:"유형",sortable:true},
   {key:"address",label:"주소",sortable:true},
-  {key:"price",label:"금액",sortable:true},
-  {key:"net_area",label:"전용",sortable:true}
+  {key:"price",label:"금액",sortable:true}
 ];
 
 function buildTableHead(){
@@ -568,8 +572,9 @@ function renderItems(){
     var tc=item.trade_type==="매매"?"b-sell":item.trade_type==="전세"?"b-jeon":"b-wol";
     var n=start+i+1;
     var addrFull = (item.address||"");
-    var bldName = item.building_name ? "<div style='font-size:11px;color:#2563eb;font-weight:600;'>"+item.building_name+"</div>" : "";
-    tr.innerHTML="<td>"+n+"</td><td><span class='badge "+tc+"'>"+(item.trade_type||"-")+"</span></td><td><span class='type-badge'>"+(item.type_normalized||"-")+"</span></td><td class='addr-cell' style='text-align:left;max-width:220px;' title='"+addrFull+"'>"+bldName+"<div style='font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+addrFull+"</div></td><td class='price-cell'>"+fmtPr(item)+"</td><td>"+(item.net_area||"-")+"</td>";
+    var bldName = item.building_name||"";
+    var area = item.net_area ? item.net_area+"m" : "-";
+    tr.innerHTML="<td>"+n+"</td><td style='font-size:11px;'>"+(item.trade_type||"-")+"<br><span style='color:#888;font-size:10px;'>"+(item.type_normalized||"")+"</span></td><td class='addr-cell' style='text-align:left;white-space:normal;'><div style='font-size:12px;font-weight:600;color:#2563eb;'>"+bldName+"</div><div style='font-size:11px;color:#ccc;'>"+addrFull+"</div></td><td style='text-align:right;white-space:nowrap;'><div class='price-cell'>"+fmtPr(item)+"</div><div style='font-size:10px;color:#888;'>"+area+"</div></td>";
     tbody.appendChild(tr);
   });
   renderPg(cp,tp);
