@@ -18,7 +18,7 @@
     .logo img{max-width:80px;height:auto}
     h1{font-size:20px;margin:10px 0 0}
     .tabs{display:flex;background:#1a1a2e;margin-top:12px}
-    .tab-btn{flex:1;padding:12px 4px;text-align:center;color:#888;font-size:13px;font-weight:bold;cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:.2s}
+    .tab-btn{flex:1;padding:10px 2px;text-align:center;color:#888;font-size:11px;font-weight:bold;cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap;overflow:hidden}
     .tab-btn.active{color:#fff;border-bottom-color:#c9a040}
     .tab-btn:hover{color:#ccc}
     .tab-content{display:none;padding:20px 16px;max-width:700px;margin:0 auto}
@@ -92,10 +92,10 @@
   <h1>다이아부동산</h1>
 </div>
 <div class="tabs">
-  <div class="tab-btn active" onclick="switchTab('search',this)">🔍 매물확인</div>
-  <div class="tab-btn" onclick="location.href='listing.html'">🏠 매물검색</div>
-  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 계산기</div>
-  <div class="tab-btn" onclick="location.href='building.html'">🏛️ 건축물대장</div>
+  <div class="tab-btn active" onclick="switchTab('search',this)">🔍 확인</div>
+  <div class="tab-btn" onclick="location.href='listing.html'">🏠 매물</div>
+  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 계산</div>
+  <div class="tab-btn" onclick="location.href='building.html'">🏛️ 건축물</div>
 </div>
 <div id="tab-search" class="tab-content active">
   <div class="section"><h3>매물번호로 확인</h3><div class="row">

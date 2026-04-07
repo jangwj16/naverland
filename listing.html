@@ -88,6 +88,16 @@ tbody tr{cursor:pointer;}
 .empty .big{font-size:40px;margin-bottom:8px;opacity:.5;}
 .loading-bar{display:none;text-align:center;padding:40px;color:var(--txt2);}
 .loading-bar.on{display:block;}
+
+@media (max-width: 600px) {
+  .filter-bar { padding: 8px !important; gap: 6px !important; }
+  .chip { font-size: 13px !important; padding: 6px 10px !important; }
+  #resultTable th, #resultTable td { font-size: 12px !important; padding: 6px 4px !important; }
+  .search-bar { flex-direction: column; }
+  .search-bar input { width: 100% !important; }
+  body { font-size: 14px; }
+  h2, h3 { font-size: 16px !important; }
+}
 </style>
 </head>
 <body><div style="background:#1a1a2e;padding:10px 16px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:16px;font-weight:bold">🏠 매물검색</span></div>
