@@ -161,14 +161,11 @@ var TYPES=["빌라/연립","아파트","단독/다가구","오피스텔","상가
 // ===== 테이블 헤더 (정렬 가능) =====
 var COLS=[
   {key:"_num",label:"#",sortable:false},
-  {key:"trade_type",label:"거래유형",sortable:true},
+  {key:"trade_type",label:"거래",sortable:true},
   {key:"type_normalized",label:"유형",sortable:true},
   {key:"address",label:"주소",sortable:true},
   {key:"price",label:"금액",sortable:true},
-  {key:"net_area",label:"전용㎡",sortable:true},
-  {key:"region_small",label:"동",sortable:true},
-  {key:"feature",label:"특징",sortable:false},
-  {key:"sub_account_name",label:"담당",sortable:true}
+  {key:"net_area",label:"전용",sortable:true}
 ];
 
 function buildTableHead(){
@@ -476,7 +473,7 @@ function doSearch(page){
   document.getElementById("pagination").innerHTML="";
 
   var params=new URLSearchParams();
-  params.set("page","1");params.set("size","2000");
+  params.set("page","1");params.set("size","100000");
   if(F.trade)params.set("trade_type",F.trade);
   if(F.types.length===1)params.set("type_normalized",F.types[0]);
   if(F.rl)params.set("region_large",F.rl);
@@ -569,7 +566,9 @@ function renderItems(){
     if(nid){tr.onclick=function(){var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);var landUrl=isMobile?"https://m.land.naver.com/article/info/"+nid:"https://new.land.naver.com/articles/"+nid;window.open(landUrl,"_blank");};}
     var tc=item.trade_type==="매매"?"b-sell":item.trade_type==="전세"?"b-jeon":"b-wol";
     var n=start+i+1;
-    tr.innerHTML="<td>"+n+"</td><td><span class='badge "+tc+"'>"+(item.trade_type||"-")+"</span></td><td><span class='type-badge'>"+(item.type_normalized||"-")+"</span></td><td class='addr-cell' title='"+(item.address||"").replace(/'/g,"&#39;")+"'>"+(item.address||"-")+"</td><td class='price-cell'>"+fmtPr(item)+"</td><td>"+(item.net_area||"-")+"</td><td>"+(item.region_small||"-")+"</td><td class='feature-cell' title='"+(item.feature||"").replace(/'/g,"&#39;")+"'>"+(item.feature||"-")+"</td><td>"+(function(){var s=item.sub_account_name||"-";var m=s.match(/([가-힣]{2,3})/);return m?m[1]:s;})()+"</td>";
+    var addrFull = (item.address||"");
+    var bldName = item.building_name ? "<div style='font-size:11px;color:#2563eb;font-weight:600;'>"+item.building_name+"</div>" : "";
+    tr.innerHTML="<td>"+n+"</td><td><span class='badge "+tc+"'>"+(item.trade_type||"-")+"</span></td><td><span class='type-badge'>"+(item.type_normalized||"-")+"</span></td><td class='addr-cell' style='text-align:left;max-width:220px;' title='"+addrFull+"'>"+bldName+"<div style='font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+addrFull+"</div></td><td class='price-cell'>"+fmtPrice(item.price,item.trade_type,item.monthly_rent)+"</td><td>"+(item.net_area||"-")+"</td>";
     tbody.appendChild(tr);
   });
   renderPg(cp,tp);
