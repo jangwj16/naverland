@@ -588,12 +588,9 @@ function renderItems(){
     var addrFull = (item.address||"");
     var bldName = item.building_name||"";
     var area = item.net_area ? item.net_area+"\u33A1" : "";
-    var ft = (item.feature||"")+(item.address||"");
-    var rmMatch = ft.match(/(\d)룸/) || ft.match(/(\d)room/i) || ft.match(/방(\d)/) || ft.match(/(\d)방/);
-    var btMatch = ft.match(/화(\d)/) || ft.match(/욕실(\d)/) || ft.match(/화장실(\d)/);
     var roomInfo = "";
-    if(rmMatch) roomInfo += "방"+rmMatch[1];
-    if(btMatch) roomInfo += " 욕"+btMatch[1];
+    if(item.room_count){roomInfo="방"+item.room_count;if(item.bath_count)roomInfo+=" 욕"+item.bath_count;}
+    else{var ft=(item.feature||"")+(item.address||"");var rmMatch=ft.match(/(\d)룸/)||ft.match(/(\d)room/i)||ft.match(/방(\d)/)||ft.match(/(\d)방/);var btMatch=ft.match(/화(\d)/)||ft.match(/욕실(\d)/)||ft.match(/화장실(\d)/);if(rmMatch)roomInfo+="방"+rmMatch[1];if(btMatch)roomInfo+=" 욕"+btMatch[1];}
     if(roomInfo) roomInfo = "<span style='color:#10b981;font-size:10px;'>"+roomInfo+"</span>";
     var areaInfo = area ? "<span style='color:#888;font-size:10px;'>"+area+"</span>" : "";
     var subInfo = [areaInfo, roomInfo].filter(function(x){return x;}).join(" ");

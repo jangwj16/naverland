@@ -243,9 +243,10 @@ function switchTab(id,el){
 }
 function openById(){
   var raw=document.getElementById('ids').value;
-  var ids=raw.split(/[\s,\n]+/).filter(Boolean);
-  if(!ids.length){alert("매물번호를 입력하세요");return;}
-  ids.forEach(function(id,i){setTimeout(function(){window.open('https://m.land.naver.com/article/info/'+encodeURIComponent(id),'_blank')},i*200)});
+  var found=raw.match(/26\d{8}/g)||[];
+  if(!found.length){var manual=raw.split(/[\s,\n]+/).filter(Boolean);if(manual.length)found=manual;}
+  if(!found.length){alert("매물번호를 입력하세요");return;}
+  found.forEach(function(id,i){setTimeout(function(){window.open('https://m.land.naver.com/article/info/'+encodeURIComponent(id),'_blank')},i*200)});
 }
 function searchByAddress(){
   var addr=document.getElementById('addr').value.trim();
