@@ -91,11 +91,10 @@
   <div class="logo"><img src="icons/icon-192.png" alt="DIA logo"></div>
   <h1>다이아부동산</h1>
 </div>
-<div class="tabs" style="flex-wrap:wrap">
+<div class="tabs">
   <div class="tab-btn active" onclick="switchTab('search',this)">🔍 매물확인</div>
-  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 취득세</div>
-  <div class="tab-btn" onclick="switchTab('loan',this)">🏦 대출</div>
   <div class="tab-btn" onclick="location.href='listing.html'">🏠 매물검색</div>
+  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 계산기</div>
   <div class="tab-btn" onclick="location.href='building.html'">🏛️ 건축물대장</div>
 </div>
 <div id="tab-search" class="tab-content active">
@@ -169,10 +168,8 @@
   </div>
   <div style="text-align:center;"><button onclick="resetTax()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 전체 초기화</button></div>
   <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음 · 2026.4 기준<br>다이아공인중개사</div>
-</div>
 
-<!-- ========== 대출계산기 탭 ========== -->
-<div id="tab-loan" class="tab-content">
+<div style="border-top:2px solid #444;margin:30px 0"></div>
   <div style="text-align:center;margin-bottom:20px;">
     <div style="font-size:20px;font-weight:900;color:#222;">🏦 매수자금 · 대출 계산기</div>
     <div style="font-size:11px;color:#999;">필요 가용현금 + 월 상환금액 한눈에</div>
@@ -234,7 +231,9 @@
   <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 실제 대출조건은 금융기관 확인<br>다이아공인중개사</div>
 </div>
 
-<footer>© 2025 다이아부동산 QuickLink PWA</footer>
+</div>
+
+<!-- ========== 대출계산기 탭 ========== -->
 <script>
 function switchTab(id,el){
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
@@ -271,7 +270,7 @@ function txSel(el,g,v){
 function fmt(n){return n.toLocaleString()}
 function setLtv(v){
   document.getElementById('loanLtv').value=v;
-  document.querySelectorAll('#tab-loan .tx-card:first-child .tx-opts .tx-opt').forEach(function(o){o.classList.remove('sel');if(o.textContent.trim()===v+'%')o.classList.add('sel')});
+  document.querySelectorAll('#tab-tax .tx-card:first-child .tx-opts .tx-opt').forEach(function(o){o.classList.remove('sel');if(o.textContent.trim()===v+'%')o.classList.add('sel')});
   autoCalcLoan();
 }
 function setMon(v){
@@ -402,7 +401,7 @@ function resetLoan(){
   var r=document.getElementById('resLoan');if(r){r.innerHTML='';r.className='loan-summary'}
   var box=document.getElementById('autoCalcBox');if(box)box.className='auto-calc';
   S.loanGrace='0';S.loanType='equal';
-  document.querySelectorAll('#tab-loan .tx-opts').forEach(function(opts){opts.querySelectorAll('.tx-opt').forEach(function(o){
+  document.querySelectorAll('#tab-tax .tx-opts').forEach(function(opts){opts.querySelectorAll('.tx-opt').forEach(function(o){
     var t=o.textContent.trim();
     if(t==='30년'||t==='없음'||t==='원리금균등'||t==='70%')o.classList.add('sel');
     else o.classList.remove('sel');
