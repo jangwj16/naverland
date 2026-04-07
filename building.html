@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건축물대장 - 다이아부동산</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: white; text-align: center; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .search-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin-bottom: 30px; }
+        .search-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-group { flex: 1; min-width: 150px; }
+        .search-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .search-group input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+        .search-group input:focus { outline: none; border-color: #667eea; }
+        .btn { padding: 15px 40px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .result-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .result-title { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea; }
+        .error-msg { background: #fff3f3; color: #dc3545; padding: 20px; border-radius: 8px; border-left: 4px solid #dc3545; }
+        .info-msg { background: #e7f3ff; color: #0066cc; padding: 20px; border-radius: 8px; border-left: 4px solid #0066cc; }
+        .loading { text-align: center; padding: 50px; color: #666; }
+        .unit-box { display: none; margin-top: 15px; padding: 20px; background: #f0f8ff; border-radius: 10px; border: 2px solid #667eea; }
+        .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto; }
+        .unit-item { background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        .unit-item label { display: flex; align-items: center; cursor: pointer; }
+        .unit-item input { margin-right: 8px; width: 18px; height: 18px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f0f0f0; font-weight: bold; }
+        .section { margin-top: 30px; }
+        .section-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; }
+        .card { background: #f8f9fa; border-radius: 10px; padding: 20px; border-left: 4px solid #667eea; margin-bottom: 20px; }
+    </style>
+</head>
+<body style="margin:0"><div style="background:#1a1a2e;padding:10px 16px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:16px;font-weight:bold">🏛️ 건축물대장</span></div>
+    <div class="container">
+        <h1>건축물대장 조회 시스템</h1>
+        <div class="search-box">
+            <div class="search-row">
+                <div class="search-group" style="flex:3;">
+                    <label>주소 입력</label>
+                    <input type="text" id="addressInput" placeholder="예: 마포구 성산동 20-22" onkeypress="if(event.keyCode==13)searchAddress()">
+                </div>
+                <div class="search-group" style="flex:1; display:flex; align-items:flex-end;">
+                    <button class="btn btn-primary" onclick="searchAddress()" style="width:100%;">주소 검색</button>
+                </div>
+            </div>
+            <div id="addressResults" style="display:none; margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:8px;">
+                <label style="font-weight:bold; margin-bottom:10px; display:block;">검색 결과 (클릭하여 선택)</label>
+                <div id="addressList"></div>
+            </div>
+            <div class="search-row" id="detailRow" style="display:none;">
+                <div class="search-group"><label>시군구코드</label><input type="text" id="sigunguCd" readonly style="background:#e9ecef;"></div>
+                <div class="search-group"><label>법정동코드</label><input type="text" id="bjdongCd" readonly style="background:#e9ecef;"></div>
+                <div class="search-group"><label>본번</label><input type="text" id="bun" readonly style="background:#e9ecef;"></div>
+                <div class="search-group"><label>부번</label><input type="text" id="ji" readonly style="background:#e9ecef;"></div>
+            </div>
+            <div id="unitSelectBox" class="unit-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <label style="font-weight:bold; font-size:16px;">🏠 호실 선택</label>
+                    <div>
+                        <button onclick="selectAllUnits()" style="padding:5px 10px; margin-right:5px; border:1px solid #667eea; background:white; border-radius:5px; cursor:pointer;">전체선택</button>
+                        <button onclick="deselectAllUnits()" style="padding:5px 10px; border:1px solid #999; background:white; border-radius:5px; cursor:pointer;">전체해제</button>
+                    </div>
+                </div>
+                <div id="unitList" class="unit-grid"></div>
+            </div>
+            <div class="btn-row" style="margin-top:20px;">
+                <button class="btn btn-primary" onclick="searchBuilding()" id="searchBtn" style="display:none;">건축물대장 조회</button>
+                <button class="btn btn-secondary" onclick="clearForm()">초기화</button>
+            </div>
+        </div>
+        <div class="result-box">
+            <div class="result-title">조회 결과</div>
+            <div id="result"><div class="info-msg">주소를 입력하고 검색하세요.</div></div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'https://diahouse.kr';
+        async function searchAddress() {
+            const query = document.getElementById('addressInput').value.trim();
+            if (!query) { alert('주소를 입력해주세요.'); return; }
+            try {
+                const response = await fetch(API_BASE + '/api/search-address?query=' + encodeURIComponent(query));
+                const data = await response.json();
+                if (!data.success || !data.results || data.results.length === 0) { alert('검색 결과가 없습니다.'); return; }
+                const listDiv = document.getElementById('addressList');
+                listDiv.innerHTML = '';
+                data.results.forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'padding:10px; margin:5px 0; background:white; border-radius:5px; cursor:pointer; border:1px solid #ddd;';
+                    div.innerHTML = '<strong>' + item.address + '</strong><br><small style="color:#666;">시군구:' + item.sigunguCd + ' | 법정동:' + item.bjdongCd + '</small>';
+                    div.onclick = function() { selectAddress(item); };
+                    div.onmouseover = function() { this.style.background = '#e7f3ff'; };
+                    div.onmouseout = function() { this.style.background = 'white'; };
+                    listDiv.appendChild(div);
+                });
+                document.getElementById('addressResults').style.display = 'block';
+            } catch (error) { alert('주소 검색 오류: ' + error.message); }
+        }
+        function selectAddress(item) {
+            document.getElementById('sigunguCd').value = item.sigunguCd;
+            document.getElementById('bjdongCd').value = item.bjdongCd;
+            document.getElementById('bun').value = item.bun;
+            document.getElementById('ji').value = item.ji;
+            document.getElementById('detailRow').style.display = 'flex';
+            document.getElementById('searchBtn').style.display = 'inline-block';
+            document.getElementById('addressResults').style.display = 'none';
+            loadUnits(item.sigunguCd, item.bjdongCd, item.bun, item.ji);
+        }
+        async function loadUnits(sigunguCd, bjdongCd, bun, ji) {
+            const unitBox = document.getElementById('unitSelectBox');
+            const unitList = document.getElementById('unitList');
+            unitList.innerHTML = '<p style="color:#666;">호실 목록 로딩중...</p>';
+            unitBox.style.display = 'block';
+            try {
+                const url = API_BASE + '/api/building-units?sigunguCd=' + sigunguCd + '&bjdongCd=' + bjdongCd + '&bun=' + bun + '&ji=' + ji;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success && data.units && data.units.length > 0) {
+                    unitList.innerHTML = '';
+                    data.units.forEach(unit => {
+                        const div = document.createElement('div');
+                        div.className = 'unit-item';
+                        div.innerHTML = '<label><input type="checkbox" class="unit-check" value="' + unit.ho + '" data-dong="' + (unit.dong || '') + '"><span><strong>' + unit.ho + '</strong><br><small>' + (unit.flr || '') + '층 | ' + (unit.jeonyu_area || '') + '㎡</small></span></label>';
+                        unitList.appendChild(div);
+                    });
+                } else { unitList.innerHTML = '<p style="color:#666;">호실 정보가 없습니다.</p>'; }
+            } catch (error) { unitList.innerHTML = '<p style="color:#dc3545;">호실 목록 조회 실패</p>'; }
+        }
+        function selectAllUnits() { document.querySelectorAll('.unit-check').forEach(cb => cb.checked = true); }
+        function deselectAllUnits() { document.querySelectorAll('.unit-check').forEach(cb => cb.checked = false); }
+        async function searchBuilding() {
+            const resultDiv = document.getElementById('result');
+            const sigunguCd = document.getElementById('sigunguCd').value;
+            const bjdongCd = document.getElementById('bjdongCd').value;
+            const bun = document.getElementById('bun').value;
+            const ji = document.getElementById('ji').value || '0000';
+            if (!sigunguCd || !bjdongCd) { resultDiv.innerHTML = '<div class="error-msg">먼저 주소를 검색해주세요.</div>'; return; }
+            resultDiv.innerHTML = '<div class="loading">데이터를 조회중입니다...</div>';
+            const selectedUnits = [];
+            document.querySelectorAll('.unit-check:checked').forEach(cb => { selectedUnits.push({ ho: cb.value, dong: cb.dataset.dong || '' }); });
+            try {
+                const url = API_BASE + '/api/building-all?sigunguCd=' + sigunguCd + '&bjdongCd=' + bjdongCd + '&bun=' + bun + '&ji=' + ji;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success && data.data) { displayResults(data.data, selectedUnits); }
+                else { resultDiv.innerHTML = '<div class="error-msg">조회 실패</div>'; }
+            } catch (error) { resultDiv.innerHTML = '<div class="error-msg">조회 오류: ' + error.message + '</div>'; }
+        }
+        function displayResults(data, selectedUnits) {
+            const resultDiv = document.getElementById('result');
+            let html = '';
+            if (data.getBrTitleInfo && data.getBrTitleInfo.items && data.getBrTitleInfo.items.length > 0) {
+                const item = data.getBrTitleInfo.items[0];
+                const totalParking = (parseInt(item.indrAutoUtcnt)||0) + (parseInt(item.indrMechUtcnt)||0) + (parseInt(item.oudrAutoUtcnt)||0) + (parseInt(item.oudrMechUtcnt)||0);
+                html += '<div class="section"><div class="section-title">📋 표제부 정보</div>';
+                html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px;">';
+                html += '<div style="background:#e3f2fd;padding:15px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#1565c0;">대지면적</div><div style="font-size:16px;font-weight:bold;">' + formatNumber(item.platArea) + '㎡</div></div>';
+                html += '<div style="background:#e8f5e9;padding:15px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#2e7d32;">건축면적</div><div style="font-size:16px;font-weight:bold;">' + formatNumber(item.archArea) + '㎡</div></div>';
+                html += '<div style="background:#fff3e0;padding:15px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#ef6c00;">연면적</div><div style="font-size:16px;font-weight:bold;">' + formatNumber(item.totArea) + '㎡</div></div>';
+                html += '<div style="background:#fce4ec;padding:15px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#c2185b;">건폐율</div><div style="font-size:16px;font-weight:bold;">' + (item.bcRat || '-') + '%</div></div>';
+                html += '<div style="background:#f3e5f5;padding:15px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#7b1fa2;">용적률</div><div style="font-size:16px;font-weight:bold;">' + (item.vlRat || '-') + '%</div></div>';
+                html += '<div style="background:#e0f2f1;padding:15px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#00695c;">층수</div><div style="font-size:16px;font-weight:bold;">지상' + (item.grndFlrCnt||0) + '/지하' + (item.ugrndFlrCnt||0) + '</div></div>';
+                html += '</div>';
+                html += '<table><tr><th colspan="4" style="background:#667eea;color:white;">기본 정보</th></tr>';
+                html += '<tr><td style="background:#f5f5f5;font-weight:bold;">대지위치</td><td colspan="3">' + (item.platPlc || '-') + '</td></tr>';
+                html += '<tr><td style="background:#f5f5f5;font-weight:bold;">도로명주소</td><td colspan="3">' + (item.newPlatPlc || '-') + '</td></tr>';
+                html += '<tr><td style="background:#f5f5f5;font-weight:bold;">건물명</td><td>' + (item.bldNm || '-') + '</td><td style="background:#f5f5f5;font-weight:bold;">주용도</td><td>' + (item.mainPurpsCdNm || '-') + '</td></tr>';
+                html += '<tr><td style="background:#f5f5f5;font-weight:bold;">구조</td><td>' + (item.strctCdNm || '-') + '</td><td style="background:#f5f5f5;font-weight:bold;">사용승인일</td><td>' + formatDate(item.useAprDay) + '</td></tr>';
+                html += '<tr><td style="background:#f5f5f5;font-weight:bold;">승강기</td><td>' + (item.rideUseElvtCnt || '0') + '대</td><td style="background:#f5f5f5;font-weight:bold;">총 주차대수</td><td>' + totalParking + '대</td></tr>';
+                html += '</table></div>';
+            }
+            if (data.getBrExposPubuseAreaInfo && data.getBrExposPubuseAreaInfo.items) {
+                let items = data.getBrExposPubuseAreaInfo.items;
+                if (selectedUnits && selectedUnits.length > 0) {
+                    const selectedHos = selectedUnits.map(u => u.ho);
+                    items = items.filter(item => selectedHos.includes(item.hoNm || ''));
+                }
+                if (items.length > 0) {
+                    const hoGroups = {};
+                    items.forEach(item => { const ho = item.hoNm || '-'; if (!hoGroups[ho]) hoGroups[ho] = []; hoGroups[ho].push(item); });
+                    html += '<div class="section"><div class="section-title">📋 전유부 정보 (' + items.length + '건)</div>';
+                    for (const [ho, hoItems] of Object.entries(hoGroups)) {
+                        const first = hoItems[0];
+                        const jeonyu = hoItems.filter(i => i.exposPubuseGbCdNm === '전유');
+                        const gongyu = hoItems.filter(i => i.exposPubuseGbCdNm === '공용');
+                        let jeonyuArea = 0, gongyuArea = 0;
+                        jeonyu.forEach(i => jeonyuArea += parseFloat(i.area) || 0);
+                        gongyu.forEach(i => gongyuArea += parseFloat(i.area) || 0);
+                        const gonggeupArea = jeonyuArea + gongyuArea;
+                        html += '<div class="card" style="border-left:4px solid #28a745;">';
+                        html += '<div style="font-size:18px;font-weight:bold;color:#28a745;margin-bottom:10px;">🏠 ' + (first.bldNm||'') + ' ' + ho + '호</div>';
+                        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:15px;padding:15px;background:#e8f5e9;border-radius:8px;">';
+                        html += '<div style="text-align:center;"><div style="font-size:12px;color:#666;">전용면적</div><div style="font-size:20px;font-weight:bold;color:#2e7d32;">' + jeonyuArea.toFixed(2) + '㎡</div></div>';
+                        html += '<div style="text-align:center;"><div style="font-size:12px;color:#666;">공용면적</div><div style="font-size:20px;font-weight:bold;color:#1565c0;">' + gongyuArea.toFixed(2) + '㎡</div></div>';
+                        html += '<div style="text-align:center;"><div style="font-size:12px;color:#666;">공급면적</div><div style="font-size:20px;font-weight:bold;color:#c62828;">' + gonggeupArea.toFixed(2) + '㎡</div></div>';
+                        html += '</div>';
+                        if (jeonyu.length > 0) {
+                            html += '<h4 style="margin:10px 0;font-size:14px;">전유부분</h4><table><tr><th>층</th><th>구조</th><th>용도</th><th>면적(㎡)</th></tr>';
+                            jeonyu.forEach(item => { html += '<tr><td>' + (item.flrNoNm||item.flrNo||'-') + '</td><td>' + (item.strctCdNm||'-') + '</td><td>' + (item.etcPurps||item.mainPurpsCdNm||'-') + '</td><td style="text-align:right;">' + formatNumber(item.area) + '</td></tr>'; });
+                            html += '</table>';
+                        }
+                        if (gongyu.length > 0) {
+                            html += '<h4 style="margin:10px 0;font-size:14px;">공용부분</h4><table><tr><th>층</th><th>구조</th><th>용도</th><th>면적(㎡)</th></tr>';
+                            gongyu.forEach(item => { html += '<tr><td>' + (item.flrNoNm||'각층') + '</td><td>' + (item.strctCdNm||'-') + '</td><td>' + (item.etcPurps||item.mainPurpsCdNm||'-') + '</td><td style="text-align:right;">' + formatNumber(item.area) + '</td></tr>'; });
+                            html += '</table>';
+                        }
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                }
+            }
+            if (data.getBrFlrOulnInfo && data.getBrFlrOulnInfo.items && data.getBrFlrOulnInfo.items.length > 0) {
+                html += '<div class="section"><div class="section-title">📋 층별개요 (' + data.getBrFlrOulnInfo.items.length + '건)</div>';
+                html += '<table><tr><th>층</th><th>구조</th><th>용도</th><th>면적(㎡)</th></tr>';
+                data.getBrFlrOulnInfo.items.forEach(item => { html += '<tr><td>' + (item.flrNoNm||item.flrNo||'-') + '</td><td>' + (item.strctCdNm||'-') + '</td><td>' + (item.etcPurps||item.mainPurpsCdNm||'-') + '</td><td style="text-align:right;">' + formatNumber(item.area) + '</td></tr>'; });
+                html += '</table></div>';
+            }
+            resultDiv.innerHTML = html || '<div class="info-msg">조회 결과가 없습니다.</div>';
+        }
+        function clearForm() {
+            document.getElementById('addressInput').value = '';
+            document.getElementById('sigunguCd').value = '';
+            document.getElementById('bjdongCd').value = '';
+            document.getElementById('bun').value = '';
+            document.getElementById('ji').value = '';
+            document.getElementById('addressResults').style.display = 'none';
+            document.getElementById('detailRow').style.display = 'none';
+            document.getElementById('searchBtn').style.display = 'none';
+            document.getElementById('unitSelectBox').style.display = 'none';
+            document.getElementById('unitList').innerHTML = '';
+            document.getElementById('result').innerHTML = '<div class="info-msg">주소를 입력하고 검색하세요.</div>';
+        }
+        function formatNumber(val) { if (!val) return '-'; const num = parseFloat(val); return isNaN(num) ? val : num.toLocaleString('ko-KR', {maximumFractionDigits: 2}); }
+        function formatDate(val) { if (!val || val.length !== 8) return val || '-'; return val.substring(0,4) + '-' + val.substring(4,6) + '-' + val.substring(6,8); }
+    </script>
+</body>
+</html>

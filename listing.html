@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매물검색 - 다이아부동산</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css');
+:root{--bg:#f5f6f8;--card:#fff;--pri:#2563eb;--pri-h:#1d4ed8;--pri-l:#dbeafe;--grn:#10b981;--grn-l:#d1fae5;--txt:#1e293b;--txt2:#64748b;--bor:#e2e8f0;--inp:#f8fafc;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--txt);}
+.filter-bar{background:var(--card);border-bottom:1px solid var(--bor);padding:12px 16px;position:sticky;top:0;z-index:10;}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;max-width:1400px;margin:0 auto;}
+.f-chip{position:relative;display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border:1px solid var(--bor);border-radius:20px;font-size:15px;font-weight:600;cursor:pointer;background:#fff;color:var(--txt);transition:all .15s;white-space:nowrap;user-select:none;}
+.f-chip:hover{border-color:var(--pri);color:var(--pri);}
+.f-chip.has-value{background:var(--pri-l);color:var(--pri);border-color:var(--pri);}
+.f-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:20px;z-index:100;min-width:340px;}
+.f-panel.open{display:block;}
+.f-panel-title{font-size:15px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.f-panel-close{cursor:pointer;font-size:16px;color:var(--txt2);background:none;border:none;}
+.price-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:10px;}
+.price-btn{padding:12px 8px;border:1px solid var(--bor);border-radius:8px;font-size:14px;text-align:center;cursor:pointer;background:#fff;font-family:inherit;}
+.price-btn:hover{border-color:var(--pri);color:var(--pri);}
+.price-btn.sel{background:var(--pri);color:#fff;border-color:var(--pri);}
+.price-range{display:flex;align-items:center;gap:4px;margin-top:8px;}
+.price-range input{width:80px;padding:6px 8px;border:1px solid var(--bor);border-radius:6px;font-size:12px;text-align:center;font-family:inherit;}
+.pm-btn{width:28px;height:28px;border:1px solid var(--bor);border-radius:6px;background:#fff;cursor:pointer;font-size:16px;font-weight:700;color:var(--txt2);display:flex;align-items:center;justify-content:center;}
+.pm-btn:hover{border-color:var(--pri);color:var(--pri);}
+.region-cols{display:flex;gap:6px;}
+.region-col{flex:1;max-height:260px;overflow-y:auto;border:1px solid var(--bor);border-radius:8px;}
+.region-col-title{font-size:11px;font-weight:600;color:var(--txt2);padding:6px 8px;background:var(--inp);position:sticky;top:0;}
+.region-item{padding:9px 14px;font-size:14px;cursor:pointer;}
+.region-item:hover{background:var(--inp);}
+.region-item.sel{background:var(--pri-l);color:var(--pri);font-weight:600;}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.type-btn{padding:10px 8px;border:1px solid var(--bor);border-radius:8px;font-size:14px;text-align:center;cursor:pointer;background:#fff;font-family:inherit;}
+.type-btn:hover{border-color:var(--pri);color:var(--pri);}
+.type-btn.sel{background:var(--pri);color:#fff;border-color:var(--pri);}
+.count-btns{display:flex;flex-wrap:wrap;gap:4px;}
+.count-btn{padding:10px 16px;border:1px solid var(--bor);border-radius:8px;font-size:14px;cursor:pointer;background:#fff;font-family:inherit;}
+.count-btn:hover{border-color:var(--pri);color:var(--pri);}
+.count-btn.sel{background:var(--pri);color:#fff;border-color:var(--pri);}
+.mode-toggle{display:flex;gap:2px;margin-bottom:6px;background:var(--inp);border-radius:6px;padding:2px;}
+.mode-btn{flex:1;padding:4px 8px;border:none;border-radius:4px;font-size:11px;cursor:pointer;background:transparent;font-family:inherit;color:var(--txt2);}
+.mode-btn.sel{background:#fff;color:var(--pri);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.slider-wrap{margin:12px 0;padding:0 4px;}
+.slider-wrap input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(to right,var(--grn) 0%,#e2e8f0 0%);outline:none;}
+.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--grn);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;}
+.year-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;}
+.year-grid .year-btn{padding:10px 8px;text-align:center;border-radius:8px;font-size:14px;}
+.slider-wrap input[type=range]{width:100%;accent-color:var(--grn);}
+.slider-label{font-size:12px;color:var(--grn);font-weight:600;margin-bottom:4px;text-align:center;}
+.f-apply{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--bor);}
+.btn-sm{padding:8px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-reset{background:var(--inp);color:var(--txt2);}
+.btn-apply{background:var(--pri);color:#fff;}
+.f-actions{display:flex;gap:6px;margin-left:auto;}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-pri{background:var(--pri);color:#fff;}
+.btn-pri:hover{background:var(--pri-h);}
+.btn-out{background:#fff;color:var(--txt2);border:1px solid var(--bor);}
+.result-bar{max-width:1400px;margin:10px auto 0;padding:0 16px;display:none;justify-content:space-between;align-items:center;}
+.result-count{font-size:13px;color:var(--txt2);}
+.result-count b{color:var(--pri);font-size:15px;}
+.dedup-info{font-size:11px;color:var(--txt2);margin-left:8px;}
+.table-wrap{max-width:1400px;margin:8px auto 0;padding:0 16px 16px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);display:none;}
+thead th{text-align:center;padding:12px;background:var(--inp);font-weight:700;color:var(--txt);font-size:13.5px;border-bottom:1px solid var(--bor);white-space:nowrap;cursor:pointer;user-select:none;}
+thead th:hover{color:var(--pri);}
+thead th .sort-arrow{font-size:10px;margin-left:2px;opacity:.4;}
+thead th.sorted .sort-arrow{opacity:1;color:var(--pri);}
+tbody td{padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:center;}
+tbody tr:hover td{background:#f8fafc;}
+tbody tr{cursor:pointer;}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+.b-sell{background:#dbeafe;color:#1d4ed8;}.b-jeon{background:#d1fae5;color:#065f46;}.b-wol{background:#fef3c7;color:#92400e;}
+.type-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:#f1f5f9;color:#475569;}
+.price-cell{font-weight:700;white-space:nowrap;}
+.addr-cell{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;}
+.feature-cell{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt2);font-size:12.5px;text-align:left;}
+.pagination{max-width:1400px;margin:0 auto;padding:10px 16px 20px;display:flex;justify-content:center;gap:4px;}
+.pg-btn{padding:6px 11px;border:1px solid var(--bor);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;font-family:inherit;}
+.pg-btn:hover{background:var(--inp);}
+.pg-btn.active{background:var(--pri);color:#fff;border-color:var(--pri);}
+.welcome{text-align:center;padding:80px 20px;color:var(--txt2);}
+.welcome .big{font-size:48px;margin-bottom:12px;}
+.empty{text-align:center;padding:60px 20px;color:var(--txt2);display:none;}
+.empty .big{font-size:40px;margin-bottom:8px;opacity:.5;}
+.loading-bar{display:none;text-align:center;padding:40px;color:var(--txt2);}
+.loading-bar.on{display:block;}
+</style>
+</head>
+<body><div style="background:#1a1a2e;padding:10px 16px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:16px;font-weight:bold">🏠 매물검색</span></div>
+<div class="filter-bar"><div class="filter-row" id="filterRow"></div></div>
+<div class="welcome" id="welcomeState">
+  <div class="big">🏠</div>
+  <p style="font-size:15px;font-weight:600;">다이아하우스 매물검색</p>
+  <p style="font-size:13px;margin-top:6px;">조건을 선택하고 <b>검색</b>을 눌러주세요</p>
+  <p style="font-size:11px;margin-top:4px;color:#94a3b8;">노출중 매물 대상 검색</p>
+</div>
+<div class="result-bar" id="resultBar">
+  <div><span class="result-count">검색 결과 <b id="totalCount">0</b>건</span><span class="dedup-info" id="dedupInfo"></span></div>
+  <div style="font-size:11px;color:var(--txt2);" id="pageInfo"></div>
+</div>
+<div class="loading-bar" id="loadingBar">검색 중...</div>
+<div class="table-wrap">
+  <div class="empty" id="emptyState"><div class="big">😕</div><p>조건에 맞는 매물이 없습니다</p></div>
+  <table id="resultTable">
+    <thead><tr id="tableHead"></tr></thead>
+    <tbody id="resultBody"></tbody>
+  </table>
+</div>
+<div class="pagination" id="pagination"></div>
+<script>
+var API="https://diahouse.kr/nrank-api/listings",PS=50,cp=1,searched=false;
+var F={trade:"매매",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:""};
+var allItems=[],sortCol="",sortDir="asc",dedupCount=0;
+
+var REGIONS={"경기도":{"고양시 덕양구":["덕은동","향동동","삼송동","성석동","내유동","동산동","행신동","화정동","풍동","원흥동","지축동","신원동","대장동","토당동","원당동","창릉동"],"고양시 일산동구":["식사동","백석동","마두동","정발산동","장항동","중산동"],"고양시 일산서구":["대화동","주엽동","탄현동","일산동","덕이동"],"파주시":["야당동","금촌동","교하동","운정동","목동동","와동동","문발동","당하동","하지석동","상지석동","동패동"],"김포시":["장기동","구래동","풍무동","걸포동","사우동","마산동"],"부천시 원미구":["상동","중동","심곡동","역곡동","원미동","도당동"],"부천시 소사구":["소사본동","범박동","심곡본동","옥길동"],"부천시 오정구":["오정동","내동","여월동","원종동","고강동"],"안산시 상록구":["사동","본오동","일동","이동","성포동","선부동"],"안산시 단원구":["고잔동","원곡동","초지동"],"양주시":["옥정동","회정동","덕정동"]},"서울시":{"은평구":["응암동","역촌동","갈현동","구산동","신사동","불광동","녹번동","대조동","증산동","수색동","진관동"],"서대문구":["홍은동","북가좌동","남가좌동","연희동","홍제동"],"마포구":["상암동","성산동","연남동","합정동","서교동","망원동","공덕동"],"강서구":[],"구로구":[],"강북구":[],"도봉구":[],"중랑구":[]},"인천시":{"서구":[],"미추홀구":[],"남동구":[],"부평구":[],"강화군":[]},"충청남도":{"서천군":[],"아산시":[]}};
+var TYPES=["빌라/연립","아파트","단독/다가구","오피스텔","상가","사무실","전원주택","상가주택","토지","지식산업센터","건물","공장/창고"];
+
+// ===== 테이블 헤더 (정렬 가능) =====
+var COLS=[
+  {key:"_num",label:"#",sortable:false},
+  {key:"trade_type",label:"거래유형",sortable:true},
+  {key:"type_normalized",label:"유형",sortable:true},
+  {key:"address",label:"주소",sortable:true},
+  {key:"price",label:"금액",sortable:true},
+  {key:"net_area",label:"전용㎡",sortable:true},
+  {key:"region_small",label:"동",sortable:true},
+  {key:"feature",label:"특징",sortable:false},
+  {key:"sub_account_name",label:"담당",sortable:true}
+];
+
+function buildTableHead(){
+  var tr=document.getElementById("tableHead");tr.innerHTML="";
+  COLS.forEach(function(c){
+    var th=document.createElement("th");
+    th.innerHTML=c.label+(c.sortable?' <span class="sort-arrow">⇅</span>':"");
+    if(c.sortable){
+      th.onclick=function(){
+        if(sortCol===c.key){sortDir=sortDir==="asc"?"desc":"asc";}
+        else{sortCol=c.key;sortDir="asc";}
+        document.querySelectorAll("#tableHead th").forEach(function(t){t.classList.remove("sorted");});
+        th.classList.add("sorted");
+        th.querySelector(".sort-arrow").textContent=sortDir==="asc"?"▲":"▼";
+        renderItems();
+      };
+    }
+    tr.appendChild(th);
+  });
+}
+
+// ===== 필터바 =====
+function buildFilterBar(){
+  var row=document.getElementById("filterRow");
+  var chips=[
+    {id:"trade",label:"매매"},{id:"price",label:"가격대"},{id:"region",label:"지역"},
+    {id:"type",label:"매물유형"},{id:"room",label:"방/욕실"},{id:"area",label:"면적"},{id:"year",label:"사용승인일"}
+  ];
+  row.innerHTML="";
+  chips.forEach(function(c){
+    var chip=document.createElement("div");
+    chip.className="f-chip"+(c.id==="trade"?" has-value":"");
+    chip.id="chip-"+c.id;
+    chip.innerHTML='<span class="chip-text">'+c.label+'</span> <span style="font-size:10px;opacity:.5;">▼</span>';
+    var panel=document.createElement("div");
+    panel.className="f-panel";panel.id="panel-"+c.id;
+    panel.onclick=function(e){e.stopPropagation();};
+    chip.appendChild(panel);
+    chip.onclick=function(e){toggleP(e,c.id);};
+    row.appendChild(chip);
+  });
+  // 키워드
+  var kwDiv=document.createElement("div");
+  kwDiv.style.cssText="display:flex;align-items:center;gap:4px;margin-left:8px;";
+  var kwInput=document.createElement("input");
+  kwInput.id="s_keyword";kwInput.placeholder="주소/특징 검색";
+  kwInput.style.cssText="padding:10px 16px;border:1px solid var(--bor);border-radius:20px;font-size:14px;width:220px;font-family:inherit;text-align:center;";
+  kwInput.onkeydown=function(e){if(e.key==="Enter")doSearch(1);};var kwTimer;kwInput.oninput=function(){clearTimeout(kwTimer);kwTimer=setTimeout(function(){if(searched)doSearch(1);},300);};
+  kwDiv.appendChild(kwInput);row.appendChild(kwDiv);
+  // 버튼
+  var actDiv=document.createElement("div");actDiv.className="f-actions";
+  var btnSearch=document.createElement("button");btnSearch.className="btn btn-pri";btnSearch.textContent="검색";btnSearch.onclick=function(){doSearch(1);};
+  var btnReset=document.createElement("button");btnReset.className="btn btn-out";btnReset.textContent="초기화";btnReset.onclick=resetAll;
+  actDiv.appendChild(btnSearch);actDiv.appendChild(btnReset);row.appendChild(actDiv);
+  buildAllPanels();
+}
+
+function buildAllPanels(){
+  buildTradePanel();buildPricePanel();buildRegionPanel();buildTypePanel();buildRoomPanel();buildAreaPanel();buildYearPanel();
+}
+
+function toggleP(e,name){e.stopPropagation();var p=document.getElementById("panel-"+name);var was=p.classList.contains("open");document.querySelectorAll(".f-panel").forEach(function(x){x.classList.remove("open");});if(!was)p.classList.add("open");}
+function closeP(name){document.getElementById("panel-"+name).classList.remove("open");}
+document.addEventListener("click",function(e){if(!e.target.closest(".f-chip"))document.querySelectorAll(".f-panel").forEach(function(p){p.classList.remove("open");});});
+
+function adjV(id,delta){var el=document.getElementById(id);var v=parseInt(el.value)||0;v+=delta;if(v<0)v=0;el.value=v;}
+function addPmBtn(parent,targetId,delta){var b=document.createElement("button");b.className="pm-btn";b.textContent=delta<0?"\u2212":"+";b.onclick=function(e){e.stopPropagation();adjV(targetId,delta);};parent.appendChild(b);}
+function addInput(parent,id,ph){var inp=document.createElement("input");inp.type="number";inp.id=id;inp.placeholder=ph;inp.style.cssText="width:80px;padding:6px 8px;border:1px solid var(--bor);border-radius:6px;font-size:13px;text-align:center;font-family:inherit;";inp.onfocus=function(){if(id==="pr_min"||id==="pr_max")prTarget=id;};parent.appendChild(inp);}
+function addSpan(parent,text,style){var s=document.createElement("span");s.textContent=text;if(style)s.style.cssText=style;parent.appendChild(s);}
+function updChip(n,label){var c=document.getElementById("chip-"+n);var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일"};c.querySelector(".chip-text").textContent=label;label===defs[n]?c.classList.remove("has-value"):c.classList.add("has-value");}
+
+// ===== 거래유형 =====
+function buildTradePanel(){
+  var p=document.getElementById("panel-trade");p.innerHTML="";
+  addTitle(p,"거래유형","trade");
+  var g=document.createElement("div");g.className="type-grid";g.id="tradeGrid";p.appendChild(g);
+  ["전체","매매","전세","월세"].forEach(function(t){
+    var btn=document.createElement("div");btn.className="type-btn"+(t==="매매"?" sel":"");btn.textContent=t;
+    btn.onclick=function(e){e.stopPropagation();F.trade=(t==="전체"?"":t);g.querySelectorAll(".type-btn").forEach(function(b){b.classList.toggle("sel",b.textContent===(F.trade||"전체"));});updChip("trade",F.trade||"거래유형");closeP("trade");if(searched)doSearch(1);};
+    g.appendChild(btn);
+  });
+}
+
+// ===== 가격대 =====
+function buildPricePanel(){
+  var p=document.getElementById("panel-price");p.style.minWidth="400px";p.innerHTML="";
+  addTitle(p,"매매가","price");
+  var grid=document.createElement("div");grid.className="price-grid";grid.id="priceGrid";p.appendChild(grid);
+  [10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,110000,120000,130000,150000,170000,200000,230000,250000].forEach(function(v){
+    var btn=document.createElement("div");btn.className="price-btn";btn.textContent=fmtUk(v);
+    btn.onclick=function(e){e.stopPropagation();clickPr(v);};grid.appendChild(btn);
+  });
+  var range=document.createElement("div");range.className="price-range";
+  addPmBtn(range,"pr_min",-1000);addInput(range,"pr_min","최소");addPmBtn(range,"pr_min",1000);addSpan(range,"~");addPmBtn(range,"pr_max",-1000);addInput(range,"pr_max","최대");addPmBtn(range,"pr_max",1000);addSpan(range,"만원","font-size:11px;color:var(--txt2);");
+  p.appendChild(range);
+  addApply(p,resetPrice,applyPrice);
+}
+function fmtUk(v){return v>=10000?(v/10000)+"억":(v/1000)+"천";}
+var prTarget="pr_min";
+function clickPr(v){document.getElementById(prTarget).value=v;}
+function applyPrice(){F.pmin=document.getElementById("pr_min").value;F.pmax=document.getElementById("pr_max").value;var l="가격대";if(F.pmin&&F.pmax)l=fmtUk(+F.pmin)+"~"+fmtUk(+F.pmax);else if(F.pmin)l=fmtUk(+F.pmin)+"이상";else if(F.pmax)l=fmtUk(+F.pmax)+"이하";updChip("price",l);closeP("price");if(searched)doSearch(1);}
+function resetPrice(){document.getElementById("pr_min").value="";document.getElementById("pr_max").value="";F.pmin="";F.pmax="";updChip("price","가격대");prSt=0;}
+
+// ===== 지역 =====
+function buildRegionPanel(){
+  var p=document.getElementById("panel-region");p.style.minWidth="480px";p.innerHTML="";
+  addTitle(p,"지역 선택","region");
+  var cols=document.createElement("div");cols.className="region-cols";
+  cols.innerHTML='<div class="region-col" id="col-sido"><div class="region-col-title">시/도</div></div><div class="region-col" id="col-gugun"><div class="region-col-title">구/군</div></div><div class="region-col" id="col-dong"><div class="region-col-title">동/읍/면</div></div>';
+  p.appendChild(cols);addApply(p,resetRegion,applyRegion);buildRegionList();
+}
+function buildRegionList(){
+  var c=document.getElementById("col-sido");c.innerHTML='<div class="region-col-title">시/도</div>';
+  addRI(c,"전체",true,function(){selSido("");});
+  Object.keys(REGIONS).forEach(function(s){addRI(c,s,false,function(){selSido(s);});});
+}
+function addRI(parent,text,sel,handler){var d=document.createElement("div");d.className="region-item"+(sel?" sel":"");d.textContent=text;d.onclick=function(e){e.stopPropagation();parent.querySelectorAll(".region-item").forEach(function(x){x.classList.remove("sel");});d.classList.add("sel");handler();};parent.appendChild(d);}
+function selSido(v){F.rl=v;F.rm="";F.rs="";var g=document.getElementById("col-gugun");g.innerHTML='<div class="region-col-title">구/군</div>';document.getElementById("col-dong").innerHTML='<div class="region-col-title">동/읍/면</div>';if(!v)return;addRI(g,"전체",true,function(){selGu("");});Object.keys(REGIONS[v]).forEach(function(gu){addRI(g,gu,false,function(){selGu(gu);});});}
+function selGu(v){F.rm=v;F.rs="";var d=document.getElementById("col-dong");d.innerHTML='<div class="region-col-title">동/읍/면</div>';if(!v||!F.rl)return;var ds=REGIONS[F.rl][v]||[];if(!ds.length)return;addRI(d,"전체",true,function(){F.rs="";});ds.forEach(function(dong){addRI(d,dong,false,function(){F.rs=dong;});});}
+function applyRegion(){var l="지역";if(F.rs)l=F.rs;else if(F.rm)l=F.rm;else if(F.rl)l=F.rl;updChip("region",l);closeP("region");if(searched)doSearch(1);}
+function resetRegion(){F.rl="";F.rm="";F.rs="";buildRegionList();updChip("region","지역");}
+
+// ===== 매물유형 (중복선택) =====
+function buildTypePanel(){
+  var p=document.getElementById("panel-type");p.innerHTML="";
+  addTitle(p,"매물유형 (중복선택 가능)","type");
+  var g=document.createElement("div");g.className="type-grid";g.id="typeGrid";p.appendChild(g);
+  var allBtn=document.createElement("div");allBtn.className="type-btn sel";allBtn.textContent="전체";
+  allBtn.onclick=function(e){e.stopPropagation();F.types=[];g.querySelectorAll(".type-btn").forEach(function(b){b.classList.remove("sel");});allBtn.classList.add("sel");};
+  g.appendChild(allBtn);
+  TYPES.forEach(function(t){
+    var btn=document.createElement("div");btn.className="type-btn";btn.textContent=t;
+    btn.onclick=function(e){
+      e.stopPropagation();allBtn.classList.remove("sel");
+      var idx=F.types.indexOf(t);
+      if(idx>=0){F.types.splice(idx,1);btn.classList.remove("sel");}
+      else{F.types.push(t);btn.classList.add("sel");}
+      if(F.types.length===0)allBtn.classList.add("sel");
+    };
+    g.appendChild(btn);
+  });
+  addApply(p,function(){F.types=[];buildTypePanel();updChip("type","매물유형");},function(){updChip("type",F.types.length?F.types.join(", "):"매물유형");closeP("type");if(searched)doSearch(1);});
+}
+
+// ===== 방/욕실 (정확히 N개 / N개 이상) =====
+function buildRoomPanel(){
+  var p=document.getElementById("panel-room");p.innerHTML="";
+  addTitle(p,"방/욕실 수","room");
+  // 방
+  var rd=document.createElement("div");rd.style.marginBottom="12px";
+  rd.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:4px;">방 개수</div>';
+  var rmToggle=document.createElement("div");rmToggle.className="mode-toggle";
+  ["정확히","이상"].forEach(function(m){
+    var btn=document.createElement("button");btn.className="mode-btn"+(F.roomMode===(m==="정확히"?"exact":"gte")?" sel":"");btn.textContent=m;
+    btn.onclick=function(e){e.stopPropagation();F.roomMode=(m==="정확히"?"exact":"gte");rmToggle.querySelectorAll(".mode-btn").forEach(function(b){b.classList.remove("sel");});btn.classList.add("sel");};
+    rmToggle.appendChild(btn);
+  });
+  rd.appendChild(rmToggle);
+  var rb=document.createElement("div");rb.className="count-btns";rb.id="roomBtns";rd.appendChild(rb);
+  p.appendChild(rd);
+  // 욕실
+  var bd=document.createElement("div");
+  bd.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:4px;">욕실 개수</div>';
+  var btToggle=document.createElement("div");btToggle.className="mode-toggle";
+  ["정확히","이상"].forEach(function(m){
+    var btn=document.createElement("button");btn.className="mode-btn"+(F.bathMode===(m==="정확히"?"exact":"gte")?" sel":"");btn.textContent=m;
+    btn.onclick=function(e){e.stopPropagation();F.bathMode=(m==="정확히"?"exact":"gte");btToggle.querySelectorAll(".mode-btn").forEach(function(b){b.classList.remove("sel");});btn.classList.add("sel");};
+    btToggle.appendChild(btn);
+  });
+  bd.appendChild(btToggle);
+  var bb=document.createElement("div");bb.className="count-btns";bb.id="bathBtns";bd.appendChild(bb);
+  p.appendChild(bd);
+  buildCountBtns();
+  addApply(p,function(){F.rooms="";F.baths="";F.roomMode="exact";F.bathMode="exact";buildRoomPanel();updChip("room","방/욕실");},applyRoom);
+}
+function buildCountBtns(){
+  var rb=document.getElementById("roomBtns");if(!rb)return;rb.innerHTML="";
+  ["전체","1","2","3","4","5+"].forEach(function(v){
+    var btn=document.createElement("div");btn.className="count-btn"+(F.rooms===(v==="전체"?"":v)?" sel":"");btn.textContent=v;
+    btn.onclick=function(e){e.stopPropagation();F.rooms=(v==="전체"?"":v);rb.querySelectorAll(".count-btn").forEach(function(b){b.classList.remove("sel");});btn.classList.add("sel");};
+    rb.appendChild(btn);
+  });
+  var bb=document.getElementById("bathBtns");if(!bb)return;bb.innerHTML="";
+  ["전체","1","2","3+"].forEach(function(v){
+    var btn=document.createElement("div");btn.className="count-btn"+(F.baths===(v==="전체"?"":v)?" sel":"");btn.textContent=v;
+    btn.onclick=function(e){e.stopPropagation();F.baths=(v==="전체"?"":v);bb.querySelectorAll(".count-btn").forEach(function(b){b.classList.remove("sel");});btn.classList.add("sel");};
+    bb.appendChild(btn);
+  });
+}
+function applyRoom(){var parts=[];if(F.rooms)parts.push("방"+F.rooms+(F.roomMode==="gte"?"이상":""));if(F.baths)parts.push("욕실"+F.baths+(F.bathMode==="gte"?"이상":""));updChip("room",parts.length?parts.join(", "):"방/욕실");closeP("room");if(searched)doSearch(1);}
+
+// ===== 면적 =====
+function buildAreaPanel(){
+  var p=document.getElementById("panel-area");p.innerHTML="";
+  addTitle(p,"전용면적(㎡)","area");
+  var range=document.createElement("div");range.className="price-range";
+  addPmBtn(range,"ar_min",-10);addInput(range,"ar_min","최소");addPmBtn(range,"ar_min",10);addSpan(range,"~");addPmBtn(range,"ar_max",-10);addInput(range,"ar_max","최대");addPmBtn(range,"ar_max",10);addSpan(range,"㎡","font-size:11px;");
+  p.appendChild(range);
+  addApply(p,function(){document.getElementById("ar_min").value="";document.getElementById("ar_max").value="";F.amin="";F.amax="";updChip("area","면적");},function(){F.amin=document.getElementById("ar_min").value;F.amax=document.getElementById("ar_max").value;var l="면적";if(F.amin&&F.amax)l=F.amin+"~"+F.amax+"㎡";else if(F.amin)l=F.amin+"㎡이상";else if(F.amax)l=F.amax+"㎡이하";updChip("area",l);closeP("area");if(searched)doSearch(1);});
+}
+
+// ===== 사용승인일 (1년 단위 슬라이더) =====
+function buildYearPanel(){
+  var p=document.getElementById("panel-year");p.style.minWidth="380px";p.innerHTML="";
+  addTitle(p,"사용승인일","year");
+  // 슬라이더 라벨
+  var label=document.createElement("div");
+  label.id="yearLabel";label.style.cssText="text-align:center;font-size:15px;font-weight:700;color:var(--grn);margin:8px 0 4px;";
+  label.textContent="전체";p.appendChild(label);
+  // 슬라이더
+  var sw=document.createElement("div");sw.className="slider-wrap";
+  var slider=document.createElement("input");slider.type="range";slider.id="yearSlider";
+  slider.min="0";slider.max="30";slider.value="0";slider.step="1";
+  slider.oninput=function(){
+    var v=parseInt(this.value);
+    F.yearMax=v>0?String(v):"";
+    document.getElementById("yearLabel").textContent=v>0?"~"+v+"년":"전체";
+    // 슬라이더 배경 채우기
+    var pct=(v/30)*100;
+    this.style.background="linear-gradient(to right,var(--grn) "+pct+"%,#e2e8f0 "+pct+"%)";
+    highlightYearBtns();
+  };
+  sw.appendChild(slider);p.appendChild(sw);
+  // 버튼 그리드 (4열)
+  var grid=document.createElement("div");grid.className="year-grid";grid.id="yearBtns";
+  var yearData=[
+    {l:"입주예정",v:0},{l:"2년",v:2},{l:"4년",v:4},{l:"10년",v:10},
+    {l:"15년",v:15},{l:"20년",v:20},{l:"25년",v:25},{l:"30년",v:30}
+  ];
+  yearData.forEach(function(o,i){
+    var btn=document.createElement("div");
+    btn.className="year-btn"+(i===0?" sel":"");
+    btn.textContent=o.l;
+    btn.onclick=function(e){
+      e.stopPropagation();
+      F.yearMax=o.v>0?String(o.v):"";
+      var sl=document.getElementById("yearSlider");
+      sl.value=o.v;
+      var pct=(o.v/30)*100;
+      sl.style.background="linear-gradient(to right,var(--grn) "+pct+"%,#e2e8f0 "+pct+"%)";
+      document.getElementById("yearLabel").textContent=o.v>0?"~"+o.v+"년":"전체";
+      highlightYearBtns();
+    };
+    grid.appendChild(btn);
+  });
+  p.appendChild(grid);
+  addApply(p,function(){
+    F.yearMax="";
+    var sl=document.getElementById("yearSlider");sl.value=0;
+    sl.style.background="linear-gradient(to right,var(--grn) 0%,#e2e8f0 0%)";
+    document.getElementById("yearLabel").textContent="전체";
+    highlightYearBtns();
+    updChip("year","사용승인일");
+  },function(){
+    updChip("year",F.yearMax?"~"+F.yearMax+"년":"사용승인일");
+    closeP("year");if(searched)doSearch(1);
+  });
+}
+function highlightYearBtns(){
+  var v=parseInt(F.yearMax)||0;
+  var yearVals=[0,2,4,10,15,20,25,30];
+  document.querySelectorAll("#yearBtns .year-btn").forEach(function(btn,i){
+    btn.classList.toggle("sel",yearVals[i]===v);
+  });
+}
+
+// ===== 공통 UI 헬퍼 =====
+function addTitle(parent,text,panelId){
+  var d=document.createElement("div");d.className="f-panel-title";
+  d.innerHTML=text;
+  var closeBtn=document.createElement("button");closeBtn.className="f-panel-close";closeBtn.textContent="✕";
+  closeBtn.onclick=function(){closeP(panelId);};
+  d.appendChild(closeBtn);parent.appendChild(d);
+}
+function addApply(parent,resetFn,applyFn){
+  var d=document.createElement("div");d.className="f-apply";
+  var r=document.createElement("button");r.className="btn-sm btn-reset";r.textContent="초기화";r.onclick=function(e){e.stopPropagation();resetFn();};
+  var a=document.createElement("button");a.className="btn-sm btn-apply";a.textContent="적용";a.onclick=function(e){e.stopPropagation();applyFn();};
+  d.appendChild(r);d.appendChild(a);parent.appendChild(d);
+}
+
+// ===== 검색 =====
+function doSearch(page){
+  cp=page;searched=true;
+  document.getElementById("welcomeState").style.display="none";
+  document.getElementById("resultBar").style.display="flex";
+  document.getElementById("loadingBar").classList.add("on");
+  document.getElementById("resultTable").style.display="none";
+  document.getElementById("emptyState").style.display="none";
+  document.getElementById("pagination").innerHTML="";
+
+  var params=new URLSearchParams();
+  params.set("page","1");params.set("size","100000");
+  if(F.trade)params.set("trade_type",F.trade);
+  if(F.types.length===1)params.set("type_name_filter",F.types[0]);
+  if(F.rl)params.set("region_large",F.rl);
+  if(F.rm)params.set("region_mid",F.rm);
+  if(F.rs)params.set("region_small",F.rs);
+  if(F.pmin)params.set("price_min",F.pmin);
+  if(F.pmax)params.set("price_max",F.pmax);
+  var kw=document.getElementById("s_keyword").value.trim();
+  if(kw)params.set("search",kw);
+
+  fetch(API+"?"+params.toString()).then(function(r){return r.json();}).then(function(data){
+    document.getElementById("loadingBar").classList.remove("on");
+    allItems=data.items||[];
+    // 매물유형 다중 필터 (서버에서 1개만 지원하므로 클라이언트에서 추가 필터)
+    if(F.types.length>1){allItems=allItems.filter(function(item){return F.types.indexOf(item.type_normalized)>=0;});}
+    // 중복 제거 (같은 주소+금액+면적)
+    var before=allItems.length;
+    // 같은 동+번지+금액+면적 중 최신 매물만 유지
+    var groups={};
+    allItems.forEach(function(item){
+      var addr=item.address||"";
+      var m=addr.match(/(\d+-\d+)/);
+      var bunji=m?m[1]:"";
+      var dong=item.region_small||"";
+      var key=dong+"_"+bunji+"_"+(item.price||0)+"_"+(item.net_area||0);
+      if(!groups[key]){groups[key]=item;}
+      else{
+        var curId=parseInt(item.naver_id)||0;
+        var prevId=parseInt(groups[key].naver_id)||0;
+        if(curId>prevId)groups[key]=item;
+      }
+    });
+    allItems=Object.values(groups);
+    // 방 개수 필터 (feature에서 파싱)
+    if(F.rooms){
+      var rn=parseInt(F.rooms)||99;
+      allItems=allItems.filter(function(item){
+        var ft=(item.feature||"")+(item.address||"");
+        var rm=ft.match(/방(\d)/)||ft.match(/(\d)룸/)||ft.match(/(\d)room/i);
+        if(!rm)return F.roomMode==="gte";
+        var cnt=parseInt(rm[1]);
+        return F.roomMode==="gte"?cnt>=rn:cnt===rn;
+      });
+    }
+    // 욕실 개수 필터
+    if(F.baths){
+      var bn=parseInt(F.baths)||99;
+      allItems=allItems.filter(function(item){
+        var ft=(item.feature||"")+(item.address||"");
+        var bm=ft.match(/화(\d)/)||ft.match(/욕실(\d)/)||ft.match(/화장실(\d)/);
+        if(!bm)return F.bathMode==="gte";
+        var cnt=parseInt(bm[1]);
+        return F.bathMode==="gte"?cnt>=bn:cnt===bn;
+      });
+    }
+    dedupCount=before-allItems.length;
+    document.getElementById("totalCount").textContent=allItems.length.toLocaleString();
+    document.getElementById("dedupInfo").textContent=dedupCount>0?"(중복 "+dedupCount+"건 제외)":"";
+    if(!allItems.length){document.getElementById("emptyState").style.display="block";return;}
+    sortCol="";sortDir="asc";
+    renderItems();
+  }).catch(function(err){
+    document.getElementById("loadingBar").classList.remove("on");
+    document.getElementById("emptyState").style.display="block";
+  });
+}
+
+function renderItems(){
+  var items=allItems.slice();
+  // 정렬
+  if(sortCol){
+    items.sort(function(a,b){
+      var va=a[sortCol],vb=b[sortCol];
+      if(typeof va==="number"&&typeof vb==="number")return sortDir==="asc"?va-vb:vb-va;
+      va=String(va||"");vb=String(vb||"");
+      return sortDir==="asc"?va.localeCompare(vb):vb.localeCompare(va);
+    });
+  }
+  // 페이징
+  var tp=Math.ceil(items.length/PS);
+  var start=(cp-1)*PS,end=start+PS;
+  var pageItems=items.slice(start,end);
+  document.getElementById("pageInfo").textContent=cp+" / "+tp+" 페이지";
+  document.getElementById("resultTable").style.display="table";
+
+  var tbody=document.getElementById("resultBody");tbody.innerHTML="";
+  pageItems.forEach(function(item,i){
+    var tr=document.createElement("tr");
+    var nid=item.naver_id||"";
+    if(nid){tr.onclick=function(){window.open("https://new.land.naver.com/articles/"+nid,"_blank");};}
+    var tc=item.trade_type==="매매"?"b-sell":item.trade_type==="전세"?"b-jeon":"b-wol";
+    var n=start+i+1;
+    tr.innerHTML="<td>"+n+"</td><td><span class='badge "+tc+"'>"+(item.trade_type||"-")+"</span></td><td><span class='type-badge'>"+(item.type_normalized||"-")+"</span></td><td class='addr-cell' title='"+(item.address||"").replace(/'/g,"&#39;")+"'>"+(item.address||"-")+"</td><td class='price-cell'>"+fmtPr(item)+"</td><td>"+(item.net_area||"-")+"</td><td>"+(item.region_small||"-")+"</td><td class='feature-cell' title='"+(item.feature||"").replace(/'/g,"&#39;")+"'>"+(item.feature||"-")+"</td><td>"+(function(){var s=item.sub_account_name||"-";var m=s.match(/([가-힣]{2,3})/);return m?m[1]:s;})()+"</td>";
+    tbody.appendChild(tr);
+  });
+  renderPg(cp,tp);
+}
+
+function fmtPr(item){var p=item.price||0;if(item.trade_type==="월세")return fmtM(item.deposit||0)+"/"+fmtM(item.monthly_rent||0);return fmtM(p);}
+function fmtM(v){if(!v)return"-";if(v>=10000){var u=Math.floor(v/10000),r=v%10000;return r>0?u+"억"+r.toLocaleString():u+"억";}return v.toLocaleString()+"만";}
+
+function renderPg(cur,total){
+  var div=document.getElementById("pagination");div.innerHTML="";
+  if(total<=1)return;
+  function addBtn(text,page,active){var btn=document.createElement("button");btn.className="pg-btn"+(active?" active":"");btn.textContent=text;btn.onclick=function(){cp=page;renderItems();};div.appendChild(btn);}
+  if(cur>1){addBtn("«",1);addBtn("‹",cur-1);}
+  var s=Math.max(1,cur-4),e=Math.min(total,s+9);if(e-s<9)s=Math.max(1,e-9);
+  for(var i=s;i<=e;i++)addBtn(i,i,i===cur);
+  if(cur<total){addBtn("›",cur+1);addBtn("»",total);}
+}
+
+function resetAll(){
+  F={trade:"",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:""};
+  document.getElementById("s_keyword").value="";
+  ["trade","price","region","type","room","area","year"].forEach(function(n){
+    var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일"};
+    updChip(n,defs[n]);
+  });
+  allItems=[];sortCol="";sortDir="asc";searched=false;
+  buildAllPanels();buildTableHead();
+  document.getElementById("welcomeState").style.display="block";
+  document.getElementById("resultBar").style.display="none";
+  document.getElementById("resultTable").style.display="none";
+  document.getElementById("emptyState").style.display="none";
+  document.getElementById("pagination").innerHTML="";
+}
+
+window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTableHead();});
+</script>
+</body>
+</html>
