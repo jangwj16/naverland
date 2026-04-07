@@ -529,10 +529,10 @@ function doSearch(page){
     if(F.rooms){
       var rn=parseInt(F.rooms)||99;
       allItems=allItems.filter(function(item){
-        var ft=(item.feature||"")+(item.address||"");
-        var rm=ft.match(/방(\d)/)||ft.match(/(\d)룸/)||ft.match(/(\d)room/i);
-        if(!rm)return F.roomMode==="gte";
-        var cnt=parseInt(rm[1]);
+        var cnt=0;
+        if(item.room_count){cnt=parseInt(item.room_count)||0;}
+        else{var ft=(item.feature||"")+(item.address||"");var rm=ft.match(/방(\d)/)||ft.match(/(\d)룸/)||ft.match(/(\d)room/i);if(rm)cnt=parseInt(rm[1]);}
+        if(!cnt)return F.roomMode==="gte";
         return F.roomMode==="gte"?cnt>=rn:cnt===rn;
       });
     }
@@ -540,10 +540,10 @@ function doSearch(page){
     if(F.baths){
       var bn=parseInt(F.baths)||99;
       allItems=allItems.filter(function(item){
-        var ft=(item.feature||"")+(item.address||"");
-        var bm=ft.match(/화(\d)/)||ft.match(/욕실(\d)/)||ft.match(/화장실(\d)/);
-        if(!bm)return F.bathMode==="gte";
-        var cnt=parseInt(bm[1]);
+        var cnt=0;
+        if(item.bath_count){cnt=parseInt(item.bath_count)||0;}
+        else{var ft=(item.feature||"")+(item.address||"");var bm=ft.match(/화(\d)/)||ft.match(/욕실(\d)/)||ft.match(/화장실(\d)/);if(bm)cnt=parseInt(bm[1]);}
+        if(!cnt)return F.bathMode==="gte";
         return F.bathMode==="gte"?cnt>=bn:cnt===bn;
       });
     }
