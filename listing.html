@@ -512,7 +512,7 @@ function renderItems(){
   pageItems.forEach(function(item,i){
     var tr=document.createElement("tr");
     var nid=item.naver_id||"";
-    if(nid){tr.onclick=function(){window.open("https://new.land.naver.com/articles/"+nid,"_blank");};}
+    if(nid){tr.onclick=function(){var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);var landUrl=isMobile?"https://m.land.naver.com/article/info/"+nid:"https://new.land.naver.com/articles/"+nid;window.open(landUrl,"_blank");};}
     var tc=item.trade_type==="매매"?"b-sell":item.trade_type==="전세"?"b-jeon":"b-wol";
     var n=start+i+1;
     tr.innerHTML="<td>"+n+"</td><td><span class='badge "+tc+"'>"+(item.trade_type||"-")+"</span></td><td><span class='type-badge'>"+(item.type_normalized||"-")+"</span></td><td class='addr-cell' title='"+(item.address||"").replace(/'/g,"&#39;")+"'>"+(item.address||"-")+"</td><td class='price-cell'>"+fmtPr(item)+"</td><td>"+(item.net_area||"-")+"</td><td>"+(item.region_small||"-")+"</td><td class='feature-cell' title='"+(item.feature||"").replace(/'/g,"&#39;")+"'>"+(item.feature||"-")+"</td><td>"+(function(){var s=item.sub_account_name||"-";var m=s.match(/([가-힣]{2,3})/);return m?m[1]:s;})()+"</td>";
