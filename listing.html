@@ -491,7 +491,7 @@ function doSearch(page){
   var params=new URLSearchParams();
   params.set("page","1");params.set("size","100000");
   if(F.trade)params.set("trade_type",F.trade);
-  if(F.types.length===1)params.set("type_name_filter",F.types[0]);
+  // type 필터는 프론트에서 type_normalized로 처리
   if(F.rl)params.set("region_large",F.rl);
   if(F.rm)params.set("region_mid",F.rm);
   if(F.rs)params.set("region_small",F.rs);
@@ -504,7 +504,7 @@ function doSearch(page){
     document.getElementById("loadingBar").classList.remove("on");
     allItems=data.items||[];
     // 매물유형 다중 필터 (서버에서 1개만 지원하므로 클라이언트에서 추가 필터)
-    if(F.types.length>0){allItems=allItems.filter(function(item){return F.types.indexOf(item.type_normalized)>=0;});}
+    if(F.types.length>0){allItems=allItems.filter(function(item){return F.types.indexOf(item.type_normalized)>=0||F.types.indexOf(item.type_name)>=0;});}
     // 시설옵션 필터
     if(F.facs.length>0){allItems=allItems.filter(function(item){var ft=(item.feature||"")+(item.facilities||"");return F.facs.every(function(fac){return ft.indexOf(fac)>=0;});});}
     // 중복 제거 (같은 주소+금액+면적)
