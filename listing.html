@@ -22,6 +22,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .price-btn{padding:12px 8px;border:1px solid var(--bor);border-radius:8px;font-size:14px;text-align:center;cursor:pointer;background:#fff;font-family:inherit;}
 .price-btn:hover{border-color:var(--pri);color:var(--pri);}
 .price-btn.sel{background:var(--pri);color:#fff;border-color:var(--pri);}
+.price-btn.sel-range{background:#dbeafe;color:var(--pri);border-color:#93c5fd;}
 .price-range{display:flex;align-items:center;gap:4px;margin-top:8px;}
 .price-range input{width:80px;padding:6px 8px;border:1px solid var(--bor);border-radius:6px;font-size:12px;text-align:center;font-family:inherit;}
 .pm-btn{width:28px;height:28px;border:1px solid var(--bor);border-radius:6px;background:#fff;cursor:pointer;font-size:16px;font-weight:700;color:var(--txt2);display:flex;align-items:center;justify-content:center;}
@@ -270,23 +271,35 @@ function buildPricePanel(){
 function fmtUk(v){return v>=10000?(v/10000)+"억":(v/1000)+"천";}
 var prSt=0;
 function clickPr(v){
-  if(prSt===0){document.getElementById("pr_min").value=v;prSt=1;}
-  else{document.getElementById("pr_max").value=v;prSt=0;}
-  document.querySelectorAll(".price-btn").forEach(function(b){b.classList.remove("sel");});
-  var mn=parseInt(document.getElementById("pr_min").value)||0;
-  var mx=parseInt(document.getElementById("pr_max").value)||0;
-  if(mn&&mx&&mn>mx){var t=mn;document.getElementById("pr_min").value=mx;document.getElementById("pr_max").value=t;}
-  document.querySelectorAll(".price-btn").forEach(function(b){
-    var bv=parseInt(b.textContent.replace(/[^0-9]/g,""))*10000||0;
-    if(bv===0){var m=b.textContent.match(/([0-9.]+)/);if(m)bv=parseFloat(m[1])*10000;}
-    var cmin=parseInt(document.getElementById("pr_min").value)||0;
-    var cmax=parseInt(document.getElementById("pr_max").value)||0;
-    if(cmin&&bv===cmin)b.classList.add("sel");
-    if(cmax&&bv===cmax)b.classList.add("sel");
+  var grid=document.getElementById("priceGrid");
+  if(prSt===0){
+    document.getElementById("pr_min").value=v;
+    document.getElementById("pr_max").value="";
+    prSt=1;
+    grid.querySelectorAll(".price-btn").forEach(function(b){b.classList.remove("sel");b.classList.remove("sel-range");});
+    grid.querySelectorAll(".price-btn").forEach(function(b){if(b.textContent===fmtUk(v))b.classList.add("sel");});
+  } else {
+    var minV=parseInt(document.getElementById("pr_min").value)||0;
+    if(v<minV){document.getElementById("pr_min").value=v;document.getElementById("pr_max").value=minV;}
+    else{document.getElementById("pr_max").value=v;}
+    prSt=0;
+    var finalMin=parseInt(document.getElementById("pr_min").value)||0;
+    var finalMax=parseInt(document.getElementById("pr_max").value)||0;
+    highlightPriceRange(finalMin,finalMax);
+  }
+}
+function highlightPriceRange(minV,maxV){
+  var vals=[10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,110000,120000,130000,150000,170000,200000,230000,250000];
+  var grid=document.getElementById("priceGrid");
+  grid.querySelectorAll(".price-btn").forEach(function(b,i){
+    b.classList.remove("sel");b.classList.remove("sel-range");
+    var bv=vals[i];
+    if(bv===minV||bv===maxV)b.classList.add("sel");
+    else if(bv>minV&&bv<maxV)b.classList.add("sel-range");
   });
 }
 function applyPrice(){F.pmin=document.getElementById("pr_min").value;F.pmax=document.getElementById("pr_max").value;var l="가격대";if(F.pmin&&F.pmax)l=fmtUk(+F.pmin)+"~"+fmtUk(+F.pmax);else if(F.pmin)l=fmtUk(+F.pmin)+"이상";else if(F.pmax)l=fmtUk(+F.pmax)+"이하";updChip("price",l);closeP("price");if(searched)doSearch(1);}
-function resetPrice(){document.getElementById("pr_min").value="";document.getElementById("pr_max").value="";F.pmin="";F.pmax="";updChip("price","가격대");prSt=0;}
+function resetPrice(){document.getElementById("pr_min").value="";document.getElementById("pr_max").value="";F.pmin="";F.pmax="";updChip("price","가격대");prSt=0;document.getElementById("priceGrid").querySelectorAll(".price-btn").forEach(function(b){b.classList.remove("sel");b.classList.remove("sel-range");});}
 
 // ===== 지역 =====
 function buildRegionPanel(){
