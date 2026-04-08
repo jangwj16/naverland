@@ -99,6 +99,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
   </div>
 </div>
 <script>
+
+var PWA_TK=(new URLSearchParams(location.search)).get('tk')||'dia2026pwa';
+
         // [건축물대장] 기능 로직 (API키는 서버에서 관리)
 
         // =========================================
@@ -131,7 +134,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
 
             try {
 
-                var resp = await fetch('https://diahouse.kr/api/pwa/addr-search?token=dia2026pwa&q='+encodeURIComponent(q));
+                var resp = await fetch('https://diahouse.kr/api/pwa/addr-search?token='+PWA_TK+'&q='+encodeURIComponent(q));
 
                 var data = await resp.json();
 
@@ -237,7 +240,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
 
                 if(bdSelectedApi==='getBrExposPubuseAreaInfo'){
 
-                    var tUrl='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType=getBrTitleInfo&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
+                    var tUrl='https://diahouse.kr/api/pwa/building?token='+PWA_TK+'&apiType=getBrTitleInfo&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
 
                     if(bjdong) tUrl+='&bjdongCd='+bjdong;
 
@@ -315,7 +318,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
 
                 }
 
-                var url='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType='+bdSelectedApi+'&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
+                var url='https://diahouse.kr/api/pwa/building?token='+PWA_TK+'&apiType='+bdSelectedApi+'&sigunguCd='+sigunguCd+'&bun='+bp+'&ji='+jp;
 
                 if(bjdong) url+='&bjdongCd='+bjdong;
 
@@ -355,7 +358,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
 
             try{
 
-                var url='https://diahouse.kr/api/pwa/building?token=dia2026pwa&apiType=getBrExposPubuseAreaInfo&sigunguCd='+q.sigunguCd+'&bun='+q.bp+'&ji='+q.jp;
+                var url='https://diahouse.kr/api/pwa/building?token='+PWA_TK+'&apiType=getBrExposPubuseAreaInfo&sigunguCd='+q.sigunguCd+'&bun='+q.bp+'&ji='+q.jp;
 
                 if(q.bjdong)url+='&bjdongCd='+q.bjdong;
 

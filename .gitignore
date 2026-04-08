@@ -1,0 +1,18 @@
+# 백업 파일
+*.bak*
+*.backup
+*_BAK_*
+
+# 테스트 파일
+test.html
+
+# 프로젝트 설명서 (API 키 포함)
+CLAUDE.md
+
+# 임시 파일
+_temp_backup/
+_our_files/
+
+# OS 파일
+.DS_Store
+Thumbs.db
