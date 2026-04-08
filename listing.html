@@ -566,14 +566,17 @@ function doSearch(page){
         return a>=amin&&a<=amax;
       });
     }
-    // 사용승인일 필터 (프론트)
+    // 사용승인일 필터 (프론트) - 경과 연수 기준
     if(F.yearMax){
-      var cutoff=parseInt(F.yearMax);
+      var maxAge=parseInt(F.yearMax);
+      var thisYear=new Date().getFullYear();
       allItems=allItems.filter(function(item){
         var ad=item.approval_date||"";
         if(!ad)return false;
         var y=parseInt(ad.substring(0,4))||0;
-        return y>=cutoff;
+        if(y<1900)return false;
+        var age=thisYear-y;
+        return age<=maxAge;
       });
     }
     dedupCount=before-allItems.length;
@@ -611,7 +614,7 @@ function renderItems(){
   pageItems.forEach(function(item,i){
     var tr=document.createElement("tr");
     var nid=item.naver_id||"";
-    if(nid){tr.onclick=function(){var sect=(item.type_normalized==="지식산업센터")?"offices":"houses";var landUrl="https://new.land.naver.com/"+sect+"?articleNo="+nid;window.open(landUrl,"_blank");};}
+    tr.onclick=function(){showDetail(item);};
     var tc=item.trade_type==="매매"?"b-sell":item.trade_type==="전세"?"b-jeon":"b-wol";
     var n=start+i+1;
     var addrFull = (item.address||"");
@@ -657,6 +660,75 @@ function resetAll(){
   document.getElementById("resultTable").style.display="none";
   document.getElementById("emptyState").style.display="none";
   document.getElementById("pagination").innerHTML="";
+}
+
+// ===== 매물 상세 모달 =====
+function showDetail(item) {
+  var tc = item.trade_type==='매매' ? 'b-sell' : item.trade_type==='전세' ? 'b-jeon' : 'b-wol';
+  var priceText = fmtPr(item);
+  var nid = item.naver_id || '';
+  var memo = item.private_memo || '';
+  var photoUrls = [];
+  try { if(item.photo_urls) photoUrls = JSON.parse(item.photo_urls); } catch(e){}
+
+  var el = document.createElement('div');
+  el.id = 'detail-modal';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  el.onclick = function(e){ if(e.target===el) el.remove(); };
+
+  var box = '<div style="background:#fff;border-radius:16px;padding:24px;max-width:480px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto;">';
+  box += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><span style="font-size:17px;font-weight:800;">매물 상세</span><button id="dm-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;padding:0 4px;">✕</button></div>';
+  box += '<div style="display:flex;gap:8px;margin-bottom:10px;"><span class="badge '+tc+'" style="font-size:12px;padding:4px 10px;">'+(item.trade_type||'-')+'</span><span style="font-size:12px;padding:4px 10px;background:#f1f5f9;border-radius:6px;">'+(item.type_normalized||'-')+'</span></div>';
+  box += '<div style="font-size:24px;font-weight:900;color:#1e293b;margin-bottom:12px;">'+priceText+'</div>';
+
+  // 매물 정보 테이블
+  box += '<table style="display:table;width:100%;font-size:13px;border-collapse:collapse;margin-bottom:14px;">';
+  var rows = [
+    ['소재지', item.address||'-'],
+    ['전용/공급', (item.net_area||'-')+'㎡ / '+(item.total_area||'-')+'㎡'],
+    ['특징', item.feature||'-'],
+    ['담당', item.sub_account_name||'-']
+  ];
+  rows.forEach(function(r){
+    box += '<tr><td style="padding:6px 10px;font-weight:600;color:#64748b;white-space:nowrap;border-bottom:1px solid #f1f5f9;width:65px;">'+r[0]+'</td><td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;">'+r[1]+'</td></tr>';
+  });
+  box += '</table>';
+
+  // 버튼: 네이버 + 브리핑시트
+  box += '<div style="display:flex;gap:10px;margin-bottom:14px;">';
+  if(nid) box += '<button id="dm-naver" style="flex:1;padding:13px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🏠 네이버부동산</button>';
+  box += '<button id="dm-briefing" style="flex:1;padding:13px;background:linear-gradient(135deg,#bf953f,#d4a84b);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">📋 브리핑시트</button>';
+  box += '</div>';
+
+  // 비공개 메모
+  box += '<div style="background:#f8f9fa;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">';
+  box += '<div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px;">🔒 비공개 메모</div>';
+  if(memo) {
+    var safeMemo = memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+safeMemo+'</div>';
+  } else {
+    box += '<div style="font-size:13px;color:#aaa;padding:12px;text-align:center;">메모 없음 (동기화 시 자동 수집)</div>';
+  }
+  box += '</div>';
+
+  // 사진
+  if(photoUrls.length > 0) {
+    box += '<div style="margin-top:12px;background:#f8f9fa;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">';
+    box += '<div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px;">📸 등록 사진 ('+photoUrls.length+'장)</div>';
+    box += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    photoUrls.forEach(function(url){
+      box += '<img src="'+url+'" style="width:75px;height:75px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+    });
+    box += '</div></div>';
+  }
+
+  box += '</div>';
+  el.innerHTML = box;
+  document.body.appendChild(el);
+
+  el.querySelector('#dm-close').onclick = function(){ el.remove(); };
+  if(nid) el.querySelector('#dm-naver').onclick = function(){ var naverPath = (item.type_normalized === '지식산업센터') ? 'offices' : 'houses'; window.open('https://new.land.naver.com/'+naverPath+'?articleNo='+nid,'_blank'); };
+  el.querySelector('#dm-briefing').onclick = function(){ el.remove(); window.open('/briefing?type='+(item.type_normalized||'')+'&trade='+(item.trade_type||'')+'&addr='+encodeURIComponent(item.address||'')+'&areaEx='+(item.net_area||'')+'%E3%8E%A1&areaSup='+(item.total_area||'')+'%E3%8E%A1&price='+encodeURIComponent(fmtPr(item))+'&rooms='+(item.room_count||'')+'&baths='+(item.bath_count||'')+'&approval='+(item.approval_date||'')+'&feature='+encodeURIComponent(item.feature||''),'_blank'); };
 }
 
 window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTableHead();});
