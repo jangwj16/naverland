@@ -611,7 +611,7 @@ function renderItems(){
   pageItems.forEach(function(item,i){
     var tr=document.createElement("tr");
     var nid=item.naver_id||"";
-    if(nid){tr.onclick=function(){var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);var landUrl=isMobile?"https://m.land.naver.com/article/info/"+nid:"https://new.land.naver.com/articles/"+nid;window.open(landUrl,"_blank");};}
+    if(nid){tr.onclick=function(){var sect=(item.type_normalized==="지식산업센터")?"offices":"houses";var landUrl="https://new.land.naver.com/"+sect+"?articleNo="+nid;window.open(landUrl,"_blank");};}
     var tc=item.trade_type==="매매"?"b-sell":item.trade_type==="전세"?"b-jeon":"b-wol";
     var n=start+i+1;
     var addrFull = (item.address||"");
