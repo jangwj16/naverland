@@ -109,10 +109,17 @@
   <div style="text-align:center;"><button class="btn btn-logout" onclick="logout()">로그아웃</button></div>
 </div>
 <div id="tab-tax" class="tab-content">
-  <div style="text-align:center;margin-bottom:20px;">
-    <div style="font-size:20px;font-weight:900;color:#222;">💎 취득세 · 중개보수 계산기</div>
+  <div style="text-align:center;margin-bottom:12px;">
+    <div style="font-size:18px;font-weight:900;color:#222;">💎 계산기</div>
     <div style="font-size:11px;color:#999;">참고용 · 정확한 금액은 세무사 확인</div>
   </div>
+  <!-- 하위 탭 -->
+  <div style="display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid #ddd;">
+    <button class="sub-tab active" onclick="switchSubTab('loan',this)" style="flex:1;padding:10px 4px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:#c9a040;color:#fff;">🏦 매수자금·대출</button>
+    <button class="sub-tab" onclick="switchSubTab('fee',this)" style="flex:1;padding:10px 4px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🤝 중개보수</button>
+    <button class="sub-tab" onclick="switchSubTab('acq',this)" style="flex:1;padding:10px 4px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏠 취득세</button>
+  </div>
+  <div id="sub-acq" style="display:none;">
   <div class="tx-card"><h3>🏠 취득세 계산</h3>
     <div class="tx-field"><label>부동산 종류</label><div class="tx-opts">
       <div class="tx-opt sel" onclick="txSel(this,'prop','apt')">아파트·빌라</div>
@@ -151,7 +158,9 @@
     <button class="tx-btn" onclick="calcAcq()">취득세 계산</button>
     <div id="resAcq" class="tx-result"></div>
   </div>
-  <div class="tx-divider"></div>
+  </div><!-- /sub-acq -->
+
+  <div id="sub-fee" style="display:none;">
   <div class="tx-card"><h3>🤝 중개보수(복비) 계산</h3>
     <div class="tx-field"><label>거래금액 (원)</label><input type="text" id="txFeePrice" placeholder="예: 500000000 (5억)" inputmode="numeric"></div>
     <div class="tx-field"><label>거래유형</label><div class="tx-opts">
@@ -166,10 +175,9 @@
     <button class="tx-btn" onclick="calcFee()">중개보수 계산</button>
     <div id="resFee" class="tx-result"></div>
   </div>
-  <div style="text-align:center;"><button onclick="resetTax()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 전체 초기화</button></div>
-  <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음 · 2026.4 기준<br>다이아공인중개사</div>
+  </div><!-- /sub-fee -->
 
-<div style="border-top:2px solid #444;margin:30px 0"></div>
+  <div id="sub-loan" style="display:block;">
   <div style="text-align:center;margin-bottom:20px;">
     <div style="font-size:20px;font-weight:900;color:#222;">🏦 매수자금 · 대출 계산기</div>
     <div style="font-size:11px;color:#999;">필요 가용현금 + 월 상환금액 한눈에</div>
@@ -228,13 +236,24 @@
   </div>
   <div id="resLoan" class="loan-summary"></div>
   <div style="text-align:center;margin-top:16px;"><button onclick="resetLoan()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 초기화</button></div>
-  <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 실제 대출조건은 금융기관 확인<br>다이아공인중개사</div>
+  </div><!-- /sub-loan -->
+
+  <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음 · 2026.4 기준<br>다이아공인중개사</div>
 </div>
 
 </div>
 
 <!-- ========== 대출계산기 탭 ========== -->
 <script>
+function switchSubTab(id,el){
+  ['loan','fee','acq'].forEach(function(t){
+    var d=document.getElementById('sub-'+t);
+    if(d) d.style.display=(t===id)?'block':'none';
+  });
+  var btns=el.parentElement.querySelectorAll('.sub-tab');
+  btns.forEach(function(b){b.style.background='#f5f5f5';b.style.color='#666';});
+  el.style.background='#c9a040';el.style.color='#fff';
+}
 function switchTab(id,el){
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
   document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});
