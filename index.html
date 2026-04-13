@@ -95,6 +95,7 @@
   <div class="tab-btn active" onclick="switchTab('search',this)">🔍 확인</div>
   <div class="tab-btn" onclick="location.href='listing.html'">🏠 매물</div>
   <div class="tab-btn" onclick="switchTab('tax',this)">🧮 계산</div>
+  <div class="tab-btn" onclick="switchTab('contract',this)">📝 계약</div>
   <div class="tab-btn" onclick="location.href='building.html'">🏛️ 건축물</div>
 </div>
 <div id="tab-search" class="tab-content active">
@@ -112,6 +113,9 @@
   </div></div>
   <div id="ql-result" style="display:none;margin-top:12px;"></div>
   <div style="text-align:center;margin-top:16px;"><button class="btn btn-logout" onclick="logout()">로그아웃</button></div>
+</div>
+<div id="tab-contract" class="tab-content">
+  <iframe src="https://diahouse.kr/contract" style="width:100%;height:calc(100vh - 120px);border:none;border-radius:8px;"></iframe>
 </div>
 <div id="tab-tax" class="tab-content">
   <div style="text-align:center;margin-bottom:12px;">
