@@ -741,7 +741,12 @@ function showDetail(item) {
 
   el.querySelector('#dm-close').onclick = function(){ el.remove(); };
   if(nid) el.querySelector('#dm-naver').onclick = function(){ var naverPath = (item.type_normalized === '지식산업센터') ? 'offices' : 'houses'; window.open('https://new.land.naver.com/'+naverPath+'?articleNo='+nid,'_blank'); };
-  el.querySelector('#dm-briefing').onclick = function(){ el.remove(); window.open('/briefing?type='+(item.type_normalized||'')+'&trade='+(item.trade_type||'')+'&addr='+encodeURIComponent(item.address||'')+'&areaEx='+(item.net_area||'')+'%E3%8E%A1&areaSup='+(item.total_area||'')+'%E3%8E%A1&price='+encodeURIComponent(fmtPr(item))+'&rooms='+(item.room_count||'')+'&baths='+(item.bath_count||'')+'&approval='+(item.approval_date||'')+'&feature='+encodeURIComponent(item.feature||''),'_blank'); };
+  el.querySelector('#dm-briefing').onclick = function(){
+    el.remove();
+    var bp = '/briefing?type='+(item.type_normalized||'')+'&trade='+(item.trade_type||'')+'&addr='+encodeURIComponent(item.address||'')+'&areaEx='+(item.net_area||'')+'%E3%8E%A1&areaSup='+(item.total_area||'')+'%E3%8E%A1&price='+encodeURIComponent(fmtPr(item))+'&rooms='+(item.room_count||'')+'&baths='+(item.bath_count||'')+'&approval='+(item.approval_date||'')+'&feature='+encodeURIComponent(item.feature||'')+'&floor='+(item.floor_info||'')+'&direction='+(item.direction||'')+'&heating='+(item.heating_type||'')+'&moveIn='+(item.move_in||'')+'&parking='+(item.parking||'')+'&elevator='+(item.elevator||'')+'&option='+(item.facilities||'');
+    if(item.photo_urls){try{var pu=JSON.parse(item.photo_urls);if(pu&&pu.length)bp+='&photos='+encodeURIComponent(pu.join(','));}catch(e){}}
+    window.open(bp,'_blank');
+  };
 }
 
 window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTableHead();});

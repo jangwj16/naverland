@@ -156,7 +156,7 @@
     <div class="tx-field"><label>거래금액 (원)</label><input type="text" id="txFeePrice" placeholder="예: 500000000 (5억)" inputmode="numeric"></div>
     <div class="tx-field"><label>거래유형</label><div class="tx-opts">
       <div class="tx-opt sel" onclick="txSel(this,'deal','trade')">매매·교환</div>
-      <div class="tx-opt" onclick="txSel(this,'deal','rent')">임대차</div>
+      <div class="tx-opt" onclick="txSel(this,'deal','rent')">임대차(전월세)</div>
     </div></div>
     <div class="tx-field"><label>부동산유형</label><div class="tx-opts">
       <div class="tx-opt sel" onclick="txSel(this,'fprop','house')">주택</div>
@@ -323,11 +323,35 @@ function calcFee(){
   if(!price){r.className='tx-result show';r.innerHTML='<p style="color:#999;text-align:center">거래금액을 입력하세요</p>';return}
   var rt=0,lm=0,lb='';
   if(S.fprop==='house'){
-    if(S.deal==='trade'){if(price<50000000){rt=0.6;lm=250000;lb='주택매매 5천만미만'}else if(price<200000000){rt=0.5;lm=800000;lb='주택매매 5천만~2억'}else if(price<600000000){rt=0.4;lb='주택매매 2~6억'}else if(price<900000000){rt=0.5;lb='주택매매 6~9억'}else{rt=0.9;lb='주택매매 9억이상 (협의)'}}
-    else{if(price<50000000){rt=0.5;lm=200000;lb='주택임대 5천만미만'}else if(price<100000000){rt=0.4;lm=300000;lb='주택임대 5천만~1억'}else if(price<600000000){rt=0.3;lb='주택임대 1~6억'}else if(price<1200000000){rt=0.4;lb='주택임대 6~12억'}else{rt=0.8;lb='주택임대 12억이상 (협의)'}}
+    if(S.deal==='trade'){
+      if(price<50000000){rt=0.6;lm=250000;lb='주택매매 5천만 미만'}
+      else if(price<200000000){rt=0.5;lm=800000;lb='주택매매 5천만~2억'}
+      else if(price<600000000){rt=0.4;lb='주택매매 2억~6억'}
+      else if(price<900000000){rt=0.4;lb='주택매매 6억~9억'}
+      else if(price<1200000000){rt=0.5;lb='주택매매 9억~12억'}
+      else if(price<1500000000){rt=0.6;lb='주택매매 12억~15억'}
+      else{rt=0.7;lb='주택매매 15억 이상'}
+    } else {
+      if(price<50000000){rt=0.5;lm=200000;lb='주택임대 5천만 미만'}
+      else if(price<100000000){rt=0.4;lm=300000;lb='주택임대 5천만~1억'}
+      else if(price<600000000){rt=0.3;lb='주택임대 1억~6억'}
+      else if(price<900000000){rt=0.4;lb='주택임대 6억~9억'}
+      else if(price<1200000000){rt=0.4;lb='주택임대 9억~12억'}
+      else if(price<1500000000){rt=0.5;lb='주택임대 12억~15억'}
+      else{rt=0.6;lb='주택임대 15억 이상'}
+    }
   }else if(S.fprop==='offi'){
-    if(S.deal==='trade'){if(price<50000000){rt=0.5;lm=250000;lb='오피스텔매매 5천만미만'}else if(price<200000000){rt=0.4;lb='오피스텔매매 5천만~2억'}else if(price<600000000){rt=0.5;lb='오피스텔매매 2~6억'}else{rt=0.9;lb='오피스텔매매 6억이상 (협의)'}}
-    else{if(price<50000000){rt=0.4;lm=200000;lb='오피스텔임대 5천만미만'}else if(price<100000000){rt=0.3;lm=300000;lb='오피스텔임대 5천만~1억'}else if(price<600000000){rt=0.4;lb='오피스텔임대 1~6억'}else{rt=0.8;lb='오피스텔임대 6억이상 (협의)'}}
+    if(S.deal==='trade'){
+      if(price<50000000){rt=0.5;lm=250000;lb='오피스텔매매 5천만 미만'}
+      else if(price<200000000){rt=0.4;lb='오피스텔매매 5천만~2억'}
+      else if(price<600000000){rt=0.5;lb='오피스텔매매 2~6억'}
+      else{rt=0.9;lb='오피스텔매매 6억 이상 (협의)'}
+    } else {
+      if(price<50000000){rt=0.4;lm=200000;lb='오피스텔임대 5천만 미만'}
+      else if(price<100000000){rt=0.3;lm=300000;lb='오피스텔임대 5천만~1억'}
+      else if(price<600000000){rt=0.4;lb='오피스텔임대 1~6억'}
+      else{rt=0.8;lb='오피스텔임대 6억 이상 (협의)'}
+    }
   }else{rt=0.9;lb=S.deal==='trade'?'상가·토지 매매 (협의)':'상가·토지 임대 (협의)'}
   var fee=Math.floor(price*rt/100);if(lm>0&&fee>lm)fee=lm;
   r.innerHTML='<div class="tx-total">'+fmt(fee)+'원</div><div style="text-align:center;font-size:12px;color:#888;margin-top:-10px;margin-bottom:12px;">(부가세 별도)</div><div class="tx-row hi"><span class="tl">적용</span><span class="tv">'+lb+' ('+rt+'%)</span></div>'+(lm>0?'<div class="tx-row hi"><span class="tl">한도액</span><span class="tv">'+fmt(lm)+'원</span></div>':'')+'<div class="tx-row tot"><span class="tl">중개보수</span><span class="tv">'+fmt(fee)+'원 (부가세별도)</span></div>';
