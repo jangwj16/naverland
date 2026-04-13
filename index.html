@@ -102,11 +102,16 @@
     <textarea id="ids" rows="2" placeholder="예: 2541088852, 2539865439" inputmode="numeric"></textarea>
     <button class="btn" onclick="openById()">열기</button>
   </div></div>
-  <div class="section"><h3>주소로 검색</h3><div class="row">
-    <input type="text" id="addr" placeholder="예: 청초로 66" />
-    <button class="btn" onclick="searchByAddress()">검색</button>
+  <div class="section"><h3>📍 주소로 보유매물 확인</h3><div class="row">
+    <input type="text" id="addr" placeholder="예: 갈현동 550" />
+    <button class="btn" onclick="searchByAddr()">검색</button>
   </div></div>
-  <div style="text-align:center;"><button class="btn btn-logout" onclick="logout()">로그아웃</button></div>
+  <div class="section"><h3>🔎 소유주등 기타정보로 찾기</h3><div class="row">
+    <input type="text" id="memo" placeholder="소유주명, 전화번호, 메모 등" />
+    <button class="btn" onclick="searchByMemo()">검색</button>
+  </div></div>
+  <div id="ql-result" style="display:none;margin-top:12px;"></div>
+  <div style="text-align:center;margin-top:16px;"><button class="btn btn-logout" onclick="logout()">로그아웃</button></div>
 </div>
 <div id="tab-tax" class="tab-content">
   <div style="text-align:center;margin-bottom:12px;">
@@ -267,10 +272,42 @@ function openById(){
   if(!found.length){alert("매물번호를 입력하세요");return;}
   found.forEach(function(id,i){setTimeout(function(){window.open('https://m.land.naver.com/article/info/'+encodeURIComponent(id),'_blank')},i*200)});
 }
-function searchByAddress(){
-  var addr=document.getElementById('addr').value.trim();
-  if(!addr){alert("주소를 입력하세요");return;}
-  window.open('https://map.kakao.com/?q='+encodeURIComponent(addr),'_blank');
+function searchByAddr(){
+  var v=document.getElementById('addr').value.trim();
+  if(!v){alert("주소를 입력하세요");return;}
+  qlDoSearch(v,'address');
+}
+function searchByMemo(){
+  var v=document.getElementById('memo').value.trim();
+  if(!v){alert("검색어를 입력하세요");return;}
+  qlDoSearch(v,'memo');
+}
+function qlDoSearch(q,mode){
+  var el=document.getElementById('ql-result');
+  el.style.display='block';
+  el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">검색 중...</div>';
+  fetch('https://diahouse.kr/nrank-api/customer-match/quick-search?q='+encodeURIComponent(q)+'&mode='+mode)
+    .then(function(r){return r.json()})
+    .then(function(d){
+      var items=d.results||[];
+      if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">검색 결과가 없습니다</div>';return;}
+      var html='<div style="font-size:13px;color:#666;margin-bottom:8px;">검색 결과 <b style="color:#2563eb;">'+items.length+'</b>건</div>';
+      items.forEach(function(r){
+        var price=r.trade_type==='매매'?(r.price?Number(r.price).toLocaleString()+'만':'-'):(r.deposit?Number(r.deposit).toLocaleString()+'만':'-');
+        var statusColor=r.status==='노출중'?'#10b981':'#94a3b8';
+        html+='<div onclick="window.open(\'https://m.land.naver.com/article/info/'+r.naver_id+'\',\'_blank\')" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:6px;cursor:pointer;">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+        html+='<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+statusColor+'20;color:'+statusColor+';font-weight:600;">'+r.status+'</span>';
+        html+='<span style="font-size:11px;color:#94a3b8;">'+(r.sub_account_name||'')+'</span></div>';
+        html+='<div style="font-size:14px;font-weight:600;margin-bottom:2px;">'+(r.address_group||r.address||'-')+'</div>';
+        html+='<div style="font-size:16px;font-weight:800;color:#111;margin-bottom:2px;">'+(r.trade_type||'')+' '+price+'</div>';
+        html+='<div style="font-size:12px;color:#64748b;">'+(r.type_normalized||'')+' | 전용'+(r.net_area||'-')+'㎡ | 방'+(r.room_count||'-')+'</div>';
+        if(r.private_memo)html+='<div style="font-size:11px;color:#94a3b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">메모: '+r.private_memo.substring(0,40)+'</div>';
+        html+='</div>';
+      });
+      el.innerHTML=html;
+    })
+    .catch(function(e){el.innerHTML='<div style="text-align:center;padding:20px;color:red;">검색 오류: '+e.message+'</div>';});
 }
 var S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house',loanGrace:'0',loanType:'equal'};
 function txSel(el,g,v){
