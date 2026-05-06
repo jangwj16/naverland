@@ -689,7 +689,7 @@ function showDetail(item) {
   el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
   el.onclick = function(e){ if(e.target===el) el.remove(); };
 
-  var box = '<div style="background:#fff;border-radius:16px;padding:24px;max-width:480px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto;">';
+  var box = '<div style="background:#fff;border-radius:16px;padding:24px;max-width:480px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:92vh;overflow-y:auto;">';
   box += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><span style="font-size:17px;font-weight:800;">매물 상세</span><button id="dm-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;padding:0 4px;">✕</button></div>';
   box += '<div style="display:flex;gap:8px;margin-bottom:10px;"><span class="badge '+tc+'" style="font-size:12px;padding:4px 10px;">'+(item.trade_type||'-')+'</span><span style="font-size:12px;padding:4px 10px;background:#f1f5f9;border-radius:6px;">'+(item.type_normalized||'-')+'</span></div>';
   box += '<div style="font-size:24px;font-weight:900;color:#1e293b;margin-bottom:12px;">'+priceText+'</div>';
@@ -718,7 +718,7 @@ function showDetail(item) {
   box += '<div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px;">🔒 비공개 메모</div>';
   if(memo) {
     var safeMemo = memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+safeMemo+'</div>';
+    box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+safeMemo+'</div>';
   } else {
     box += '<div style="font-size:13px;color:#aaa;padding:12px;text-align:center;">메모 없음 (동기화 시 자동 수집)</div>';
   }
