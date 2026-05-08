@@ -171,10 +171,17 @@
 
   <div id="sub-fee" style="display:none;">
   <div class="tx-card"><h3>🤝 중개보수(복비) 계산</h3>
-    <div class="tx-field"><label>거래금액 (원)</label><input type="text" id="txFeePrice" placeholder="예: 500000000 (5억)" inputmode="numeric"></div>
+    <div class="tx-field" id="txFeeTradeBox"><label>거래금액 (원)</label><input type="text" id="txFeePrice" placeholder="예: 500000000 (5억)" inputmode="numeric"></div>
+    <div class="tx-field" id="txFeeRentBox" style="display:none;"><label>보증금 / 월세 (만원)</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="txFeeDeposit" placeholder="보증금 예: 5000" inputmode="numeric" style="flex:1;">
+        <input type="text" id="txFeeMonthly" placeholder="월세 예: 50" inputmode="numeric" style="flex:1;">
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:4px;">환산보증금 = 보증금 + (월세 × 100)</div>
+    </div>
     <div class="tx-field"><label>거래유형</label><div class="tx-opts">
-      <div class="tx-opt sel" onclick="txSel(this,'deal','trade')">매매·교환</div>
-      <div class="tx-opt" onclick="txSel(this,'deal','rent')">임대차(전월세)</div>
+      <div class="tx-opt sel" onclick="txSel(this,'deal','trade');feeToggle()">매매·교환</div>
+      <div class="tx-opt" onclick="txSel(this,'deal','rent');feeToggle()">임대차(전월세)</div>
     </div></div>
     <div class="tx-field"><label>부동산유형</label><div class="tx-opts">
       <div class="tx-opt sel" onclick="txSel(this,'fprop','house')">주택</div>
@@ -377,8 +384,22 @@ function calcAcq(){
   r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용세율</span><span class="tv">'+lb+' (합계 '+tr+'%)</span></div><div class="tx-row"><span class="tl">취득세 ('+a.toFixed(2)+'%)</span><span class="tv">'+fmt(at)+'원</span></div><div class="tx-row"><span class="tl">농특세 ('+n.toFixed(2)+'%)</span><span class="tv">'+fmt(nt)+'원</span></div><div class="tx-row"><span class="tl">교육세 ('+e.toFixed(2)+'%)</span><span class="tv">'+fmt(et)+'원</span></div>'+fn+'<div class="tx-row tot"><span class="tl">총 납부세액</span><span class="tv">'+fmt(tot)+'원</span></div>';
   r.className='tx-result show';
 }
+function feeToggle(){
+  var isRent = (S.deal === 'rent');
+  var t = document.getElementById('txFeeTradeBox');
+  var rb = document.getElementById('txFeeRentBox');
+  if(t) t.style.display = isRent ? 'none' : '';
+  if(rb) rb.style.display = isRent ? '' : 'none';
+}
 function calcFee(){
-  var price=(parseFloat((document.getElementById('txFeePrice').value||'0').replace(/[^0-9]/g,''))||0);
+  var price;
+  if(S.deal === 'rent'){
+    var dep = parseFloat((document.getElementById('txFeeDeposit').value||'0').replace(/[^0-9]/g,''))||0;
+    var mon = parseFloat((document.getElementById('txFeeMonthly').value||'0').replace(/[^0-9]/g,''))||0;
+    price = (dep + mon*100) * 10000;  // 환산보증금 만원 → 원
+  } else {
+    price=(parseFloat((document.getElementById('txFeePrice').value||'0').replace(/[^0-9]/g,''))||0);
+  }
   var r=document.getElementById('resFee');
   if(!price){r.className='tx-result show';r.innerHTML='<p style="color:#999;text-align:center">거래금액을 입력하세요</p>';return}
   var rt=0,lm=0,lb='';
