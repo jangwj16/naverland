@@ -159,8 +159,20 @@ tbody tr{cursor:pointer;}
 <div class="pagination" id="pagination"></div>
 <script>
 // 🔐 다이아하우스 권한 enforce proxy 사용 (2026-05-13) — 직원 ID 별 시군구/메모 권한 자동 적용
-// 로그인 가드
+// 로그인 + PWA 탭 권한 가드
 if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
+(function(){
+  try {
+    var u = JSON.parse(localStorage.getItem('dia_user')||'null');
+    if (u && u.role !== 'master') {
+      var tabs = u.pwa_tabs || ['search','listing','tax','building'];
+      if (tabs.indexOf('listing') === -1) {
+        alert('이 탭(매물) 권한이 없습니다. 대표님에게 문의하세요.');
+        window.location.href = 'index.html';
+      }
+    }
+  } catch(e) {}
+})();
 var API="https://diahouse.kr/api/listings-protected",PS=50,cp=1,searched=false;
 // 토큰 헬퍼 (login.html 에서 저장한 dia_token 사용)
 function _diaHeaders(){var h={};var t=localStorage.getItem('dia_token');if(t)h['Authorization']='Bearer '+t;return h;}

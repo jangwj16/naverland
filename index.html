@@ -85,19 +85,47 @@
 <body>
 <script>
   if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
-  function logout(){localStorage.removeItem("dia_login");window.location.href="login.html";}
+  function logout(){localStorage.removeItem("dia_login");localStorage.removeItem("dia_token");localStorage.removeItem("dia_user");window.location.href="login.html";}
+  // 🔐 PWA 탭 권한 (2026-05-13) — diahouse users.json 의 pwa_tabs 적용
+  var _diaUser=null; try{_diaUser=JSON.parse(localStorage.getItem('dia_user')||'null');}catch(e){}
+  var _pwaTabs=(_diaUser && _diaUser.pwa_tabs) || ['search','listing','tax','building'];
+  var _isMaster=(_diaUser && _diaUser.role==='master');
 </script>
 <div class="header">
   <div class="logo"><img src="icons/icon-192.png" alt="DIA logo"></div>
   <h1>다이아부동산</h1>
 </div>
 <div class="tabs">
-  <div class="tab-btn active" onclick="switchTab('search',this)">🔍 확인</div>
-  <div class="tab-btn" onclick="location.href='listing.html'">🏠 매물</div>
-  <div class="tab-btn" onclick="switchTab('tax',this)">🧮 계산</div>
-  <div class="tab-btn" onclick="switchTab('contract',this)">📝 계약</div>
-  <div class="tab-btn" onclick="location.href='building.html'">🏛️ 건축물</div>
+  <div class="tab-btn active" id="pwa-tab-search" onclick="switchTab('search',this)">🔍 확인</div>
+  <div class="tab-btn" id="pwa-tab-listing" onclick="location.href='listing.html'">🏠 매물</div>
+  <div class="tab-btn" id="pwa-tab-tax" onclick="switchTab('tax',this)">🧮 계산</div>
+  <div class="tab-btn" id="pwa-tab-contract" onclick="switchTab('contract',this)">📝 계약</div>
+  <div class="tab-btn" id="pwa-tab-building" onclick="location.href='building.html'">🏛️ 건축물</div>
 </div>
+<script>
+  // 권한 없는 탭 자동 숨김 (master 는 전부 표시)
+  if (!_isMaster) {
+    ['search','listing','tax','contract','building'].forEach(function(t){
+      if (_pwaTabs.indexOf(t) === -1) {
+        var el = document.getElementById('pwa-tab-'+t);
+        if (el) el.style.display = 'none';
+      }
+    });
+    // 첫 번째 허용된 탭으로 자동 전환
+    if (_pwaTabs.indexOf('search') === -1) {
+      var first = _pwaTabs[0];
+      if (first === 'listing') location.href = 'listing.html';
+      else if (first === 'building') location.href = 'building.html';
+      // tax/contract 면 활성탭만 변경 — DOMContentLoaded 후 처리
+      else if (first) {
+        setTimeout(function(){
+          var el = document.getElementById('pwa-tab-'+first);
+          if (el) el.click();
+        }, 50);
+      }
+    }
+  }
+</script>
 <div id="tab-search" class="tab-content active">
   <div class="section"><h3>매물번호로 확인</h3><div class="row">
     <textarea id="ids" rows="2" placeholder="예: 2541088852, 2539865439" inputmode="numeric"></textarea>
