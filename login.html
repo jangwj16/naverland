@@ -6,37 +6,67 @@
   <title>다이아부동산 직원 로그인</title>
   <style>
     body { font-family: sans-serif; background:#f5f5f5; text-align:center; padding-top:80px; }
-    .box { background:white; padding:30px; border-radius:10px; width:300px; margin:auto; 
+    .box { background:white; padding:30px; border-radius:10px; width:300px; margin:auto;
            box-shadow:0 2px 8px rgba(0,0,0,.15); }
-    input { width:100%; padding:12px; margin:10px 0; font-size:15px; 
-            border-radius:6px; border:1px solid #ccc; }
-    button { width:100%; padding:12px; font-size:16px; background:#c9a040; color:white; 
+    input { width:100%; padding:12px; margin:10px 0; font-size:15px;
+            border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
+    button { width:100%; padding:12px; font-size:16px; background:#c9a040; color:white;
              border:none; border-radius:6px; cursor:pointer; }
     button:hover { background:#b38d36; }
+    button:disabled { background:#aaa; cursor:wait; }
+    .err { color:#c62828; margin-top:10px; min-height:18px; font-size:13px; }
+    .info { color:#888; font-size:11px; margin-top:14px; }
   </style>
 </head>
 <body>
   <div class="box">
     <h2>직원 로그인</h2>
-    <input type="text" id="user" placeholder="아이디">
-    <input type="password" id="pw" placeholder="비밀번호">
-    <button onclick="login()">로그인</button>
+    <input type="text" id="user" placeholder="아이디" autocomplete="username">
+    <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password">
+    <button id="btn" onclick="login()">로그인</button>
+    <div class="err" id="err"></div>
+    <div class="info">다이아부동산 통합 인증 — 권한 자동 적용</div>
   </div>
 
   <script>
-    // 대표 계정 (필요시 변경)
-    const MASTER_ID = "dia";
-    const MASTER_PW = "0331";
+    // 🔐 다이아하우스 통합 인증 (2026-05-13)
+    // PWA → diahouse.kr/api/login → 토큰 받음 → localStorage 저장 → 매물 fetch 시 Authorization 헤더 전송
+    const DIAHOUSE_BASE = "https://diahouse.kr";
 
-    function login(){
+    document.getElementById('user').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('pw').focus();
+    });
+    document.getElementById('pw').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') login();
+    });
+
+    async function login(){
+      const btn = document.getElementById('btn');
+      const errEl = document.getElementById('err');
+      errEl.textContent = '';
       const id = document.getElementById('user').value.trim();
       const pw = document.getElementById('pw').value.trim();
-
-      if(id === MASTER_ID && pw === MASTER_PW){
-        localStorage.setItem("dia_login", "ok");  // 로그인 유지
-        window.location.href = "index.html";
-      } else {
-        alert("아이디 또는 비밀번호가 잘못되었습니다.");
+      if (!id || !pw) { errEl.textContent = '아이디와 비밀번호를 입력하세요'; return; }
+      btn.disabled = true; btn.textContent = '로그인 중...';
+      try {
+        const form = new FormData();
+        form.append('user_id', id);
+        form.append('password', pw);
+        const r = await fetch(DIAHOUSE_BASE + "/api/login", { method: 'POST', body: form });
+        const d = await r.json();
+        if (!d.success) {
+          errEl.textContent = d.message || '로그인 실패';
+          btn.disabled = false; btn.textContent = '로그인';
+          return;
+        }
+        // 토큰 + 사용자 정보 저장 (PWA 는 cross-origin 이라 cookie 못 받음 → body 의 token 사용)
+        localStorage.setItem('dia_token', d.token || '');
+        localStorage.setItem('dia_user', JSON.stringify(d.user || {}));
+        localStorage.setItem('dia_login', 'ok');  // 기존 마커 유지 (호환)
+        window.location.href = 'index.html';
+      } catch(e) {
+        errEl.textContent = '서버 연결 실패: ' + e.message;
+        btn.disabled = false; btn.textContent = '로그인';
       }
     }
   </script>

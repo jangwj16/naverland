@@ -158,7 +158,12 @@ tbody tr{cursor:pointer;}
 </div>
 <div class="pagination" id="pagination"></div>
 <script>
-var API="https://diahouse.kr/nrank-api/listings",PS=50,cp=1,searched=false;
+// 🔐 다이아하우스 권한 enforce proxy 사용 (2026-05-13) — 직원 ID 별 시군구/메모 권한 자동 적용
+// 로그인 가드
+if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
+var API="https://diahouse.kr/api/listings-protected",PS=50,cp=1,searched=false;
+// 토큰 헬퍼 (login.html 에서 저장한 dia_token 사용)
+function _diaHeaders(){var h={};var t=localStorage.getItem('dia_token');if(t)h['Authorization']='Bearer '+t;return h;}
 var F={trade:"매매",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[]};
 var allItems=[],sortCol="",sortDir="asc",dedupCount=0;
 
@@ -513,7 +518,7 @@ function doSearch(page){
   var kw=document.getElementById("s_keyword").value.trim();
   if(kw)params.set("search",kw);
 
-  var fetchUrl=API+"?"+params.toString();fetch(fetchUrl,{cache:'no-store'}).then(function(r){if(!r.ok){throw new Error("HTTP "+r.status);}return r.json();}).then(function(data){
+  var fetchUrl=API+"?"+params.toString();fetch(fetchUrl,{cache:'no-store',headers:_diaHeaders()}).then(function(r){if(r.status===401){alert('로그인이 필요합니다');location.href='login.html';return Promise.reject('unauth');}if(!r.ok){throw new Error("HTTP "+r.status);}return r.json();}).then(function(data){
     document.getElementById("loadingBar").classList.remove("on");
     allItems=data.items||[];
     // 매물유형 다중 필터 (서버에서 1개만 지원하므로 클라이언트에서 추가 필터)
