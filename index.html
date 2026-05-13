@@ -143,7 +143,15 @@
   <div style="text-align:center;margin-top:16px;"><button class="btn btn-logout" onclick="logout()">로그아웃</button></div>
 </div>
 <div id="tab-contract" class="tab-content">
-  <iframe src="https://diahouse.kr/contract" style="width:100%;height:calc(100vh - 120px);border:none;border-radius:8px;"></iframe>
+  <iframe id="contract-iframe" src="about:blank" style="width:100%;height:calc(100vh - 120px);border:none;border-radius:8px;"></iframe>
+  <script>
+    // 🔐 다이아하우스 토큰을 iframe URL hash 로 전달 (cross-domain cookie 불가 우회)
+    (function() {
+      var _t = localStorage.getItem('dia_token') || '';
+      var url = 'https://diahouse.kr/contract' + (_t ? '#token=' + encodeURIComponent(_t) : '');
+      document.getElementById('contract-iframe').src = url;
+    })();
+  </script>
 </div>
 <div id="tab-tax" class="tab-content">
   <div style="text-align:center;margin-bottom:12px;">
