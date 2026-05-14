@@ -140,8 +140,77 @@
     <button class="btn" onclick="searchByMemo()">검색</button>
   </div></div>
   <div id="ql-result" style="display:none;margin-top:12px;"></div>
-  <div style="text-align:center;margin-top:16px;"><button class="btn btn-logout" onclick="logout()">로그아웃</button></div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="btn" id="installBtn" style="background:#10b981;display:none;margin-right:8px;" onclick="installApp()">📲 앱 설치</button>
+    <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+  </div>
 </div>
+
+<!-- 📲 iOS 설치 안내 모달 -->
+<div id="iosInstallModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center;">
+    <div style="font-size:42px;margin-bottom:10px;">📲</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:14px;">iPhone 앱 설치 방법</div>
+    <div style="font-size:14px;color:#444;line-height:1.6;text-align:left;">
+      1️⃣ Safari 하단 <b>공유 버튼</b> (⬆️) 탭<br>
+      2️⃣ 메뉴에서 <b>"홈 화면에 추가"</b> 선택<br>
+      3️⃣ <b>"추가"</b> 탭하면 끝!
+    </div>
+    <div style="font-size:11px;color:#888;margin-top:14px;">※ 반드시 <b>Safari</b> 사용 (Chrome 안 됨)</div>
+    <button class="btn" style="background:#c9a040;width:100%;margin-top:18px;" onclick="document.getElementById('iosInstallModal').style.display='none'">확인</button>
+  </div>
+</div>
+
+<script>
+// 📲 PWA 앱 설치 로직 (2026-05-14)
+(function(){
+  var deferredPrompt = null;
+  var btn = document.getElementById('installBtn');
+  // 이미 설치되어 standalone 모드면 버튼 숨김
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                   || window.navigator.standalone === true;
+  if (isStandalone) return;
+
+  // iOS Safari 감지
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  if (isIOS) {
+    // iOS 는 beforeinstallprompt 미지원 → 항상 버튼 노출, 누르면 안내 모달
+    btn.style.display = 'inline-block';
+  } else {
+    // Android/Desktop Chrome — beforeinstallprompt 이벤트 후에만 노출
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault();
+      deferredPrompt = e;
+      btn.style.display = 'inline-block';
+    });
+    window.addEventListener('appinstalled', function(){
+      btn.style.display = 'none';
+      deferredPrompt = null;
+    });
+  }
+
+  // 글로벌 함수 (onclick 에서 호출)
+  window.installApp = async function(){
+    if (isIOS) {
+      document.getElementById('iosInstallModal').style.display = 'flex';
+      return;
+    }
+    if (!deferredPrompt) {
+      alert('이 브라우저에서는 자동 설치가 안 됩니다.\nChrome 우측 ⋮ 메뉴 → "홈 화면에 추가" 를 눌러주세요.');
+      return;
+    }
+    deferredPrompt.prompt();
+    var choice = await deferredPrompt.userChoice;
+    if (choice && choice.outcome === 'accepted') {
+      btn.style.display = 'none';
+    }
+    deferredPrompt = null;
+  };
+})();
+</script>
+
+<div style="display:none;">END_INSTALL_BLOCK</div>
 <div id="tab-contract" class="tab-content">
   <iframe id="contract-iframe" src="about:blank" style="width:100%;height:calc(100vh - 120px);border:none;border-radius:8px;"></iframe>
   <script>
