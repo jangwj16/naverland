@@ -141,7 +141,7 @@
   </div></div>
   <div id="ql-result" style="display:none;margin-top:12px;"></div>
   <div style="text-align:center;margin-top:16px;">
-    <button class="btn" id="installBtn" style="background:#10b981;display:none;margin-right:8px;" onclick="installApp()">📲 앱 설치</button>
+    <button class="btn" id="installBtn" style="background:#10b981;margin-right:8px;" onclick="installApp()">📲 앱 설치</button>
     <button class="btn btn-logout" onclick="logout()">로그아웃</button>
   </div>
 </div>
@@ -163,49 +163,54 @@
 
 <script>
 // 📲 PWA 앱 설치 로직 (2026-05-14)
+// 항상 버튼 노출. 이미 설치된 경우만 자동 숨김.
 (function(){
   var deferredPrompt = null;
   var btn = document.getElementById('installBtn');
+  if (!btn) return;
+
   // 이미 설치되어 standalone 모드면 버튼 숨김
   var isStandalone = window.matchMedia('(display-mode: standalone)').matches
                    || window.navigator.standalone === true;
-  if (isStandalone) return;
+  if (isStandalone) { btn.style.display = 'none'; return; }
 
   // iOS Safari 감지
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-  if (isIOS) {
-    // iOS 는 beforeinstallprompt 미지원 → 항상 버튼 노출, 누르면 안내 모달
-    btn.style.display = 'inline-block';
-  } else {
-    // Android/Desktop Chrome — beforeinstallprompt 이벤트 후에만 노출
-    window.addEventListener('beforeinstallprompt', function(e){
-      e.preventDefault();
-      deferredPrompt = e;
-      btn.style.display = 'inline-block';
-    });
-    window.addEventListener('appinstalled', function(){
-      btn.style.display = 'none';
-      deferredPrompt = null;
-    });
-  }
+  // Android/Desktop Chrome — beforeinstallprompt 이벤트 캐치 (있을 때만)
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  window.addEventListener('appinstalled', function(){
+    btn.style.display = 'none';
+    deferredPrompt = null;
+  });
 
   // 글로벌 함수 (onclick 에서 호출)
   window.installApp = async function(){
+    // iOS — 안내 모달
     if (isIOS) {
       document.getElementById('iosInstallModal').style.display = 'flex';
       return;
     }
-    if (!deferredPrompt) {
-      alert('이 브라우저에서는 자동 설치가 안 됩니다.\nChrome 우측 ⋮ 메뉴 → "홈 화면에 추가" 를 눌러주세요.');
+    // Android/Desktop — deferredPrompt 있으면 native, 없으면 안내
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      var choice = await deferredPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') {
+        btn.style.display = 'none';
+      }
+      deferredPrompt = null;
       return;
     }
-    deferredPrompt.prompt();
-    var choice = await deferredPrompt.userChoice;
-    if (choice && choice.outcome === 'accepted') {
-      btn.style.display = 'none';
+    // 안드로이드인데 이벤트 못 받은 경우 — 수동 안내
+    var ua = navigator.userAgent;
+    if (/Android/i.test(ua)) {
+      alert('📲 앱 설치 안내\n\n1) Chrome 우측 상단 ⋮ 메뉴 탭\n2) "앱 설치" 또는 "홈 화면에 추가" 선택\n3) "설치" 탭\n\n※ 이미 설치되어 있거나 일정 시간 이내 설치 거부한 경우 자동 설치가 안 됩니다.');
+    } else {
+      alert('이 브라우저는 자동 설치를 지원하지 않습니다.\n\n• PC Chrome: 주소창 우측 ⊕ (모니터+다운) 아이콘\n• PC Edge: ⋯ 메뉴 → 앱 → 이 사이트를 앱으로 설치\n• 모바일: 메뉴 → "홈 화면에 추가"');
     }
-    deferredPrompt = null;
   };
 })();
 </script>
