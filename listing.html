@@ -730,12 +730,21 @@ function showDetail(item) {
   box += '<button id="dm-briefing" style="flex:1;padding:13px;background:linear-gradient(135deg,#bf953f,#d4a84b);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">📋 브리핑시트</button>';
   box += '</div>';
 
-  // 비공개 메모
+  // 비공개 메모 — 탭하면 펼쳐짐 (2026-05-18)
   box += '<div style="background:#f8f9fa;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">';
   box += '<div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px;">🔒 비공개 메모</div>';
   if(memo) {
     var safeMemo = memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+safeMemo+'</div>';
+    var memoLines = safeMemo.split('\n').length;
+    var memoLong = safeMemo.length > 180 || memoLines > 5;
+    var mid = 'pm-' + Math.random().toString(36).slice(2,9);
+    if (memoLong) {
+      box += '<div id="'+mid+'" data-expanded="0" onclick="window.toggleMemo(this)" style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;max-height:130px;overflow:hidden;cursor:pointer;position:relative;transition:max-height 0.25s ease;">'+safeMemo+
+        '<div data-fade="1" style="position:absolute;bottom:0;left:0;right:0;height:46px;background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,rgba(255,255,255,0.92) 60%,rgba(255,255,255,1) 100%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:12px;color:#2563eb;font-weight:700;pointer-events:none;">▼ 탭하여 전체보기</div>'+
+        '</div>';
+    } else {
+      box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+safeMemo+'</div>';
+    }
   } else {
     box += '<div style="font-size:13px;color:#aaa;padding:12px;text-align:center;">메모 없음 (동기화 시 자동 수집)</div>';
   }
@@ -765,6 +774,24 @@ function showDetail(item) {
     window.open(bp,'_blank');
   };
 }
+
+// 비공개 메모 펼침/접힘 토글 (2026-05-18)
+window.toggleMemo = function(div) {
+  var expanded = div.getAttribute('data-expanded') === '1';
+  var fade = div.querySelector('div[data-fade]');
+  if (expanded) {
+    div.style.maxHeight = '130px';
+    div.style.overflow = 'hidden';
+    if (fade) { fade.style.display = 'flex'; fade.innerHTML = '▼ 탭하여 전체보기'; }
+    div.setAttribute('data-expanded', '0');
+  } else {
+    // 전체 높이로 펼침
+    div.style.maxHeight = (div.scrollHeight + 40) + 'px';
+    setTimeout(function(){ div.style.overflow = 'visible'; }, 260);
+    if (fade) { fade.style.display = 'none'; }
+    div.setAttribute('data-expanded', '1');
+  }
+};
 
 window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTableHead();});
 </script>
