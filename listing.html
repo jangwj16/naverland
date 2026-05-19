@@ -730,17 +730,18 @@ function showDetail(item) {
   box += '<button id="dm-briefing" style="flex:1;padding:13px;background:linear-gradient(135deg,#bf953f,#d4a84b);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">📋 브리핑시트</button>';
   box += '</div>';
 
-  // 비공개 메모 — 탭하면 펼쳐짐 (2026-05-18)
+  // 비공개 메모 — 길면 탭하여 모달로 전체보기 (2026-05-19)
   box += '<div style="background:#f8f9fa;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">';
   box += '<div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px;">🔒 비공개 메모</div>';
   if(memo) {
     var safeMemo = memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     var memoLines = safeMemo.split('\n').length;
     var memoLong = safeMemo.length > 180 || memoLines > 5;
-    var mid = 'pm-' + Math.random().toString(36).slice(2,9);
     if (memoLong) {
-      box += '<div id="'+mid+'" data-expanded="0" onclick="window.toggleMemo(this)" style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;max-height:130px;overflow:hidden;cursor:pointer;position:relative;transition:max-height 0.25s ease;">'+safeMemo+
-        '<div data-fade="1" style="position:absolute;bottom:0;left:0;right:0;height:46px;background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,rgba(255,255,255,0.92) 60%,rgba(255,255,255,1) 100%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:12px;color:#2563eb;font-weight:700;pointer-events:none;">▼ 탭하여 전체보기</div>'+
+      // 데이터 속성에 원본 메모 저장 → 클릭 시 모달
+      var encoded = encodeURIComponent(memo);
+      box += '<div onclick="window.showMemoModal(this)" data-memo="'+encoded+'" style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;max-height:130px;overflow:hidden;cursor:pointer;position:relative;">'+safeMemo+
+        '<div style="position:absolute;bottom:0;left:0;right:0;height:46px;background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,rgba(255,255,255,0.92) 60%,rgba(255,255,255,1) 100%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:12px;color:#2563eb;font-weight:700;pointer-events:none;">▼ 탭하여 전체보기</div>'+
         '</div>';
     } else {
       box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+safeMemo+'</div>';
@@ -775,22 +776,27 @@ function showDetail(item) {
   };
 }
 
-// 비공개 메모 펼침/접힘 토글 (2026-05-18)
-window.toggleMemo = function(div) {
-  var expanded = div.getAttribute('data-expanded') === '1';
-  var fade = div.querySelector('div[data-fade]');
-  if (expanded) {
-    div.style.maxHeight = '130px';
-    div.style.overflow = 'hidden';
-    if (fade) { fade.style.display = 'flex'; fade.innerHTML = '▼ 탭하여 전체보기'; }
-    div.setAttribute('data-expanded', '0');
-  } else {
-    // 전체 높이로 펼침
-    div.style.maxHeight = (div.scrollHeight + 40) + 'px';
-    setTimeout(function(){ div.style.overflow = 'visible'; }, 260);
-    if (fade) { fade.style.display = 'none'; }
-    div.setAttribute('data-expanded', '1');
-  }
+// 비공개 메모 — 클릭 시 별도 모달 팝업으로 전체보기 (2026-05-19)
+window.showMemoModal = function(div) {
+  var encoded = div.getAttribute('data-memo') || '';
+  var memo = decodeURIComponent(encoded);
+  var safeMemo = memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  var mEl = document.createElement('div');
+  mEl.id = 'memo-modal';
+  mEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px;';
+  mEl.onclick = function(e){ if(e.target===mEl) mEl.remove(); };
+
+  var box = '<div style="background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden;">';
+  box += '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid #eef2f7;flex-shrink:0;">';
+  box += '<span style="font-size:15px;font-weight:800;color:#1e293b;">🔒 비공개 메모</span>';
+  box += '<button id="mm-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;padding:0 4px;line-height:1;">✕</button>';
+  box += '</div>';
+  box += '<div style="padding:16px 18px;overflow-y:auto;flex:1;font-size:14px;color:#222;line-height:1.75;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;-webkit-overflow-scrolling:touch;">'+safeMemo+'</div>';
+  box += '</div>';
+  mEl.innerHTML = box;
+  document.body.appendChild(mEl);
+  mEl.querySelector('#mm-close').onclick = function(){ mEl.remove(); };
 };
 
 window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTableHead();});
