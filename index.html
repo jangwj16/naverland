@@ -426,13 +426,37 @@ function qlDoSearch(q,mode){
         html+='<div style="font-size:14px;font-weight:600;margin-bottom:2px;">'+(r.address_group||r.address||'-')+'</div>';
         html+='<div style="font-size:16px;font-weight:800;color:#111;margin-bottom:2px;">'+(r.trade_type||'')+' '+price+'</div>';
         html+='<div style="font-size:12px;color:#64748b;">'+(r.type_normalized||'')+' | 전용'+(r.net_area||'-')+'㎡ | 방'+(r.room_count||'-')+'</div>';
-        if(r.private_memo)html+='<div style="font-size:11px;color:#94a3b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">메모: '+r.private_memo.substring(0,40)+'</div>';
+        if(r.private_memo){
+          // 메모 한 줄 미리보기 + 탭하면 모달 (네이버 이동 막기 위해 stopPropagation)
+          var encMemo = encodeURIComponent(r.private_memo);
+          html+='<div onclick="event.stopPropagation();window.showMemoModal(this)" data-memo="'+encMemo+'" style="font-size:11px;color:#94a3b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;border-top:1px dashed #eef2f7;padding-top:4px;">📝 '+r.private_memo.substring(0,40)+(r.private_memo.length>40?' … 탭하여 전체보기':'')+'</div>';
+        }
         html+='</div>';
       });
       el.innerHTML=html;
     })
     .catch(function(e){el.innerHTML='<div style="text-align:center;padding:20px;color:red;">검색 오류: '+e.message+'</div>';});
 }
+// 비공개 메모 — 탭하면 모달 팝업으로 전체보기 (2026-05-20)
+window.showMemoModal = function(div) {
+  var encoded = div.getAttribute('data-memo') || '';
+  var memo = decodeURIComponent(encoded);
+  var safeMemo = memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var mEl = document.createElement('div');
+  mEl.id = 'memo-modal';
+  mEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px;';
+  mEl.onclick = function(e){ if(e.target===mEl) mEl.remove(); };
+  var box = '<div style="background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden;">';
+  box += '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid #eef2f7;flex-shrink:0;">';
+  box += '<span style="font-size:15px;font-weight:800;color:#1e293b;">🔒 비공개 메모</span>';
+  box += '<button id="mm-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;padding:0 4px;line-height:1;">✕</button>';
+  box += '</div>';
+  box += '<div style="padding:16px 18px;overflow-y:auto;flex:1;font-size:14px;color:#222;line-height:1.75;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;-webkit-overflow-scrolling:touch;">'+safeMemo+'</div>';
+  box += '</div>';
+  mEl.innerHTML = box;
+  document.body.appendChild(mEl);
+  mEl.querySelector('#mm-close').onclick = function(){ mEl.remove(); };
+};
 var S={prop:'apt',buyer:'personal',cnt:'1',area:'small',zone:'normal',first:false,deal:'trade',fprop:'house',loanGrace:'0',loanType:'equal'};
 function txSel(el,g,v){
   if(el&&el.parentElement){el.parentElement.querySelectorAll('.tx-opt').forEach(function(o){o.classList.remove('sel')});el.classList.add('sel')}
