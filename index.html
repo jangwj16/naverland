@@ -129,7 +129,7 @@
 <div id="tab-search" class="tab-content active">
   <div class="section"><h3>매물번호로 확인</h3><div class="row">
     <textarea id="ids" rows="2" placeholder="예: 2541088852, 2539865439" inputmode="numeric"></textarea>
-    <button class="btn" onclick="openById()">열기</button>
+    <button class="btn" onclick="openById()">조회</button>
   </div></div>
   <div class="section"><h3>📍 주소로 보유매물 확인</h3><div class="row">
     <input type="text" id="addr" placeholder="예: 갈현동 550" />
@@ -387,11 +387,29 @@ function switchTab(id,el){
   document.getElementById('tab-'+id).classList.add('active');
 }
 function openById(){
+  // 매물번호로 우리 DB 조회 → 카드(비공개메모 포함) 표시. 카드 탭하면 네이버로 열림. (2026-05-23)
   var raw=document.getElementById('ids').value;
-  var found=raw.match(/26\d{8}/g)||[];
+  var found=raw.match(/\d{6,}/g)||[];
   if(!found.length){var manual=raw.split(/[\s,\n]+/).filter(Boolean);if(manual.length)found=manual;}
   if(!found.length){alert("매물번호를 입력하세요");return;}
-  found.forEach(function(id,i){setTimeout(function(){window.open('https://m.land.naver.com/article/info/'+encodeURIComponent(id),'_blank')},i*200)});
+  var el=document.getElementById('ql-result');
+  el.style.display='block';
+  el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">조회 중...</div>';
+  var _tok=localStorage.getItem('dia_token')||'';
+  var _hdr=_tok?{'Authorization':'Bearer '+_tok}:{};
+  Promise.all(found.map(function(id){
+    return fetch('https://diahouse.kr/api/quick-search-protected?q='+encodeURIComponent(id)+'&mode=address',{headers:_hdr})
+      .then(function(r){if(r.status===401){return Promise.reject('unauth');}return r.json()})
+      .then(function(d){return d.results||[];})
+      .catch(function(e){if(e==='unauth')throw e;return [];});
+  })).then(function(arrs){
+    var seen={},items=[];
+    arrs.forEach(function(a){a.forEach(function(it){var k=String(it.naver_id||it.article_id||'');if(k&&!seen[k]){seen[k]=1;items.push(it);}});});
+    renderQlCards(items, el);
+  }).catch(function(e){
+    if(e==='unauth'){alert('로그인 필요');location.href='login.html';return;}
+    el.innerHTML='<div style="text-align:center;padding:20px;color:red;">조회 오류</div>';
+  });
 }
 function searchByAddr(){
   var v=document.getElementById('addr').value.trim();
@@ -403,6 +421,29 @@ function searchByMemo(){
   if(!v){alert("검색어를 입력하세요");return;}
   qlDoSearch(v,'memo');
 }
+// 검색결과 카드 렌더링 (주소/메모/매물번호 검색 공용 — 비공개메모 포함)
+function renderQlCards(items, el){
+  if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">검색 결과가 없습니다</div>';return;}
+  var html='<div style="font-size:13px;color:#666;margin-bottom:8px;">검색 결과 <b style="color:#2563eb;">'+items.length+'</b>건</div>';
+  items.forEach(function(r){
+    var price=r.trade_type==='매매'?(r.price?Number(r.price).toLocaleString()+'만':'-'):(r.deposit?Number(r.deposit).toLocaleString()+'만':'-');
+    var statusColor=r.status==='노출중'?'#10b981':'#94a3b8';
+    html+='<div onclick="window.open(\'https://m.land.naver.com/article/info/'+r.naver_id+'\',\'_blank\')" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:6px;cursor:pointer;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+    html+='<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+statusColor+'20;color:'+statusColor+';font-weight:600;">'+r.status+'</span>';
+    html+='<span style="font-size:11px;color:#94a3b8;">'+(r.sub_account_name||'')+'</span></div>';
+    html+='<div style="font-size:14px;font-weight:600;margin-bottom:2px;">'+(r.address_group||r.address||'-')+'</div>';
+    html+='<div style="font-size:16px;font-weight:800;color:#111;margin-bottom:2px;">'+(r.trade_type||'')+' '+price+'</div>';
+    html+='<div style="font-size:12px;color:#64748b;">'+(r.type_normalized||'')+' | 전용'+(r.net_area||'-')+'㎡ | 방'+(r.room_count||'-')+'</div>';
+    if(r.private_memo){
+      // 메모 한 줄 미리보기 + 탭하면 모달 (네이버 이동 막기 위해 stopPropagation)
+      var encMemo = encodeURIComponent(r.private_memo);
+      html+='<div onclick="event.stopPropagation();window.showMemoModal(this)" data-memo="'+encMemo+'" style="font-size:11px;color:#94a3b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;border-top:1px dashed #eef2f7;padding-top:4px;">📝 '+r.private_memo.substring(0,40)+(r.private_memo.length>40?' … 탭하여 전체보기':'')+'</div>';
+    }
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
 function qlDoSearch(q,mode){
   var el=document.getElementById('ql-result');
   el.style.display='block';
@@ -412,30 +453,8 @@ function qlDoSearch(q,mode){
   var _hdr=_tok?{'Authorization':'Bearer '+_tok}:{};
   fetch('https://diahouse.kr/api/quick-search-protected?q='+encodeURIComponent(q)+'&mode='+mode,{headers:_hdr})
     .then(function(r){if(r.status===401){alert('로그인 필요');location.href='login.html';return Promise.reject('unauth');}return r.json()})
-    .then(function(d){
-      var items=d.results||[];
-      if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">검색 결과가 없습니다</div>';return;}
-      var html='<div style="font-size:13px;color:#666;margin-bottom:8px;">검색 결과 <b style="color:#2563eb;">'+items.length+'</b>건</div>';
-      items.forEach(function(r){
-        var price=r.trade_type==='매매'?(r.price?Number(r.price).toLocaleString()+'만':'-'):(r.deposit?Number(r.deposit).toLocaleString()+'만':'-');
-        var statusColor=r.status==='노출중'?'#10b981':'#94a3b8';
-        html+='<div onclick="window.open(\'https://m.land.naver.com/article/info/'+r.naver_id+'\',\'_blank\')" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:6px;cursor:pointer;">';
-        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
-        html+='<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+statusColor+'20;color:'+statusColor+';font-weight:600;">'+r.status+'</span>';
-        html+='<span style="font-size:11px;color:#94a3b8;">'+(r.sub_account_name||'')+'</span></div>';
-        html+='<div style="font-size:14px;font-weight:600;margin-bottom:2px;">'+(r.address_group||r.address||'-')+'</div>';
-        html+='<div style="font-size:16px;font-weight:800;color:#111;margin-bottom:2px;">'+(r.trade_type||'')+' '+price+'</div>';
-        html+='<div style="font-size:12px;color:#64748b;">'+(r.type_normalized||'')+' | 전용'+(r.net_area||'-')+'㎡ | 방'+(r.room_count||'-')+'</div>';
-        if(r.private_memo){
-          // 메모 한 줄 미리보기 + 탭하면 모달 (네이버 이동 막기 위해 stopPropagation)
-          var encMemo = encodeURIComponent(r.private_memo);
-          html+='<div onclick="event.stopPropagation();window.showMemoModal(this)" data-memo="'+encMemo+'" style="font-size:11px;color:#94a3b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;border-top:1px dashed #eef2f7;padding-top:4px;">📝 '+r.private_memo.substring(0,40)+(r.private_memo.length>40?' … 탭하여 전체보기':'')+'</div>';
-        }
-        html+='</div>';
-      });
-      el.innerHTML=html;
-    })
-    .catch(function(e){el.innerHTML='<div style="text-align:center;padding:20px;color:red;">검색 오류: '+e.message+'</div>';});
+    .then(function(d){ renderQlCards(d.results||[], el); })
+    .catch(function(e){if(e!=='unauth')el.innerHTML='<div style="text-align:center;padding:20px;color:red;">검색 오류: '+e.message+'</div>';});
 }
 // 비공개 메모 — 탭하면 모달 팝업으로 전체보기 (2026-05-20)
 window.showMemoModal = function(div) {
