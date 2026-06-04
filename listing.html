@@ -147,8 +147,6 @@ tbody tr{cursor:pointer;}
 #mapWrap{display:none;position:relative;}
 #mapWrap.on{display:block;}
 #mapCanvas{width:100%;height:calc(100dvh - 84px);min-height:60vh;background:#e9eef3;}
-#mapModeBtn{position:fixed;top:96px;right:12px;z-index:25;width:48px;height:48px;border-radius:12px;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.28);font-size:22px;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;}
-#mapModeBtn.show{display:flex;}
 #gpsBtn{position:fixed;right:14px;bottom:calc(34vh + 12px);z-index:31;width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.3);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .pin{position:relative;transform:translate(-50%,-100%);cursor:pointer;}
 .pin-label{border:2px solid;border-radius:14px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3);}
@@ -186,8 +184,7 @@ tbody tr{cursor:pointer;}
 </head>
 <body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span></div>
 <div class="filter-bar"><div class="filter-row" id="filterRow"></div></div>
-<!-- ===== 🗺️ 지도 뷰 + 바텀시트 (4단계, additive — 토글은 우측상단 코너버튼) ===== -->
-<button id="mapModeBtn" onclick="MAP.switch(MAP.active?'list':'map')" title="리스트/지도 전환">📋</button>
+<!-- ===== 🗺️ 지도 뷰 + 바텀시트 — 매물 탭 진입 시 항상 지도 (리스트는 ?view=list 디버그용) ===== -->
 <div id="mapWrap">
   <div id="mapCanvas"></div>
   <button id="gpsBtn" onclick="MAP.locate()" title="내 위치">📍</button>
@@ -235,7 +232,7 @@ if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
 var API="https://diahouse.kr/api/listings-protected",PS=50,cp=1,searched=false;
 // 토큰 헬퍼 (login.html 에서 저장한 dia_token 사용)
 function _diaHeaders(){var h={};var t=localStorage.getItem('dia_token');if(t)h['Authorization']='Bearer '+t;return h;}
-var F={trade:"매매",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[]};
+var F={trade:"매매",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[],search:""};
 var allItems=[],sortCol="",sortDir="asc",dedupCount=0;
 
 var REGIONS={"경기도":{"고양시 덕양구":["덕은동","향동동","삼송동","성석동","내유동","동산동","행신동","화정동","풍동","원흥동","지축동","신원동","대장동","토당동","원당동","창릉동"],"고양시 일산동구":["식사동","백석동","마두동","정발산동","장항동","중산동"],"고양시 일산서구":["대화동","주엽동","탄현동","일산동","덕이동"],"파주시":["야당동","금촌동","교하동","운정동","목동동","와동동","문발동","당하동","하지석동","상지석동","동패동"],"김포시":["장기동","구래동","풍무동","걸포동","사우동","마산동"],"부천시 원미구":["상동","중동","심곡동","역곡동","원미동","도당동"],"부천시 소사구":["소사본동","범박동","심곡본동","옥길동"],"부천시 오정구":["오정동","내동","여월동","원종동","고강동"],"안산시 상록구":["사동","본오동","일동","이동","성포동","선부동"],"안산시 단원구":["고잔동","원곡동","초지동"],"양주시":["옥정동","회정동","덕정동"]},"서울시":{"은평구":["응암동","역촌동","갈현동","구산동","신사동","불광동","녹번동","대조동","증산동","수색동","진관동"],"서대문구":["홍은동","북가좌동","남가좌동","연희동","홍제동"],"마포구":["상암동","성산동","연남동","합정동","서교동","망원동","공덕동"],"강서구":[],"구로구":[],"강북구":[],"도봉구":[],"중랑구":[]},"인천시":{"서구":[],"미추홀구":[],"남동구":[],"부평구":[],"강화군":[]},"충청남도":{"서천군":[],"아산시":[]}};
@@ -272,7 +269,8 @@ function buildTableHead(){
 function buildFilterBar(){
   var row=document.getElementById("filterRow");
   var chips=[
-    {id:"region",label:"지역"},{id:"trade",label:"매매"},{id:"type",label:"매물유형"},
+    {id:"search",label:"🔍"},
+    {id:"region",label:"지역"},{id:"type",label:"매물유형"},{id:"trade",label:"매매"},
     {id:"price",label:"가격대"},{id:"room",label:"방/욕실"},{id:"year",label:"사용승인일"},{id:"area",label:"면적"},{id:"fac",label:"시설옵션"}
   ];
   row.innerHTML="";
@@ -291,18 +289,35 @@ function buildFilterBar(){
     chip.onclick=function(e){toggleP(e,c.id);};
     row.appendChild(chip);
   });
-  // 키워드 (주소/특징 검색) — 가장 우측, 🔍 검색
-  var kwDiv=document.createElement("div");
-  kwDiv.style.cssText="flex-shrink:0;display:flex;align-items:center;gap:4px;";
-  var kwInput=document.createElement("input");
-  kwInput.id="s_keyword";kwInput.placeholder="🔍 주소/특징";
-  kwInput.style.cssText="padding:8px 14px;border:1px solid var(--bor);border-radius:20px;font-size:14px;width:150px;font-family:inherit;";
-  kwInput.onkeydown=function(e){if(e.key==="Enter")doSearch(1);};
-  var kwTimer;kwInput.oninput=function(){clearTimeout(kwTimer);kwTimer=setTimeout(function(){updateFilterCount();if(searched)doSearch(1);},500);};  // 디바운스 500ms
-  var btnSearch=document.createElement("button");btnSearch.className="btn btn-pri";btnSearch.textContent="🔍";btnSearch.style.flexShrink="0";btnSearch.onclick=function(){doSearch(1);};
-  kwDiv.appendChild(kwInput);kwDiv.appendChild(btnSearch);row.appendChild(kwDiv);
   buildAllPanels();
+  if(F.search) updChip("search","🔍 "+F.search);
   updateFilterCount();
+}
+
+// ===== 🔍 검색 칩 패널 (작업 2) =====
+var _searchTimer=null;
+function buildSearchPanel(){
+  var p=document.getElementById("panel-search"); if(!p) return; p.innerHTML="";
+  addTitle(p,"내 매물 검색","search");
+  var hint=document.createElement("div");hint.style.cssText="font-size:12px;color:var(--txt2);margin-bottom:8px;line-height:1.5;";
+  hint.innerHTML="주소·건물명·담당자·매물번호·메모·전화번호로<br>우리 매물을 찾습니다.";p.appendChild(hint);
+  var wrap=document.createElement("div");wrap.style.cssText="display:flex;gap:6px;";
+  var inp=document.createElement("input");inp.id="s_keyword";inp.placeholder="예: 갈현동 / 김성우 / 공실 / 리버워크";
+  inp.style.cssText="flex:1;padding:11px 12px;border:1px solid var(--bor);border-radius:8px;font-size:14px;font-family:inherit;";
+  inp.value=F.search||"";
+  inp.onkeydown=function(e){if(e.key==="Enter"){performSearch(true);}};
+  inp.oninput=function(){clearTimeout(_searchTimer);_searchTimer=setTimeout(function(){performSearch(false);},500);};  // 디바운스 500ms
+  var btn=document.createElement("button");btn.className="btn-sm btn-apply";btn.textContent="검색";btn.onclick=function(){performSearch(true);};
+  wrap.appendChild(inp);wrap.appendChild(btn);p.appendChild(wrap);
+  if(F.search){ var clr=document.createElement("button");clr.className="btn-sm btn-reset";clr.textContent="지우기";clr.style.marginTop="8px";clr.onclick=function(){var i=document.getElementById("s_keyword");if(i)i.value="";performSearch(true);};p.appendChild(clr); }
+  setTimeout(function(){try{inp.focus();}catch(e){}},50);
+}
+function performSearch(close){
+  var inp=document.getElementById("s_keyword");var kw=inp?inp.value.trim():"";
+  F.search=kw;
+  updChip("search",kw?("🔍 "+kw):"🔍");
+  if(close)closeP("search");
+  doSearch(1);   // 맵 모드면 MAP.refresh → searchFit, 리스트 모드면 일반 검색
 }
 
 // 활성 필터 개수 계산 + 배지 갱신 (작업 7)
@@ -316,14 +331,14 @@ function updateFilterCount(){
   if(F.yearMax) n++;
   if(F.amin||F.amax) n++;
   if(F.facs&&F.facs.length) n++;
-  var kw=document.getElementById("s_keyword"); if(kw&&kw.value.trim()) n++;
+  if(F.search) n++;
   var b=document.getElementById("fcBadge"); if(!b) return;
   if(n>0){ b.textContent="필터 "+n+" ✕"; b.style.display="inline-flex"; }
   else { b.style.display="none"; }
 }
 
 function buildAllPanels(){
-  buildTradePanel();buildPricePanel();buildRegionPanel();buildTypePanel();buildRoomPanel();buildAreaPanel();buildYearPanel();buildFacPanel();
+  buildSearchPanel();buildTradePanel();buildPricePanel();buildRegionPanel();buildTypePanel();buildRoomPanel();buildAreaPanel();buildYearPanel();buildFacPanel();
 }
 
 function toggleP(e,name){e.stopPropagation();var p=document.getElementById("panel-"+name);var was=p.classList.contains("open");document.querySelectorAll(".f-panel").forEach(function(x){x.classList.remove("open");});if(!was)p.classList.add("open");}
@@ -334,7 +349,7 @@ function adjV(id,delta){var el=document.getElementById(id);var v=parseInt(el.val
 function addPmBtn(parent,targetId,delta){var b=document.createElement("button");b.className="pm-btn";b.textContent=delta<0?"\u2212":"+";b.onclick=function(e){e.stopPropagation();adjV(targetId,delta);};parent.appendChild(b);}
 function addInput(parent,id,ph){var inp=document.createElement("input");inp.type="number";inp.id=id;inp.placeholder=ph;inp.style.cssText="width:80px;padding:6px 8px;border:1px solid var(--bor);border-radius:6px;font-size:13px;text-align:center;font-family:inherit;";inp.onfocus=function(){if(id==="pr_min"||id==="pr_max")prTarget=id;};parent.appendChild(inp);}
 function addSpan(parent,text,style){var s=document.createElement("span");s.textContent=text;if(style)s.style.cssText=style;parent.appendChild(s);}
-function updChip(n,label){var c=document.getElementById("chip-"+n);var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};c.querySelector(".chip-text").textContent=label;label===defs[n]?c.classList.remove("has-value"):c.classList.add("has-value");if(typeof updateFilterCount==="function")updateFilterCount();}
+function updChip(n,label){var c=document.getElementById("chip-"+n);if(!c)return;var defs={search:"🔍",trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};c.querySelector(".chip-text").textContent=label;label===defs[n]?c.classList.remove("has-value"):c.classList.add("has-value");if(typeof updateFilterCount==="function")updateFilterCount();}
 
 // ===== 거래유형 =====
 function buildTradePanel(){
@@ -604,7 +619,7 @@ function doSearch(page){
   if(F.rs)params.set("region_small",F.rs);
   if(F.pmin)params.set("price_min",F.pmin);
   if(F.pmax)params.set("price_max",F.pmax);
-  var kw=document.getElementById("s_keyword").value.trim();
+  var kwEl=document.getElementById("s_keyword");var kw=kwEl?kwEl.value.trim():(F.search||"");
   if(kw)params.set("search",kw);
 
   var fetchUrl=API+"?"+params.toString();fetch(fetchUrl,{cache:'no-store',headers:_diaHeaders()}).then(function(r){if(r.status===401){alert('로그인이 필요합니다');location.href='login.html';return Promise.reject('unauth');}if(!r.ok){throw new Error("HTTP "+r.status);}return r.json();}).then(function(data){
@@ -754,10 +769,10 @@ function renderPg(cur,total){
 }
 
 function resetAll(){
-  F={trade:"",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[]};
-  document.getElementById("s_keyword").value="";
-  ["trade","price","region","type","room","area","year","fac"].forEach(function(n){
-    var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};
+  F={trade:"",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[],search:""};
+  var _kw=document.getElementById("s_keyword"); if(_kw)_kw.value="";
+  ["search","trade","price","region","type","room","area","year","fac"].forEach(function(n){
+    var defs={search:"🔍",trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};
     updChip(n,defs[n]);
   });
   allItems=[];sortCol="";sortDir="asc";searched=false;
@@ -945,8 +960,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     if(F.baths){ p.set("bath_count_min",F.baths); if(F.bathMode!=="gte") p.set("bath_count_max",F.baths); }
     if(F.yearMax){ var cy=new Date().getFullYear(); p.set("approval_date_from",(cy-parseInt(F.yearMax))+"-01-01"); }
     if(F.facs&&F.facs.length) p.set("facilities",F.facs.join(","));
-    var kwEl=document.getElementById("s_keyword"); var kw=kwEl?kwEl.value.trim():"";
-    if(kw) p.set("search",kw);
+    if(F.search) p.set("search",F.search);
     if(extra){ for(var k in extra) p.set(k,extra[k]); }
     return p;
   }
@@ -1019,7 +1033,6 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       '<div class="mcard-sub">'+(it.address_group||"")+'</div>'+
       '<div class="mcard-sub">'+((it.net_area?it.net_area+"m²":"")+(floorTxt?" · "+floorTxt:""))+'</div>'+
       '<div class="mcard-sub">'+(it.building_name||"")+'</div>'+
-      (it.private_memo?'<div class="mcard-memo">📝 '+memoHtml(it.private_memo)+'</div>':'')+
       '<div class="mcard-acts"><a class="mcard-act" href="javascript:void(0)" onclick="MAP.route('+it.id+')">🗺️ 길찾기</a><a class="mcard-act" href="javascript:void(0)" onclick="MAP._detail('+it.id+')">📄 상세</a></div>';
     card.appendChild(img); card.appendChild(body);
     card.onclick=function(e){ var tg=e.target; if(tg&&(tg.tagName==="A"||tg.closest&&tg.closest("a"))) return; MAP._detail(it.id); };
@@ -1056,15 +1069,36 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   }
   function onIdle(){ clearTimeout(MAP.debTimer); MAP.debTimer=setTimeout(refreshByView,500); }
 
-  // 지역 → 지도 이동
+  // 검색/지역 → 매물 좌표 bounds 자동 fit (작업 5 — Geocoder 행정구역 분류 폐기)
   function regionQuery(){ return [F.rl,F.rm,F.rs].filter(Boolean).join(" ").trim(); }
-  function regionZoom(){ return F.rs?5:(F.rm?6:(F.rl?8:7)); }
-  function moveToRegion(){ var q=regionQuery(),z=regionZoom(); if(!q||!MAP.geocoder){ refreshByView(); return; } MAP._lastRegion=q; MAP.geocoder.addressSearch(q,function(res,st){ if(st===kakao.maps.services.Status.OK&&res&&res[0]){ MAP.map.setLevel(z); MAP.map.setCenter(new kakao.maps.LatLng(res[0].y,res[0].x)); } else refreshByView(); }); }
+  function toast(msg){
+    var t=document.createElement("div");
+    t.textContent=msg;
+    t.style.cssText="position:fixed;left:50%;bottom:20%;transform:translateX(-50%);background:rgba(20,24,40,.92);color:#fff;font-size:14px;font-weight:600;padding:11px 18px;border-radius:22px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:80%;text-align:center;";
+    document.body.appendChild(t);
+    setTimeout(function(){ t.style.transition="opacity .4s"; t.style.opacity="0"; setTimeout(function(){t.remove();},420); },1600);
+  }
+  // 현재 필터(검색 포함) 매칭 매물 클러스터 좌표 수집 → bounds fit. 0/1/다수 분기.
+  MAP.fitToResults=function(){
+    fetchMap("cluster",null,function(d){
+      var cls=(d.clusters||[]).filter(function(c){return c.latitude!=null;});
+      if(!cls.length){ if(F.search) toast("‘"+F.search+"’ 검색 결과가 없습니다"); else { renderClusters([]); resetSheet([],"조건에 맞는 매물이 없습니다.<br>필터를 조정해 보세요."); } return; }
+      if(cls.length===1){ MAP.map.setLevel(5); MAP.map.setCenter(new kakao.maps.LatLng(cls[0].latitude,cls[0].longitude)); }
+      else {
+        var b=new kakao.maps.LatLngBounds();
+        cls.forEach(function(c){ b.extend(new kakao.maps.LatLng(c.latitude,c.longitude)); });
+        MAP.map.setBounds(b);
+        if(MAP.map.getLevel()>7) MAP.map.setLevel(7);   // 너무 zoom out 방지 (최소 줌 7)
+      }
+      // setBounds/setCenter → idle → refreshByView 가 매칭 핀/클러스터 렌더
+    });
+  };
+  function _needsFit(){ var rq=regionQuery(), sq=F.search||""; if(rq!==MAP._lastRegion || sq!==MAP._lastSearch){ MAP._lastRegion=rq; MAP._lastSearch=sq; return true; } return false; }
 
   // URL
   function syncURL(){ if(!MAP.active||!MAP.map) return; var p=buildParams(),c=MAP.map.getCenter(); p.set("view","map"); p.set("lat",c.getLat().toFixed(6)); p.set("lng",c.getLng().toFixed(6)); p.set("zoom",MAP.map.getLevel()); if(MAP.selectedId) p.set("selected",MAP.selectedId); var qs="?"+p.toString(); MAP._lastQs=qs; try{ history.replaceState(null,"",qs); }catch(e){} }
   MAP.copyShareUrl=function(){ var url=location.origin+location.pathname+(MAP._lastQs||location.search); var b=document.querySelector(".share-btn"); var done=function(){ if(b){var t=b.textContent;b.textContent="✅ 복사됨";setTimeout(function(){b.textContent=t;},1500);} }; if(navigator.share){ navigator.share({title:"다이아부동산 매물",url:url}).then(done,function(){}); } else if(navigator.clipboard){ navigator.clipboard.writeText(url).then(done,function(){prompt("URL 복사:",url);}); } else prompt("URL 복사:",url); };
-  function restoreFilters(q){ try{ if(q.get("trade_type")) F.trade=q.get("trade_type"); if(q.get("type_normalized")) F.types=q.get("type_normalized").split(","); F.rl=q.get("region_large")||F.rl; F.rm=q.get("region_mid")||F.rm; F.rs=q.get("region_small")||F.rs; F.pmin=q.get("price_min")||""; F.pmax=q.get("price_max")||""; F.amin=q.get("area_min")||""; F.amax=q.get("area_max")||""; if(q.get("facilities")) F.facs=q.get("facilities").split(","); if(q.get("search")){ var kw=document.getElementById("s_keyword"); if(kw) kw.value=q.get("search"); } try{ if(typeof buildAllPanels==="function") buildAllPanels(); }catch(e){} }catch(e){} }
+  function restoreFilters(q){ try{ if(q.get("trade_type")) F.trade=q.get("trade_type"); if(q.get("type_normalized")) F.types=q.get("type_normalized").split(","); F.rl=q.get("region_large")||F.rl; F.rm=q.get("region_mid")||F.rm; F.rs=q.get("region_small")||F.rs; F.pmin=q.get("price_min")||""; F.pmax=q.get("price_max")||""; F.amin=q.get("area_min")||""; F.amax=q.get("area_max")||""; if(q.get("facilities")) F.facs=q.get("facilities").split(","); F.search=q.get("search")||""; try{ if(typeof buildAllPanels==="function") buildAllPanels(); }catch(e){} }catch(e){} }
 
   // GPS
   MAP.locate=function(){
@@ -1148,34 +1182,31 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       setupGestures();
       var cards=document.getElementById("sheetCards");
       cards.addEventListener("scroll",function(){ if(cards.scrollTop+cards.clientHeight>=cards.scrollHeight-100&&MAP.shown<MAP.detailItems.length) appendCards(); });
-      if(restore&&restore.lat){ refreshByView(); } else if(regionQuery()){ moveToRegion(); } else { refreshByView(); }
+      MAP._lastRegion=regionQuery(); MAP._lastSearch=F.search||"";
+      if(restore&&restore.lat){ refreshByView(); } else if(regionQuery()||F.search){ MAP.fitToResults(); } else { refreshByView(); }
     });
   }
 
-  // 토글
+  // 토글 (코너버튼 제거 — list 는 ?view=list 디버그용)
   MAP.switch=function(view){
     var toMap=(view==="map"); MAP.active=toMap;
-    try{ localStorage.setItem("dia_map_view",toMap?"map":"list"); }catch(e){}
-    var mb=document.getElementById("mapModeBtn"); if(mb){ mb.classList.add("show"); mb.textContent=toMap?"📋":"🗺️"; mb.title=toMap?"리스트 보기":"지도 보기"; }
     document.getElementById("mapWrap").classList.toggle("on",toMap);
     var listEls=[document.getElementById("welcomeState"),document.getElementById("resultBar"),document.querySelector(".table-wrap"),document.getElementById("pagination"),document.getElementById("loadingBar")];
     listEls.forEach(function(el){ if(!el) return; if(toMap){ if(el._sd===undefined) el._sd=el.style.display; el.style.display="none"; } else { el.style.display=(el._sd!==undefined?el._sd:""); el._sd=undefined; } });
-    if(toMap){ try{ searched=true; }catch(e){} MAP.sheetClosed=false; if(!MAP.inited) initMap(MAP._restore); else { MAP.map.relayout(); var rq=regionQuery(); if(rq&&rq!==MAP._lastRegion) moveToRegion(); else refreshByView(); } syncURL(); }
+    if(toMap){ try{ searched=true; }catch(e){} MAP.sheetClosed=false; if(!MAP.inited) initMap(MAP._restore); else { MAP.map.relayout(); if(_needsFit()) MAP.fitToResults(); else refreshByView(); } syncURL(); }
     else { closeSheet(); try{ history.replaceState(null,"","?view=list"); }catch(e){} }
   };
-  MAP.refresh=function(){ MAP.cache={}; if(!(MAP.active&&MAP.inited)) return; var rq=regionQuery(); if(rq&&rq!==MAP._lastRegion) moveToRegion(); else refreshByView(); };
+  MAP.refresh=function(){ MAP.cache={}; if(!(MAP.active&&MAP.inited)) return; if(_needsFit()) MAP.fitToResults(); else refreshByView(); };
 
   // doSearch 래핑 (맵 모드면 맵 갱신)
   var _origDoSearch=window.doSearch;
   window.doSearch=function(page){ if(MAP.active){ MAP.refresh(); } else { _origDoSearch(page); } };
 
-  // 로드 시 URL 복원
+  // 로드 시 — 진입 시 항상 지도 고정 (localStorage 무시). ?view=list 는 디버그용 리스트.
   window.addEventListener("DOMContentLoaded",function(){
     var q=new URLSearchParams(location.search);
-    var v=q.get("view");
-    if(!v){ try{ v=localStorage.getItem("dia_map_view")||"map"; }catch(e){ v="map"; } }  // 기본=지도, 마지막 선택 기억
-    if(v==="list"){ var mb=document.getElementById("mapModeBtn"); if(mb){ mb.classList.add("show"); mb.textContent="🗺️"; mb.title="지도 보기"; } return; }  // 리스트 유지 + 코너 전환버튼 노출
-    if(q.get("lat")){ restoreFilters(q); MAP._restore={lat:parseFloat(q.get("lat")),lng:parseFloat(q.get("lng")),zoom:q.get("zoom")}; MAP.selectedId=q.get("selected")||null; }
+    if(q.get("view")==="list") return;   // 디버그: 리스트 모드 유지
+    if(q.get("lat")||q.get("search")){ restoreFilters(q); MAP._restore={lat:parseFloat(q.get("lat")),lng:parseFloat(q.get("lng")),zoom:q.get("zoom")}; MAP.selectedId=q.get("selected")||null; }
     setTimeout(function(){ MAP.switch("map"); },60);
   });
 })();
