@@ -147,7 +147,7 @@ tbody tr{cursor:pointer;}
 #mapWrap{display:none;position:relative;}
 #mapWrap.on{display:block;}
 #mapCanvas{width:100%;height:calc(100dvh - 84px);min-height:60vh;background:#e9eef3;}
-#gpsBtn{position:fixed;right:14px;bottom:calc(34vh + 12px);z-index:31;width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.3);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+#gpsBtn{position:fixed;right:14px;bottom:18px;z-index:6;width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.3);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .pin{position:relative;transform:translate(-50%,-100%);cursor:pointer;}
 .pin-label{border:2px solid;border-radius:14px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3);}
 .pin-new{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#FF0000;color:#fff;font-size:8px;font-weight:800;padding:0 4px;border-radius:3px;}
@@ -787,6 +787,12 @@ function resetAll(){
 }
 
 // ===== 매물 상세 모달 =====
+// 메모 텍스트(HTML escape 된)의 전화번호 → tel 링크 (작업 4 — 카드/모달 공용)
+function linkifyMemo(safe){
+  return String(safe).replace(/(\d{2,3}[-.\s]?\d{3,4}[-.\s]?\d{4})/g,function(m){
+    return '<a href="tel:'+m.replace(/[-.\s]/g,"")+'" onclick="event.stopPropagation()" style="color:#1d4ed8;font-weight:700;text-decoration:underline;">'+m+'</a>';
+  });
+}
 function showDetail(item) {
   var tc = item.trade_type==='매매' ? 'b-sell' : item.trade_type==='전세' ? 'b-jeon' : 'b-wol';
   var priceText = fmtPr(item);
@@ -834,11 +840,11 @@ function showDetail(item) {
     if (memoLong) {
       // 데이터 속성에 원본 메모 저장 → 클릭 시 모달
       var encoded = encodeURIComponent(memo);
-      box += '<div onclick="window.showMemoModal(this)" data-memo="'+encoded+'" style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;max-height:130px;overflow:hidden;cursor:pointer;position:relative;">'+safeMemo+
+      box += '<div onclick="window.showMemoModal(this)" data-memo="'+encoded+'" style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;max-height:130px;overflow:hidden;cursor:pointer;position:relative;">'+linkifyMemo(safeMemo)+
         '<div style="position:absolute;bottom:0;left:0;right:0;height:46px;background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,rgba(255,255,255,0.92) 60%,rgba(255,255,255,1) 100%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:12px;color:#2563eb;font-weight:700;pointer-events:none;">▼ 탭하여 전체보기</div>'+
         '</div>';
     } else {
-      box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+safeMemo+'</div>';
+      box += '<div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">'+linkifyMemo(safeMemo)+'</div>';
     }
   } else {
     box += '<div style="font-size:13px;color:#aaa;padding:12px;text-align:center;">메모 없음 (동기화 시 자동 수집)</div>';
@@ -892,7 +898,7 @@ window.showMemoModal = function(div) {
   box += '<span style="font-size:15px;font-weight:800;color:#1e293b;">🔒 비공개 메모</span>';
   box += '<button id="mm-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;padding:0 4px;line-height:1;">✕</button>';
   box += '</div>';
-  box += '<div style="padding:16px 18px;overflow-y:auto;flex:1;font-size:14px;color:#222;line-height:1.75;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;-webkit-overflow-scrolling:touch;">'+safeMemo+'</div>';
+  box += '<div style="padding:16px 18px;overflow-y:auto;flex:1;font-size:14px;color:#222;line-height:1.75;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;-webkit-overflow-scrolling:touch;">'+linkifyMemo(safeMemo)+'</div>';
   box += '</div>';
   mEl.innerHTML = box;
   document.body.appendChild(mEl);
@@ -1063,7 +1069,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   function refreshByView(){
     if(!MAP.map) return;
     var lv=MAP.map.getLevel();
-    if(lv>=8){ fetchMap("cluster",null,function(d){ renderClusters(d.clusters); resetSheet([],"확대하거나 클러스터를 탭하면<br>매물 카드가 표시됩니다. (영역 "+(d.total||0)+"건)"); }); }
+    if(lv>=6){ fetchMap("cluster",null,function(d){ renderClusters(d.clusters); resetSheet([],"확대하거나 클러스터를 탭하면<br>매물 카드가 표시됩니다. (영역 "+(d.total||0)+"건)"); }); }
     else { var b=MAP.map.getBounds(),sw=b.getSouthWest(),ne=b.getNorthEast(); var bbox=[sw.getLng(),sw.getLat(),ne.getLng(),ne.getLat()].join(","); fetchMap("detail",bbox,function(d){ renderPins(d.items); resetSheet(d.items||[]); if((d.items||[]).length && !MAP.sheetClosed) openSheet("peek"); }); }
     syncURL();
   }
