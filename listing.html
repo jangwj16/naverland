@@ -9,9 +9,12 @@
 :root{--bg:#f5f6f8;--card:#fff;--pri:#2563eb;--pri-h:#1d4ed8;--pri-l:#dbeafe;--grn:#10b981;--grn-l:#d1fae5;--txt:#1e293b;--txt2:#64748b;--bor:#e2e8f0;--inp:#f8fafc;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--txt);}
-.filter-bar{background:var(--card);border-bottom:1px solid var(--bor);padding:12px 16px;position:sticky;top:0;z-index:10;}
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;max-width:1400px;margin:0 auto;}
-.f-chip{position:relative;display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border:1px solid var(--bor);border-radius:20px;font-size:15px;font-weight:600;cursor:pointer;background:#fff;color:var(--txt);transition:all .15s;white-space:nowrap;user-select:none;}
+.filter-bar{background:var(--card);border-bottom:1px solid var(--bor);padding:7px 10px;position:sticky;top:0;z-index:10;}
+.filter-bar::after{content:"";position:absolute;right:0;top:0;bottom:1px;width:26px;background:linear-gradient(to right,rgba(255,255,255,0),#fff);pointer-events:none;}
+.filter-row{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.filter-row::-webkit-scrollbar{display:none;}
+#fcBadge{flex-shrink:0;display:none;align-items:center;gap:4px;padding:8px 12px;border-radius:20px;background:var(--pri);color:#fff;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;border:none;font-family:inherit;}
+.f-chip{position:relative;flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border:1px solid var(--bor);border-radius:20px;font-size:14px;font-weight:600;cursor:pointer;background:#fff;color:var(--txt);transition:all .15s;white-space:nowrap;user-select:none;}
 .f-chip:hover{border-color:var(--pri);color:var(--pri);}
 .f-chip.has-value{background:var(--pri-l);color:var(--pri);border-color:var(--pri);}
 .f-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:20px;z-index:100;min-width:340px;}
@@ -143,7 +146,9 @@ tbody tr{cursor:pointer;}
 .vt-btn.sel{background:var(--pri);color:#fff;border-color:var(--pri);}
 #mapWrap{display:none;position:relative;}
 #mapWrap.on{display:block;}
-#mapCanvas{width:100%;height:80vh;background:#e9eef3;}
+#mapCanvas{width:100%;height:calc(100dvh - 84px);min-height:60vh;background:#e9eef3;}
+#mapModeBtn{position:fixed;top:96px;right:12px;z-index:25;width:48px;height:48px;border-radius:12px;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.28);font-size:22px;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;}
+#mapModeBtn.show{display:flex;}
 #gpsBtn{position:fixed;right:14px;bottom:calc(34vh + 12px);z-index:31;width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.3);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .pin{position:relative;transform:translate(-50%,-100%);cursor:pointer;}
 .pin-label{border:2px solid;border-radius:14px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3);}
@@ -179,13 +184,10 @@ tbody tr{cursor:pointer;}
 @media (max-width:480px){.dm-photos{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
-<body><div style="background:#1a1a2e;padding:10px 16px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:16px;font-weight:bold">🏠 매물검색</span></div>
+<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span></div>
 <div class="filter-bar"><div class="filter-row" id="filterRow"></div></div>
-<!-- ===== 🗺️ 지도 뷰 토글 + 지도 + 바텀시트 (4단계, additive) ===== -->
-<div id="viewToggle">
-  <button class="vt-btn sel" id="vtList" onclick="MAP.switch('list')">📋 리스트</button>
-  <button class="vt-btn" id="vtMap" onclick="MAP.switch('map')">🗺️ 지도</button>
-</div>
+<!-- ===== 🗺️ 지도 뷰 + 바텀시트 (4단계, additive — 토글은 우측상단 코너버튼) ===== -->
+<button id="mapModeBtn" onclick="MAP.switch(MAP.active?'list':'map')" title="리스트/지도 전환">📋</button>
 <div id="mapWrap">
   <div id="mapCanvas"></div>
   <button id="gpsBtn" onclick="MAP.locate()" title="내 위치">📍</button>
@@ -270,10 +272,13 @@ function buildTableHead(){
 function buildFilterBar(){
   var row=document.getElementById("filterRow");
   var chips=[
-    {id:"trade",label:"매매"},{id:"price",label:"가격대"},{id:"region",label:"지역"},
-    {id:"type",label:"매물유형"},{id:"room",label:"방/욕실"},{id:"area",label:"면적"},{id:"year",label:"사용승인일"},{id:"fac",label:"시설옵션"}
+    {id:"region",label:"지역"},{id:"trade",label:"매매"},{id:"type",label:"매물유형"},
+    {id:"price",label:"가격대"},{id:"room",label:"방/욕실"},{id:"year",label:"사용승인일"},{id:"area",label:"면적"},{id:"fac",label:"시설옵션"}
   ];
   row.innerHTML="";
+  // 활성 필터 개수 배지 (탭하면 초기화)
+  var fc=document.createElement("button"); fc.id="fcBadge"; fc.title="필터 초기화"; fc.onclick=function(e){e.stopPropagation();resetAll();};
+  row.appendChild(fc);
   chips.forEach(function(c){
     var chip=document.createElement("div");
     chip.className="f-chip"+(c.id==="trade"?" has-value":"");
@@ -286,20 +291,35 @@ function buildFilterBar(){
     chip.onclick=function(e){toggleP(e,c.id);};
     row.appendChild(chip);
   });
-  // 키워드
+  // 키워드 (주소/특징 검색) — 가장 우측, 🔍 검색
   var kwDiv=document.createElement("div");
-  kwDiv.style.cssText="display:flex;align-items:center;gap:4px;margin-left:8px;";
+  kwDiv.style.cssText="flex-shrink:0;display:flex;align-items:center;gap:4px;";
   var kwInput=document.createElement("input");
-  kwInput.id="s_keyword";kwInput.placeholder="주소/특징 검색";
-  kwInput.style.cssText="padding:10px 16px;border:1px solid var(--bor);border-radius:20px;font-size:14px;width:220px;font-family:inherit;text-align:center;";
-  kwInput.onkeydown=function(e){if(e.key==="Enter")doSearch(1);};var kwTimer;kwInput.oninput=function(){clearTimeout(kwTimer);kwTimer=setTimeout(function(){if(searched)doSearch(1);},300);};
-  kwDiv.appendChild(kwInput);row.appendChild(kwDiv);
-  // 버튼
-  var actDiv=document.createElement("div");actDiv.className="f-actions";
-  var btnSearch=document.createElement("button");btnSearch.className="btn btn-pri";btnSearch.textContent="검색";btnSearch.onclick=function(){doSearch(1);};
-  var btnReset=document.createElement("button");btnReset.className="btn btn-out";btnReset.textContent="초기화";btnReset.onclick=resetAll;
-  actDiv.appendChild(btnSearch);actDiv.appendChild(btnReset);row.appendChild(actDiv);
+  kwInput.id="s_keyword";kwInput.placeholder="🔍 주소/특징";
+  kwInput.style.cssText="padding:8px 14px;border:1px solid var(--bor);border-radius:20px;font-size:14px;width:150px;font-family:inherit;";
+  kwInput.onkeydown=function(e){if(e.key==="Enter")doSearch(1);};
+  var kwTimer;kwInput.oninput=function(){clearTimeout(kwTimer);kwTimer=setTimeout(function(){updateFilterCount();if(searched)doSearch(1);},500);};  // 디바운스 500ms
+  var btnSearch=document.createElement("button");btnSearch.className="btn btn-pri";btnSearch.textContent="🔍";btnSearch.style.flexShrink="0";btnSearch.onclick=function(){doSearch(1);};
+  kwDiv.appendChild(kwInput);kwDiv.appendChild(btnSearch);row.appendChild(kwDiv);
   buildAllPanels();
+  updateFilterCount();
+}
+
+// 활성 필터 개수 계산 + 배지 갱신 (작업 7)
+function updateFilterCount(){
+  var n=0;
+  if(F.rl||F.rm||F.rs) n++;
+  if(F.trade && F.trade!=="매매") n++;   // 매매=기본값이라 제외
+  if(F.types&&F.types.length) n++;
+  if(F.pmin||F.pmax) n++;
+  if(F.rooms||F.baths) n++;
+  if(F.yearMax) n++;
+  if(F.amin||F.amax) n++;
+  if(F.facs&&F.facs.length) n++;
+  var kw=document.getElementById("s_keyword"); if(kw&&kw.value.trim()) n++;
+  var b=document.getElementById("fcBadge"); if(!b) return;
+  if(n>0){ b.textContent="필터 "+n+" ✕"; b.style.display="inline-flex"; }
+  else { b.style.display="none"; }
 }
 
 function buildAllPanels(){
@@ -314,7 +334,7 @@ function adjV(id,delta){var el=document.getElementById(id);var v=parseInt(el.val
 function addPmBtn(parent,targetId,delta){var b=document.createElement("button");b.className="pm-btn";b.textContent=delta<0?"\u2212":"+";b.onclick=function(e){e.stopPropagation();adjV(targetId,delta);};parent.appendChild(b);}
 function addInput(parent,id,ph){var inp=document.createElement("input");inp.type="number";inp.id=id;inp.placeholder=ph;inp.style.cssText="width:80px;padding:6px 8px;border:1px solid var(--bor);border-radius:6px;font-size:13px;text-align:center;font-family:inherit;";inp.onfocus=function(){if(id==="pr_min"||id==="pr_max")prTarget=id;};parent.appendChild(inp);}
 function addSpan(parent,text,style){var s=document.createElement("span");s.textContent=text;if(style)s.style.cssText=style;parent.appendChild(s);}
-function updChip(n,label){var c=document.getElementById("chip-"+n);var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};c.querySelector(".chip-text").textContent=label;label===defs[n]?c.classList.remove("has-value"):c.classList.add("has-value");}
+function updChip(n,label){var c=document.getElementById("chip-"+n);var defs={trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};c.querySelector(".chip-text").textContent=label;label===defs[n]?c.classList.remove("has-value"):c.classList.add("has-value");if(typeof updateFilterCount==="function")updateFilterCount();}
 
 // ===== 거래유형 =====
 function buildTradePanel(){
@@ -747,6 +767,8 @@ function resetAll(){
   document.getElementById("resultTable").style.display="none";
   document.getElementById("emptyState").style.display="none";
   document.getElementById("pagination").innerHTML="";
+  updateFilterCount();
+  if(window.MAP&&MAP.active){ try{ searched=true; }catch(e){} MAP.refresh(); }  // 맵 모드면 전체 다시 표시
 }
 
 // ===== 매물 상세 모달 =====
@@ -1134,8 +1156,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   MAP.switch=function(view){
     var toMap=(view==="map"); MAP.active=toMap;
     try{ localStorage.setItem("dia_map_view",toMap?"map":"list"); }catch(e){}
-    document.getElementById("vtList").classList.toggle("sel",!toMap);
-    document.getElementById("vtMap").classList.toggle("sel",toMap);
+    var mb=document.getElementById("mapModeBtn"); if(mb){ mb.classList.add("show"); mb.textContent=toMap?"📋":"🗺️"; mb.title=toMap?"리스트 보기":"지도 보기"; }
     document.getElementById("mapWrap").classList.toggle("on",toMap);
     var listEls=[document.getElementById("welcomeState"),document.getElementById("resultBar"),document.querySelector(".table-wrap"),document.getElementById("pagination"),document.getElementById("loadingBar")];
     listEls.forEach(function(el){ if(!el) return; if(toMap){ if(el._sd===undefined) el._sd=el.style.display; el.style.display="none"; } else { el.style.display=(el._sd!==undefined?el._sd:""); el._sd=undefined; } });
@@ -1153,7 +1174,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     var q=new URLSearchParams(location.search);
     var v=q.get("view");
     if(!v){ try{ v=localStorage.getItem("dia_map_view")||"map"; }catch(e){ v="map"; } }  // 기본=지도, 마지막 선택 기억
-    if(v==="list") return;  // ?view=list 또는 마지막이 list → 리스트 화면 유지
+    if(v==="list"){ var mb=document.getElementById("mapModeBtn"); if(mb){ mb.classList.add("show"); mb.textContent="🗺️"; mb.title="지도 보기"; } return; }  // 리스트 유지 + 코너 전환버튼 노출
     if(q.get("lat")){ restoreFilters(q); MAP._restore={lat:parseFloat(q.get("lat")),lng:parseFloat(q.get("lng")),zoom:q.get("zoom")}; MAP.selectedId=q.get("selected")||null; }
     setTimeout(function(){ MAP.switch("map"); },60);
   });
