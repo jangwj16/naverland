@@ -1015,7 +1015,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       else { lab.style.borderColor=tradeColor(it.trade_type); lab.style.color=tradeColor(it.trade_type); lab.textContent=pinPrice(it); }
       w.appendChild(lab);
       if(arr.some(function(x){return x.is_new;})){ var nb=document.createElement("div"); nb.className="pin-new"; nb.textContent="NEW"; w.appendChild(nb); }
-      w.onclick=function(){ MAP.selectCard(it.id,true); openSheet("peek"); };
+      w.onclick=function(){ resetSheet(arr); openSheet("peek"); };  // 이 핀(건물)의 매물만
       var ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(it.latitude,it.longitude),content:w,yAnchor:1,xAnchor:0.5}); ov.setMap(MAP.map); MAP.overlays.push(ov);
     });
   }
@@ -1192,7 +1192,6 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       MAP.inited=true;
       try{ MAP.geocoder=(kakao.maps.services&&new kakao.maps.services.Geocoder())||null; }catch(e){ MAP.geocoder=null; }
       kakao.maps.event.addListener(MAP.map,"idle",onIdle);
-      kakao.maps.event.addListener(MAP.map,"click",function(){ refreshByView(); });  // 지도 탭 시 현재 영역 목록 갱신
       setupGestures();
       var cards=document.getElementById("sheetCards");
       cards.addEventListener("scroll",function(){ if(cards.scrollTop+cards.clientHeight>=cards.scrollHeight-100&&MAP.shown<MAP.detailItems.length) appendCards(); });
