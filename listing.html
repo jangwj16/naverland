@@ -981,6 +981,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
 
   function fetchMap(mode,bbox,cb){
     var p=buildParams({mode:mode}); if(bbox) p.set("bbox",bbox);
+    if(mode==="cluster" && MAP.map) p.set("zoom", MAP.map.getLevel());  // 저줌 격자집계용
     var key=p.toString(), c=MAP.cache[key];
     if(c&&(Date.now()-c.t)<60000){ cb(c.data); return; }
     fetch(API_MAP+"?"+key,{cache:"no-store",headers:_diaHeaders()}).then(function(r){
@@ -1069,7 +1070,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   function refreshByView(){
     if(!MAP.map) return;
     var lv=MAP.map.getLevel();
-    if(lv>=6){ fetchMap("cluster",null,function(d){ renderClusters(d.clusters); resetSheet([],"확대하거나 클러스터를 탭하면<br>매물 카드가 표시됩니다. (영역 "+(d.total||0)+"건)"); }); }
+    if(lv>=6){ var cb=MAP.map.getBounds(),csw=cb.getSouthWest(),cne=cb.getNorthEast(); var cbbox=[csw.getLng(),csw.getLat(),cne.getLng(),cne.getLat()].join(","); fetchMap("cluster",cbbox,function(d){ renderClusters(d.clusters); resetSheet([],"확대하거나 클러스터를 탭하면<br>매물 카드가 표시됩니다. (영역 "+(d.total||0)+"건)"); }); }
     else { var b=MAP.map.getBounds(),sw=b.getSouthWest(),ne=b.getNorthEast(); var bbox=[sw.getLng(),sw.getLat(),ne.getLng(),ne.getLat()].join(","); fetchMap("detail",bbox,function(d){ renderPins(d.items); resetSheet(d.items||[]); if((d.items||[]).length && !MAP.sheetClosed) openSheet("peek"); }); }
     syncURL();
   }
