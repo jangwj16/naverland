@@ -197,7 +197,7 @@ tbody tr{cursor:pointer;}
 <div class="welcome" id="welcomeState">
   <div class="big">🏠</div>
   <p style="font-size:15px;font-weight:600;">다이아하우스 매물검색</p>
-  <p style="font-size:13px;margin-top:6px;">조건을 선택하고 <b>검색</b>을 눌러주세요</p>
+  <p style="font-size:13px;margin-top:6px;">조건을 선택하면 <b>자동으로 검색</b>됩니다</p>
   <p style="font-size:11px;margin-top:4px;color:#94a3b8;">노출중 매물 대상 검색</p>
 </div>
 <div class="result-bar" id="resultBar">
@@ -358,7 +358,7 @@ function buildTradePanel(){
   var g=document.createElement("div");g.className="type-grid";g.id="tradeGrid";p.appendChild(g);
   ["전체","매매","전세","월세"].forEach(function(t){
     var btn=document.createElement("div");btn.className="type-btn"+(t==="매매"?" sel":"");btn.textContent=t;
-    btn.onclick=function(e){e.stopPropagation();F.trade=(t==="전체"?"":t);g.querySelectorAll(".type-btn").forEach(function(b){b.classList.toggle("sel",b.textContent===(F.trade||"전체"));});updChip("trade",F.trade||"거래유형");closeP("trade");if(searched)doSearch(1);};
+    btn.onclick=function(e){e.stopPropagation();F.trade=(t==="전체"?"":t);g.querySelectorAll(".type-btn").forEach(function(b){b.classList.toggle("sel",b.textContent===(F.trade||"전체"));});updChip("trade",F.trade||"거래유형");closeP("trade");doSearch(1);};
     g.appendChild(btn);
   });
 }
@@ -407,7 +407,7 @@ function highlightPriceRange(minV,maxV){
     else if(bv>minV&&bv<maxV)b.classList.add("sel-range");
   });
 }
-function applyPrice(){F.pmin=document.getElementById("pr_min").value;F.pmax=document.getElementById("pr_max").value;var l="가격대";if(F.pmin&&F.pmax)l=fmtUk(+F.pmin)+"~"+fmtUk(+F.pmax);else if(F.pmin)l=fmtUk(+F.pmin)+"이상";else if(F.pmax)l=fmtUk(+F.pmax)+"이하";updChip("price",l);closeP("price");if(searched)doSearch(1);}
+function applyPrice(){F.pmin=document.getElementById("pr_min").value;F.pmax=document.getElementById("pr_max").value;var l="가격대";if(F.pmin&&F.pmax)l=fmtUk(+F.pmin)+"~"+fmtUk(+F.pmax);else if(F.pmin)l=fmtUk(+F.pmin)+"이상";else if(F.pmax)l=fmtUk(+F.pmax)+"이하";updChip("price",l);closeP("price");doSearch(1);}
 function resetPrice(){document.getElementById("pr_min").value="";document.getElementById("pr_max").value="";F.pmin="";F.pmax="";updChip("price","가격대");prSt=0;document.getElementById("priceGrid").querySelectorAll(".price-btn").forEach(function(b){b.classList.remove("sel");b.classList.remove("sel-range");});}
 
 // ===== 지역 =====
@@ -426,7 +426,7 @@ function buildRegionList(){
 function addRI(parent,text,sel,handler){var d=document.createElement("div");d.className="region-item"+(sel?" sel":"");d.textContent=text;d.onclick=function(e){e.stopPropagation();parent.querySelectorAll(".region-item").forEach(function(x){x.classList.remove("sel");});d.classList.add("sel");handler();};parent.appendChild(d);}
 function selSido(v){F.rl=v;F.rm="";F.rs="";var g=document.getElementById("col-gugun");g.innerHTML='<div class="region-col-title">구/군</div>';document.getElementById("col-dong").innerHTML='<div class="region-col-title">동/읍/면</div>';if(!v)return;addRI(g,"전체",true,function(){selGu("");});Object.keys(REGIONS[v]).forEach(function(gu){addRI(g,gu,false,function(){selGu(gu);});});}
 function selGu(v){F.rm=v;F.rs="";var d=document.getElementById("col-dong");d.innerHTML='<div class="region-col-title">동/읍/면</div>';if(!v||!F.rl)return;var ds=REGIONS[F.rl][v]||[];if(!ds.length)return;addRI(d,"전체",true,function(){F.rs="";});ds.forEach(function(dong){addRI(d,dong,false,function(){F.rs=dong;});});}
-function applyRegion(){var l="지역";if(F.rs)l=F.rs;else if(F.rm)l=F.rm;else if(F.rl)l=F.rl;updChip("region",l);closeP("region");if(searched)doSearch(1);}
+function applyRegion(){var l="지역";if(F.rs)l=F.rs;else if(F.rm)l=F.rm;else if(F.rl)l=F.rl;updChip("region",l);closeP("region");doSearch(1);}
 function resetRegion(){F.rl="";F.rm="";F.rs="";buildRegionList();updChip("region","지역");}
 
 // ===== 매물유형 (중복선택) =====
@@ -448,7 +448,7 @@ function buildTypePanel(){
     };
     g.appendChild(btn);
   });
-  addApply(p,function(){F.types=[];buildTypePanel();updChip("type","매물유형");},function(){updChip("type",F.types.length?F.types.join(", "):"매물유형");closeP("type");if(searched)doSearch(1);});
+  addApply(p,function(){F.types=[];buildTypePanel();updChip("type","매물유형");},function(){updChip("type",F.types.length?F.types.join(", "):"매물유형");closeP("type");doSearch(1);});
 }
 
 // ===== 방/욕실 (정확히 N개 / N개 이상) =====
@@ -496,7 +496,7 @@ function buildCountBtns(){
     bb.appendChild(btn);
   });
 }
-function applyRoom(){var parts=[];if(F.rooms)parts.push("방"+F.rooms+(F.roomMode==="gte"?"이상":""));if(F.baths)parts.push("욕실"+F.baths+(F.bathMode==="gte"?"이상":""));updChip("room",parts.length?parts.join(", "):"방/욕실");closeP("room");if(searched)doSearch(1);}
+function applyRoom(){var parts=[];if(F.rooms)parts.push("방"+F.rooms+(F.roomMode==="gte"?"이상":""));if(F.baths)parts.push("욕실"+F.baths+(F.bathMode==="gte"?"이상":""));updChip("room",parts.length?parts.join(", "):"방/욕실");closeP("room");doSearch(1);}
 
 // ===== 면적 =====
 function buildAreaPanel(){
@@ -505,7 +505,7 @@ function buildAreaPanel(){
   var range=document.createElement("div");range.className="price-range";
   addPmBtn(range,"ar_min",-10);addInput(range,"ar_min","최소");addPmBtn(range,"ar_min",10);addSpan(range,"~");addPmBtn(range,"ar_max",-10);addInput(range,"ar_max","최대");addPmBtn(range,"ar_max",10);addSpan(range,"㎡","font-size:11px;");
   p.appendChild(range);
-  addApply(p,function(){document.getElementById("ar_min").value="";document.getElementById("ar_max").value="";F.amin="";F.amax="";updChip("area","면적");},function(){F.amin=document.getElementById("ar_min").value;F.amax=document.getElementById("ar_max").value;var l="면적";if(F.amin&&F.amax)l=F.amin+"~"+F.amax+"㎡";else if(F.amin)l=F.amin+"㎡이상";else if(F.amax)l=F.amax+"㎡이하";updChip("area",l);closeP("area");if(searched)doSearch(1);});
+  addApply(p,function(){document.getElementById("ar_min").value="";document.getElementById("ar_max").value="";F.amin="";F.amax="";updChip("area","면적");},function(){F.amin=document.getElementById("ar_min").value;F.amax=document.getElementById("ar_max").value;var l="면적";if(F.amin&&F.amax)l=F.amin+"~"+F.amax+"㎡";else if(F.amin)l=F.amin+"㎡이상";else if(F.amax)l=F.amax+"㎡이하";updChip("area",l);closeP("area");doSearch(1);});
 }
 
 // ===== 사용승인일 (1년 단위 슬라이더) =====
@@ -562,7 +562,7 @@ function buildYearPanel(){
     updChip("year","사용승인일");
   },function(){
     updChip("year",F.yearMax?"~"+F.yearMax+"년":"사용승인일");
-    closeP("year");if(searched)doSearch(1);
+    closeP("year");doSearch(1);
   });
 }
 function buildFacPanel(){
@@ -575,7 +575,7 @@ function buildFacPanel(){
     btn.onclick=function(e){e.stopPropagation();var idx=F.facs.indexOf(f);if(idx>=0){F.facs.splice(idx,1);btn.classList.remove("sel");}else{F.facs.push(f);btn.classList.add("sel");}};
     g.appendChild(btn);
   });
-  addApply(p,function(){F.facs=[];buildFacPanel();updChip("fac","시설옵션");},function(){updChip("fac",F.facs.length?F.facs.join(","):"시설옵션");closeP("fac");if(searched)doSearch(1);});
+  addApply(p,function(){F.facs=[];buildFacPanel();updChip("fac","시설옵션");},function(){updChip("fac",F.facs.length?F.facs.join(","):"시설옵션");closeP("fac");doSearch(1);});
 }
 function highlightYearBtns(){
   var v=parseInt(F.yearMax)||0;
