@@ -1011,8 +1011,9 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       var arr=groups[k], it=arr[0], multi=arr.length>1;
       var w=document.createElement("div"); w.className="pin";
       var lab=document.createElement("div"); lab.className="pin-label";
-      if(multi){ lab.className="pin-label pin-multi"; lab.textContent=arr.length+"건"; }
-      else { lab.style.borderColor=tradeColor(it.trade_type); lab.style.color=tradeColor(it.trade_type); lab.textContent=pinPrice(it); }
+      var nm=(it.building_name||it.address_group||"매물");
+      if(multi){ lab.className="pin-label pin-multi"; lab.textContent=nm+" "+arr.length+"건"; }
+      else { lab.style.borderColor=tradeColor(it.trade_type); lab.style.color=tradeColor(it.trade_type); lab.textContent=nm; }
       w.appendChild(lab);
       if(arr.some(function(x){return x.is_new;})){ var nb=document.createElement("div"); nb.className="pin-new"; nb.textContent="NEW"; w.appendChild(nb); }
       w.onclick=function(){ resetSheet(arr); openSheet("peek"); };  // 이 핀(건물)의 매물만
