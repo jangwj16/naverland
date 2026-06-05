@@ -150,6 +150,7 @@ tbody tr{cursor:pointer;}
 #gpsBtn{position:fixed;right:14px;bottom:18px;z-index:6;width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.3);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .pin{position:relative;transform:translate(-50%,-100%);cursor:pointer;}
 .pin-label{border:2px solid;border-radius:14px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3);}
+.pin-label.pin-multi{border-color:#343a40;color:#fff;background:#343a40;}
 .pin-new{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#FF0000;color:#fff;font-size:8px;font-weight:800;padding:0 4px;border-radius:3px;}
 .cl-badge{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);position:relative;font-family:inherit;cursor:pointer;}
 .cl-new-dot{position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#FF0000;border:1.5px solid #fff;}
@@ -1004,11 +1005,16 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   }
   function renderPins(items){
     clearOverlays();
-    (items||[]).forEach(function(it){
-      if(it.latitude==null) return;
+    var groups={};
+    (items||[]).forEach(function(it){ if(it.latitude==null) return; var k=(+it.latitude).toFixed(5)+","+(+it.longitude).toFixed(5); (groups[k]=groups[k]||[]).push(it); });
+    Object.keys(groups).forEach(function(k){
+      var arr=groups[k], it=arr[0], multi=arr.length>1;
       var w=document.createElement("div"); w.className="pin";
-      var lab=document.createElement("div"); lab.className="pin-label"; lab.style.borderColor=tradeColor(it.trade_type); lab.style.color=tradeColor(it.trade_type); lab.textContent=pinPrice(it); w.appendChild(lab);
-      if(it.is_new){ var nb=document.createElement("div"); nb.className="pin-new"; nb.textContent="NEW"; w.appendChild(nb); }
+      var lab=document.createElement("div"); lab.className="pin-label";
+      if(multi){ lab.className="pin-label pin-multi"; lab.textContent=arr.length+"건"; }
+      else { lab.style.borderColor=tradeColor(it.trade_type); lab.style.color=tradeColor(it.trade_type); lab.textContent=pinPrice(it); }
+      w.appendChild(lab);
+      if(arr.some(function(x){return x.is_new;})){ var nb=document.createElement("div"); nb.className="pin-new"; nb.textContent="NEW"; w.appendChild(nb); }
       w.onclick=function(){ MAP.selectCard(it.id,true); openSheet("peek"); };
       var ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(it.latitude,it.longitude),content:w,yAnchor:1,xAnchor:0.5}); ov.setMap(MAP.map); MAP.overlays.push(ov);
     });
@@ -1186,6 +1192,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       MAP.inited=true;
       try{ MAP.geocoder=(kakao.maps.services&&new kakao.maps.services.Geocoder())||null; }catch(e){ MAP.geocoder=null; }
       kakao.maps.event.addListener(MAP.map,"idle",onIdle);
+      kakao.maps.event.addListener(MAP.map,"click",function(){ refreshByView(); });  // 지도 탭 시 현재 영역 목록 갱신
       setupGestures();
       var cards=document.getElementById("sheetCards");
       cards.addEventListener("scroll",function(){ if(cards.scrollTop+cards.clientHeight>=cards.scrollHeight-100&&MAP.shown<MAP.detailItems.length) appendCards(); });
