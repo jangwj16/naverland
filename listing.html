@@ -342,9 +342,15 @@ function buildAllPanels(){
   buildSearchPanel();buildTradePanel();buildPricePanel();buildRegionPanel();buildTypePanel();buildRoomPanel();buildAreaPanel();buildYearPanel();buildFacPanel();
 }
 
-function toggleP(e,name){e.stopPropagation();var p=document.getElementById("panel-"+name);var was=p.classList.contains("open");document.querySelectorAll(".f-panel").forEach(function(x){x.classList.remove("open");});if(!was)p.classList.add("open");}
-function closeP(name){document.getElementById("panel-"+name).classList.remove("open");}
-document.addEventListener("click",function(e){if(!e.target.closest(".f-chip"))document.querySelectorAll(".f-panel").forEach(function(p){p.classList.remove("open");});});
+// 모바일: 가로스크롤 필터바(overflow-x) 안의 풀스크린 패널이 iOS에서 잘려 안 보이는 문제 →
+//   열 때 body 로 빼고, 닫을 때 원래 칩으로 복귀.
+function _isMobP(){ return window.innerWidth<=600; }
+function _panelToBody(p,name){ if(_isMobP()){ p._homeChip=document.getElementById("chip-"+name); document.body.appendChild(p); } }
+function _panelRestore(p){ if(p && p._homeChip){ try{ p._homeChip.appendChild(p); }catch(e){} p._homeChip=null; } }
+function _closeAllPanels(){ document.querySelectorAll(".f-panel.open").forEach(function(x){ x.classList.remove("open"); _panelRestore(x); }); }
+function toggleP(e,name){ e.stopPropagation(); var p=document.getElementById("panel-"+name); var was=p.classList.contains("open"); _closeAllPanels(); if(!was){ p.classList.add("open"); _panelToBody(p,name); } }
+function closeP(name){ var p=document.getElementById("panel-"+name); if(!p) return; p.classList.remove("open"); _panelRestore(p); }
+document.addEventListener("click",function(e){ if(!e.target.closest(".f-chip") && !e.target.closest(".f-panel")) _closeAllPanels(); });
 
 function adjV(id,delta){var el=document.getElementById(id);var v=parseInt(el.value)||0;v+=delta;if(v<0)v=0;el.value=v;}
 function addPmBtn(parent,targetId,delta){var b=document.createElement("button");b.className="pm-btn";b.textContent=delta<0?"\u2212":"+";b.onclick=function(e){e.stopPropagation();adjV(targetId,delta);};parent.appendChild(b);}
