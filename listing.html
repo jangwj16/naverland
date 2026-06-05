@@ -101,7 +101,8 @@ tbody tr{cursor:pointer;}
   .addr-cell { max-width: none !important; white-space: normal !important; }
   .price-cell { font-size: 12px !important; }
   .badge, .type-badge { font-size: 9px !important; padding: 1px 4px !important; }
-  .filter-row { gap: 5px !important; }
+  .filter-row { gap: 5px !important; flex-wrap: wrap !important; overflow-x: visible !important; }
+  .filter-bar::after { display: none !important; }
   .f-chip { padding: 6px 12px !important; font-size: 13px !important; }
   .f-panel {
     position: fixed !important;
@@ -113,7 +114,7 @@ tbody tr{cursor:pointer;}
     min-width: unset !important;
     max-width: unset !important;
     border-radius: 0 !important;
-    z-index: 9999 !important;
+    z-index: 2147483000 !important;
     overflow-y: auto !important;
     padding: 20px 16px !important;
     box-sizing: border-box !important;
@@ -183,7 +184,7 @@ tbody tr{cursor:pointer;}
 @media (max-width:480px){.dm-photos{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
-<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span></div>
+<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v17</span></div>
 <div class="filter-bar"><div class="filter-row" id="filterRow"></div></div>
 <!-- ===== 🗺️ 지도 뷰 + 바텀시트 — 매물 탭 진입 시 항상 지도 (리스트는 ?view=list 디버그용) ===== -->
 <div id="mapWrap">
