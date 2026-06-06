@@ -185,7 +185,7 @@ tbody tr{cursor:pointer;}
 @media (max-width:480px){.dm-photos{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
-<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v22</span></div>
+<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v23</span></div>
 <div class="filter-bar"><div class="filter-row" id="filterRow"></div></div>
 <!-- ===== 🗺️ 지도 뷰 + 바텀시트 — 매물 탭 진입 시 항상 지도 (리스트는 ?view=list 디버그용) ===== -->
 <div id="mapWrap">
@@ -987,7 +987,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     if(extra){ for(var k in extra) p.set(k,extra[k]); }
     return p;
   }
-  function shortMoney(v){ v=v||0; if(!v) return "-"; if(v>=10000){var u=Math.floor(v/10000),r=Math.round((v%10000)/1000); if(r>=10){u+=1;r=0;} return r>0?u+"억"+r+"천":u+"억";} return v.toLocaleString()+"만"; }
+  function shortMoney(v){ v=v||0; if(!v) return "-"; if(v>=10000){var u=Math.floor(v/10000),r=v%10000; return r>0?u+"억"+r.toLocaleString():u+"억";} return v.toLocaleString()+"만"; }
   function pinPrice(it){ if(it.trade_type==="월세") return "월 "+((it.monthly_rent||0).toLocaleString()); var v=it.trade_type==="전세"?(it.deposit||it.price||0):(it.price||0); return (it.trade_type==="전세"?"전세 ":"")+shortMoney(v); }
   function tradeColor(t){ return t==="매매"?"#FA5252":t==="전세"?"#228BE6":"#40C057"; }
   function clusterColor(c){ return c<=5?"#FFD43B":c<=20?"#FF922B":c<=50?"#FA5252":"#862E9C"; }
