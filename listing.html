@@ -103,8 +103,7 @@ tbody tr{cursor:pointer;}
   .addr-cell { max-width: none !important; white-space: normal !important; }
   .price-cell { font-size: 12px !important; }
   .badge, .type-badge { font-size: 9px !important; padding: 1px 4px !important; }
-  .filter-row { gap: 5px !important; flex-wrap: wrap !important; overflow-x: visible !important; }
-  .filter-bar::after { display: none !important; }
+  .filter-row { gap: 5px !important; }
   .f-chip { padding: 6px 12px !important; font-size: 13px !important; }
   .f-panel {
     position: fixed !important;
@@ -186,7 +185,7 @@ tbody tr{cursor:pointer;}
 @media (max-width:480px){.dm-photos{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
-<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v21</span></div>
+<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v22</span></div>
 <div class="filter-bar"><div class="filter-row" id="filterRow"></div></div>
 <!-- ===== 🗺️ 지도 뷰 + 바텀시트 — 매물 탭 진입 시 항상 지도 (리스트는 ?view=list 디버그용) ===== -->
 <div id="mapWrap">
@@ -291,6 +290,13 @@ function buildFilterBar(){
     panel.onclick=function(e){e.stopPropagation();};
     chip.appendChild(panel);
     chip.onclick=function(e){toggleP(e,c.id);};
+    // 가로스크롤 필터바에서도 탭이 확실히 열리게 — 움직임 적은 터치는 직접 열기(스크롤은 통과)
+    (function(cid){
+      var sx=0,sy=0,mv=false;
+      chip.addEventListener("touchstart",function(e){ var t=e.touches[0]; sx=t.clientX; sy=t.clientY; mv=false; },{passive:true});
+      chip.addEventListener("touchmove",function(e){ var t=e.touches[0]; if(Math.abs(t.clientX-sx)>8||Math.abs(t.clientY-sy)>8) mv=true; },{passive:true});
+      chip.addEventListener("touchend",function(e){ if(!mv){ if(e.cancelable)e.preventDefault(); toggleP(e,cid); } });
+    })(c.id);
     row.appendChild(chip);
   });
   buildAllPanels();
@@ -1120,7 +1126,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   function _needsFit(){ var rq=regionQuery(), sq=F.search||""; if(rq!==MAP._lastRegion || sq!==MAP._lastSearch){ MAP._lastRegion=rq; MAP._lastSearch=sq; return true; } return false; }
 
   // URL
-  function syncURL(){ if(!MAP.active||!MAP.map) return; var p=buildParams(),c=MAP.map.getCenter(); p.set("view","map"); p.set("lat",c.getLat().toFixed(6)); p.set("lng",c.getLng().toFixed(6)); p.set("zoom",MAP.map.getLevel()); if(MAP.selectedId) p.set("selected",MAP.selectedId); var qs="?"+p.toString(); MAP._lastQs=qs; try{ history.replaceState(null,"",qs); }catch(e){} }
+  function syncURL(){ if(!MAP.active||!MAP.map) return; var p=buildParams(),c=MAP.map.getCenter(); p.set("view","map"); p.set("lat",c.getLat().toFixed(6)); p.set("lng",c.getLng().toFixed(6)); p.set("zoom",MAP.map.getLevel()); if(MAP.selectedId) p.set("selected",MAP.selectedId); var qs="?"+p.toString(); MAP._lastQs=qs; try{ history.replaceState(null,"",qs); }catch(e){} try{ localStorage.setItem("dia_listing_qs", qs); }catch(e){}  /* 뒤로가기/재진입 시 필터·위치 복원용 */ }
   MAP.copyShareUrl=function(){ var url=location.origin+location.pathname+(MAP._lastQs||location.search); var b=document.querySelector(".share-btn"); var done=function(){ if(b){var t=b.textContent;b.textContent="✅ 복사됨";setTimeout(function(){b.textContent=t;},1500);} }; if(navigator.share){ navigator.share({title:"다이아부동산 매물",url:url}).then(done,function(){}); } else if(navigator.clipboard){ navigator.clipboard.writeText(url).then(done,function(){prompt("URL 복사:",url);}); } else prompt("URL 복사:",url); };
   function restoreFilters(q){ try{ if(q.get("trade_type")) F.trade=q.get("trade_type"); if(q.get("type_normalized")) F.types=q.get("type_normalized").split(","); F.rl=q.get("region_large")||F.rl; F.rm=q.get("region_mid")||F.rm; F.rs=q.get("region_small")||F.rs; F.pmin=q.get("price_min")||""; F.pmax=q.get("price_max")||""; F.amin=q.get("area_min")||""; F.amax=q.get("area_max")||""; if(q.get("facilities")) F.facs=q.get("facilities").split(","); F.search=q.get("search")||""; try{ if(typeof buildAllPanels==="function") buildAllPanels(); }catch(e){} }catch(e){} }
 
@@ -1230,7 +1236,11 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   window.addEventListener("DOMContentLoaded",function(){
     var q=new URLSearchParams(location.search);
     if(q.get("view")==="list") return;   // 디버그: 리스트 모드 유지
-    if(q.get("lat")||q.get("search")){ restoreFilters(q); MAP._restore={lat:parseFloat(q.get("lat")),lng:parseFloat(q.get("lng")),zoom:q.get("zoom")}; MAP.selectedId=q.get("selected")||null; }
+    // URL 에 상태 없으면 직전 저장본(필터·위치) 복원 — 뒤로가기/재진입해도 검색 유지
+    if(!q.get("lat") && !q.get("search") && !q.get("trade_type") && !q.get("type_normalized")){
+      try{ var saved=localStorage.getItem("dia_listing_qs"); if(saved){ q=new URLSearchParams(saved); } }catch(e){}
+    }
+    if(q.get("lat")||q.get("search")||q.get("trade_type")||q.get("type_normalized")){ restoreFilters(q); if(q.get("lat")) MAP._restore={lat:parseFloat(q.get("lat")),lng:parseFloat(q.get("lng")),zoom:q.get("zoom")}; MAP.selectedId=q.get("selected")||null; }
     setTimeout(function(){ MAP.switch("map"); },60);
   });
 })();
