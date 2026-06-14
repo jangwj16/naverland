@@ -671,7 +671,7 @@ function doSearch(page){
       var m=addr.match(/(\d+-\d+)/);
       var bunji=m?m[1]:"";
       var dong=item.region_small||"";
-      var key=dong+"_"+bunji+"_"+(item.price||0)+"_"+(item.net_area||0);
+      var hm=addr.match(/(\d+)호/);var ho=hm?hm[1]:"";var tt=item.trade_type||"";var key=ho?(dong+"_"+bunji+"_"+ho+"_"+(item.net_area||0)+"_"+tt):(dong+"_"+bunji+"_"+(item.price||0)+"_"+(item.net_area||0)+"_"+tt);
       if(!groups[key]){groups[key]=item;}
       else{
         var curId=parseInt(item.naver_id)||0;
