@@ -8,7 +8,9 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css');
 :root{--bg:#f5f6f8;--card:#fff;--pri:#2563eb;--pri-h:#1d4ed8;--pri-l:#dbeafe;--grn:#10b981;--grn-l:#d1fae5;--txt:#1e293b;--txt2:#64748b;--bor:#e2e8f0;--inp:#f8fafc;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--txt);}
+/* 지도 드래그가 '당겨서 새로고침'으로 오인돼 필터가 날아가는 문제 차단 */
+html,body{overscroll-behavior:none;}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--txt);overscroll-behavior:none;}
 .filter-bar{background:var(--card);border-bottom:1px solid var(--bor);padding:7px 10px;position:sticky;top:0;z-index:10;}
 .filter-bar::after{content:"";position:absolute;right:0;top:0;bottom:1px;width:26px;background:linear-gradient(to right,rgba(255,255,255,0),#fff);pointer-events:none;}
 .filter-row{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
@@ -148,7 +150,7 @@ tbody tr{cursor:pointer;}
 .vt-btn.sel{background:var(--pri);color:#fff;border-color:var(--pri);}
 #mapWrap{display:none;position:relative;}
 #mapWrap.on{display:block;}
-#mapCanvas{width:100%;height:calc(100dvh - 84px);min-height:60vh;background:#e9eef3;}
+#mapCanvas{width:100%;height:calc(100dvh - 84px);min-height:60vh;background:#e9eef3;overscroll-behavior:none;}
 #gpsBtn{position:fixed;right:14px;bottom:18px;z-index:6;width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--bor);box-shadow:0 2px 10px rgba(0,0,0,.3);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .pin{position:relative;transform:translate(-50%,-100%);cursor:pointer;}
 .pin-label{border:2px solid;border-radius:14px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3);}
@@ -1144,7 +1146,12 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   // URL
   function syncURL(){ if(!MAP.active||!MAP.map) return; var p=buildParams(),c=MAP.map.getCenter(); p.set("view","map"); p.set("lat",c.getLat().toFixed(6)); p.set("lng",c.getLng().toFixed(6)); p.set("zoom",MAP.map.getLevel()); if(MAP.selectedId) p.set("selected",MAP.selectedId); var qs="?"+p.toString(); MAP._lastQs=qs; try{ history.replaceState(null,"",qs); }catch(e){} try{ localStorage.setItem("dia_listing_qs", qs); }catch(e){}  /* 뒤로가기/재진입 시 필터·위치 복원용 */ }
   MAP.copyShareUrl=function(){ var url=location.origin+location.pathname+(MAP._lastQs||location.search); var b=document.querySelector(".share-btn"); var done=function(){ if(b){var t=b.textContent;b.textContent="✅ 복사됨";setTimeout(function(){b.textContent=t;},1500);} }; if(navigator.share){ navigator.share({title:"다이아부동산 매물",url:url}).then(done,function(){}); } else if(navigator.clipboard){ navigator.clipboard.writeText(url).then(done,function(){prompt("URL 복사:",url);}); } else prompt("URL 복사:",url); };
-  function restoreFilters(q){ try{ if(q.get("trade_type")) F.trade=q.get("trade_type"); if(q.get("type_normalized")) F.types=q.get("type_normalized").split(","); F.rl=q.get("region_large")||F.rl; F.rm=q.get("region_mid")||F.rm; F.rs=q.get("region_small")||F.rs; F.pmin=q.get("price_min")||""; F.pmax=q.get("price_max")||""; F.amin=q.get("area_min")||""; F.amax=q.get("area_max")||""; if(q.get("facilities")) F.facs=q.get("facilities").split(","); F.search=q.get("search")||""; try{ if(typeof buildAllPanels==="function") buildAllPanels(); }catch(e){} }catch(e){} }
+  function restoreFilters(q){ try{ if(q.get("trade_type")) F.trade=q.get("trade_type"); if(q.get("type_normalized")) F.types=q.get("type_normalized").split(","); F.rl=q.get("region_large")||F.rl; F.rm=q.get("region_mid")||F.rm; F.rs=q.get("region_small")||F.rs; F.pmin=q.get("price_min")||""; F.pmax=q.get("price_max")||""; F.amin=q.get("area_min")||""; F.amax=q.get("area_max")||""; if(q.get("facilities")) F.facs=q.get("facilities").split(","); F.search=q.get("search")||"";
+    /* 방·욕실·연식도 복원 (buildParams 역매핑) — 리로드 시 누락되던 버그 */
+    if(q.get("room_count_min")){ F.rooms=q.get("room_count_min"); F.roomMode=q.get("room_count_max")?"exact":"gte"; }
+    if(q.get("bath_count_min")){ F.baths=q.get("bath_count_min"); F.bathMode=q.get("bath_count_max")?"exact":"gte"; }
+    if(q.get("approval_date_from")){ var _yr=parseInt((q.get("approval_date_from")||"").slice(0,4)); if(_yr){ F.yearMax=String(new Date().getFullYear()-_yr); } }
+    try{ if(typeof buildAllPanels==="function") buildAllPanels(); }catch(e){} }catch(e){} }
 
   // GPS
   MAP.locate=function(){
