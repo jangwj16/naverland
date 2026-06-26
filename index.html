@@ -457,6 +457,12 @@ function qlDoSearch(q,mode){
     .catch(function(e){if(e!=='unauth')el.innerHTML='<div style="text-align:center;padding:20px;color:red;">검색 오류: '+e.message+'</div>';});
 }
 // 비공개 메모 — 탭하면 모달 팝업으로 전체보기 (2026-05-20)
+// 메모(HTML escape 됨)의 전화번호 → tel: 링크 (iOS/안드로이드 자동인식 의존 X — 명시적 링크)
+function linkifyMemo(safe){
+  return String(safe).replace(/(\d{2,3}[-.\s]?\d{3,4}[-.\s]?\d{4})/g,function(m){
+    return '<a href="tel:'+m.replace(/[-.\s]/g,"")+'" onclick="event.stopPropagation()" style="color:#1d4ed8;font-weight:700;text-decoration:underline;">'+m+'</a>';
+  });
+}
 window.showMemoModal = function(div) {
   var encoded = div.getAttribute('data-memo') || '';
   var memo = decodeURIComponent(encoded);
@@ -470,7 +476,7 @@ window.showMemoModal = function(div) {
   box += '<span style="font-size:15px;font-weight:800;color:#1e293b;">🔒 비공개 메모</span>';
   box += '<button id="mm-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;padding:0 4px;line-height:1;">✕</button>';
   box += '</div>';
-  box += '<div style="padding:16px 18px;overflow-y:auto;flex:1;font-size:14px;color:#222;line-height:1.75;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;-webkit-overflow-scrolling:touch;">'+safeMemo+'</div>';
+  box += '<div style="padding:16px 18px;overflow-y:auto;flex:1;font-size:14px;color:#222;line-height:1.75;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;-webkit-overflow-scrolling:touch;">'+linkifyMemo(safeMemo)+'</div>';
   box += '</div>';
   mEl.innerHTML = box;
   document.body.appendChild(mEl);
