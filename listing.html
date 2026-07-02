@@ -1083,6 +1083,8 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       '<div class="mcard-sub">'+(it.address_group||"")+'</div>'+
       '<div class="mcard-sub">'+((it.net_area?it.net_area+"m²":"")+(floorTxt?" · "+floorTxt:""))+'</div>'+
       '<div class="mcard-sub">'+(it.building_name||"")+'</div>'+
+      // 🔒 비공개(중개사) 메모 — 카드에 미리보기(50자), 전체는 상세모달. web search.html 과 동일 (2026-07-02)
+      (it.private_memo ? '<div class="mcard-memo" title="'+_esc(it.private_memo)+'">📝 '+_esc(it.private_memo.length>50?it.private_memo.slice(0,50)+'…':it.private_memo)+'</div>' : '')+
       '<div class="mcard-acts"><a class="mcard-act" href="javascript:void(0)" onclick="MAP.route('+it.id+')">🗺️ 길찾기</a><a class="mcard-act" href="javascript:void(0)" onclick="MAP._detail('+it.id+')">📄 상세</a></div>';
     card.appendChild(img); card.appendChild(body);
     card.onclick=function(e){ var tg=e.target; if(tg&&(tg.tagName==="A"||tg.closest&&tg.closest("a"))) return; MAP._detail(it.id); };
