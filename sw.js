@@ -1,5 +1,5 @@
 // 🔥 강제 버전 업데이트 (버전만 바꿔도 전 직원에게 즉시 업데이트 강제됨)
-const CACHE_NAME = 'landlink-v28';   // v2, v3, v4 … 숫자만 바꾸면 강제 업데이트
+const CACHE_NAME = 'landlink-v29';   // v2, v3, v4 … 숫자만 바꾸면 강제 업데이트
 
 const FILES_TO_CACHE = [
   './',
@@ -8,6 +8,8 @@ const FILES_TO_CACHE = [
   './listing.html',
   './building.html',
   './manifest.webmanifest',
+  './loanCalc.js',
+  './loan_rules.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'

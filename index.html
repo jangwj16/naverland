@@ -234,9 +234,10 @@
   </div>
   <!-- 하위 탭 -->
   <div style="display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid #ddd;">
-    <button class="sub-tab active" onclick="switchSubTab('loan',this)" style="flex:1;padding:10px 4px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:#c9a040;color:#fff;">🏦 매수자금·대출</button>
-    <button class="sub-tab" onclick="switchSubTab('fee',this)" style="flex:1;padding:10px 4px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🤝 중개보수</button>
-    <button class="sub-tab" onclick="switchSubTab('acq',this)" style="flex:1;padding:10px 4px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏠 취득세</button>
+    <button class="sub-tab active" onclick="switchSubTab('loan',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#c9a040;color:#fff;">🏦 매수·상환</button>
+    <button class="sub-tab" onclick="switchSubTab('limit',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏦 대출한도</button>
+    <button class="sub-tab" onclick="switchSubTab('fee',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🤝 중개보수</button>
+    <button class="sub-tab" onclick="switchSubTab('acq',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏠 취득세</button>
   </div>
   <div id="sub-acq" style="display:none;">
   <div class="tx-card"><h3>🏠 취득세 계산</h3>
@@ -364,6 +365,93 @@
   <div style="text-align:center;margin-top:16px;"><button onclick="resetLoan()" style="padding:10px 30px;background:#6c757d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 초기화</button></div>
   </div><!-- /sub-loan -->
 
+  <!-- ========== 🏦 대출한도 (스트레스 DSR) ========== -->
+  <div id="sub-limit" style="display:none;">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:20px;font-weight:900;color:#222;">🏦 대출한도 계산기</div>
+      <div style="font-size:11px;color:#999;">스트레스 DSR 지역차등 · 신생아특례 반영</div>
+    </div>
+    <!-- 내부 3탭 -->
+    <div style="display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid #ddd;">
+      <button class="lim-tab active" onclick="limitTab('bank',this)" style="flex:1;padding:9px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#2563eb;color:#fff;">🏦 은행 주담대</button>
+      <button class="lim-tab" onclick="limitTab('didim',this)" style="flex:1;padding:9px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">👶 신생아특례</button>
+      <button class="lim-tab" onclick="limitTab('quick',this)" style="flex:1;padding:9px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">📋 조견표</button>
+    </div>
+
+    <!-- 은행 주담대 -->
+    <div id="lim-bank" style="display:block;">
+      <div class="tx-card">
+        <div class="tx-field"><label>주택가격 (만원)</label><input type="text" id="lmPrice" placeholder="예: 50000 (5억)" inputmode="numeric"></div>
+        <div class="tx-field"><label>지역</label><div class="tx-opts">
+          <div class="tx-opt sel" onclick="limSel(this,'bankRegion','수도권')">수도권(비규제)</div>
+          <div class="tx-opt" onclick="limSel(this,'bankRegion','규제')">규제지역</div>
+          <div class="tx-opt" onclick="limSel(this,'bankRegion','지방')">지방(비규제)</div>
+        </div><div style="font-size:10px;color:#aaa;margin-top:3px;">수도권·규제=스트레스 3.0%p / 지방=0.75%p (26.12.31까지)</div></div>
+        <label class="tx-chk" style="background:#eff6ff;border-color:#bfdbfe;"><input type="checkbox" id="lmFirst"><span style="color:#2563eb;">🎉 생애최초 주택구입<span class="txsub">LTV 우대 (지방 80% / 수도권·규제 최대 70%)</span></span></label>
+        <div class="tx-field"><label>연소득 (부부합산, 만원)</label><input type="text" id="lmIncome" placeholder="예: 6000 (6천만)" inputmode="numeric"></div>
+        <div class="tx-field"><label>대출금리 (연 %)</label><input type="text" id="lmRate" placeholder="예: 4.0" inputmode="decimal"></div>
+        <div class="tx-field"><label>대출만기</label><div class="tx-opts">
+          <div class="tx-opt" onclick="limSel(this,'bankYears','10')">10년</div>
+          <div class="tx-opt" onclick="limSel(this,'bankYears','15')">15년</div>
+          <div class="tx-opt" onclick="limSel(this,'bankYears','20')">20년</div>
+          <div class="tx-opt sel" onclick="limSel(this,'bankYears','30')">30년</div>
+          <div class="tx-opt" onclick="limSel(this,'bankYears','40')">40년</div>
+        </div></div>
+        <div style="font-size:12px;font-weight:700;color:#888;margin:14px 0 8px;border-top:1px dashed #e0e0e0;padding-top:12px;">▸ 기존 부채 (있으면 입력)</div>
+        <div class="tx-field"><label>기존 신용대출 잔액 (만원)</label><div class="input-row">
+          <input type="text" id="lmCredit" placeholder="예: 5000" inputmode="numeric">
+          <span class="unit">금리</span>
+          <input type="text" id="lmCreditRate" placeholder="6.0" inputmode="decimal" style="max-width:70px">
+          <span class="unit">%</span>
+        </div><div style="font-size:10px;color:#aaa;margin-top:3px;">1억 초과 시 스트레스 1.5%p 가산 · 5년 만기 환산</div></div>
+        <div class="tx-field"><label>기타대출 연 원리금 (만원)</label><input type="text" id="lmOtherDebt" placeholder="예: 600 (연 상환액)" inputmode="numeric"></div>
+        <div style="font-size:12px;font-weight:700;color:#888;margin:14px 0 8px;border-top:1px dashed #e0e0e0;padding-top:12px;">▸ 담보 차감 (있으면 입력)</div>
+        <div class="tx-field"><label>선순위채권 (만원)</label><input type="text" id="lmSenior" placeholder="예: 10000" inputmode="numeric"></div>
+        <div class="tx-field"><label>임대보증금 (만원)</label><input type="text" id="lmDeposit" placeholder="예: 3000" inputmode="numeric"></div>
+        <button class="tx-btn" style="background:#2563eb;" onclick="limCalcBank()">대출한도 계산</button>
+      </div>
+      <div id="limResBank" class="loan-summary"></div>
+    </div>
+
+    <!-- 신생아특례 디딤돌 -->
+    <div id="lim-didim" style="display:none;">
+      <div class="tx-card">
+        <div style="background:#fef9f0;border:1px solid #f0d9a0;border-radius:8px;padding:10px 12px;font-size:11px;color:#8a6d3b;margin-bottom:14px;line-height:1.6;">기금대출은 <b>DSR 미적용, DTI 60%</b> 적용. 저소득 고객은 여기부터 검토.</div>
+        <div class="tx-field"><label>주택가격 (만원)</label><input type="text" id="ddPrice" placeholder="예: 80000 (8억)" inputmode="numeric"></div>
+        <div class="tx-field"><label>지역 (LTV 우대 판정용)</label><div class="tx-opts">
+          <div class="tx-opt sel" onclick="limSel(this,'ddRegion','수도권')">수도권·규제</div>
+          <div class="tx-opt" onclick="limSel(this,'ddRegion','지방')">지방</div>
+        </div></div>
+        <div class="tx-field"><label>전용면적 (㎡)</label><input type="text" id="ddArea" placeholder="예: 84.9 (상한 85㎡)" inputmode="decimal"></div>
+        <div class="tx-field"><label>연소득 (부부합산, 만원)</label><input type="text" id="ddIncome" placeholder="예: 12000 (1.2억)" inputmode="numeric"></div>
+        <div class="tx-field"><label>순자산 (만원)</label><input type="text" id="ddAsset" placeholder="예: 40000 (상한 4.88억)" inputmode="numeric"></div>
+        <div class="tx-field"><label>대출금리 (연 %)</label><input type="text" id="ddRate" placeholder="예: 2.5" inputmode="decimal"></div>
+        <div class="tx-field"><label>대출만기</label><div class="tx-opts">
+          <div class="tx-opt" onclick="limSel(this,'ddYears','10')">10년</div>
+          <div class="tx-opt" onclick="limSel(this,'ddYears','20')">20년</div>
+          <div class="tx-opt sel" onclick="limSel(this,'ddYears','30')">30년</div>
+        </div></div>
+        <div class="tx-field"><label>기타대출 연 이자 (만원)</label><input type="text" id="ddOtherInterest" placeholder="없으면 비움" inputmode="numeric"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 4px;">
+          <label class="tx-chk" style="margin-bottom:0;"><input type="checkbox" id="ddBirth"><span>👶 2년내 출산</span></label>
+          <label class="tx-chk" style="margin-bottom:0;"><input type="checkbox" id="ddDual"><span>💼 맞벌이</span></label>
+          <label class="tx-chk" style="margin-bottom:0;"><input type="checkbox" id="ddNoHouse" checked><span>🏠 무주택</span></label>
+          <label class="tx-chk" style="margin-bottom:0;"><input type="checkbox" id="ddRefi"><span>🔁 대환(1주택)</span></label>
+          <label class="tx-chk" style="margin-bottom:0;"><input type="checkbox" id="ddFirst"><span>🎉 생애최초</span></label>
+        </div>
+        <button class="tx-btn" style="background:#c9a040;" onclick="limCalcDidim()">디딤돌 한도 계산</button>
+      </div>
+      <div id="limResDidim" class="loan-summary"></div>
+    </div>
+
+    <!-- 조견표 -->
+    <div id="lim-quick" style="display:none;">
+      <div class="tx-card" id="limQuickBox"><p style="color:#999;text-align:center;">불러오는 중…</p></div>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음<br>다이아공인중개사</div>
+  </div><!-- /sub-limit -->
+
   <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">⚠️ 참고용 간이계산 · 법적효력 없음 · 2026.4 기준<br>다이아공인중개사</div>
 </div>
 
@@ -372,7 +460,7 @@
 <!-- ========== 대출계산기 탭 ========== -->
 <script>
 function switchSubTab(id,el){
-  ['loan','fee','acq'].forEach(function(t){
+  ['loan','limit','fee','acq'].forEach(function(t){
     var d=document.getElementById('sub-'+t);
     if(d) d.style.display=(t===id)?'block':'none';
   });
@@ -676,6 +764,165 @@ function resetLoan(){
   })});
 }
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}
+</script>
+
+<!-- ========== 🏦 대출한도 엔진 (loanCalc.js 모듈 + loan_rules.json) ========== -->
+<script type="module">
+  import {
+    calcBankMortgage, calcNewbornDidimdol,
+    monthlyPayment, principalFromAnnualPayment
+  } from './loanCalc.js';
+
+  let RULES = null;
+  const LM = { bankRegion:'수도권', bankYears:30, ddRegion:'수도권', ddYears:30 };
+
+  fetch('./loan_rules.json').then(r=>r.json()).then(j=>{ RULES = j; renderQuick(); })
+    .catch(()=>{ RULES = null; });
+
+  // ---- helpers ----
+  const $ = (id)=>document.getElementById(id);
+  function manToWon(id){ const el=$(id); if(!el) return 0; const n=parseFloat((el.value||'0').replace(/[^0-9.]/g,''))||0; return Math.round(n*10000); }
+  function numv(id){ const el=$(id); if(!el) return 0; return parseFloat((el.value||'0').replace(/[^0-9.]/g,''))||0; }
+  function chk(id){ const el=$(id); return el?el.checked:false; }
+  function regionFlags(region){ return { isMetro: region==='수도권', isRegulated: region==='규제' }; }
+  function fmtEokMan(won){
+    won = Math.round(won/1e6)*1e6;          // 백만원 단위 반올림
+    if (won<=0) return '0원';
+    const eok=Math.floor(won/1e8), man=Math.round((won-eok*1e8)/1e4);
+    let s='';
+    if(eok>0) s+=eok+'억';
+    if(man>0) s+=(s?' ':'')+man.toLocaleString()+'만';
+    return (s||'0')+'원';
+  }
+  function renderMsg(id,msg,color){ const r=$(id); if(r){ r.className='loan-summary show'; r.innerHTML='<p style="color:'+(color||'#999')+';text-align:center;margin:0;">'+msg+'</p>'; } }
+  function bindingBadge(txt){ return '<div style="text-align:center;margin-bottom:14px;"><span style="display:inline-block;padding:5px 14px;border-radius:20px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:13px;font-weight:800;">⛔ '+txt+' 기준에서 한도 결정</span></div>'; }
+  function barRow(label, amt, isBind, maxAmt){
+    const pct = maxAmt>0 ? Math.max(4, Math.round(amt/maxAmt*100)) : 0;
+    const color = isBind ? '#dc2626' : '#2563eb';
+    return '<div style="margin-bottom:9px;">'
+      +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="color:#555;font-weight:600;">'+(isBind?'⛔ ':'')+label+'</span><span style="font-weight:800;color:'+(isBind?'#dc2626':'#333')+';">'+fmtEokMan(amt)+'</span></div>'
+      +'<div style="background:#eef0f2;border-radius:6px;height:11px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+color+';border-radius:6px;"></div></div>'
+      +'</div>';
+  }
+  function disclaimer(){ return '<div style="margin-top:16px;padding-top:12px;border-top:1px dashed #ddd;font-size:11px;color:#999;line-height:1.6;text-align:center;">내부 참고용 · 기준일 '+(RULES&&RULES.meta?RULES.meta.version:'-')+' · 실제 한도는 금융기관 심사 기준</div>'; }
+
+  // ---- 내부 탭 전환 ----
+  window.limitTab = function(id, el){
+    ['bank','didim','quick'].forEach(function(t){ const d=$('lim-'+t); if(d) d.style.display=(t===id)?'block':'none'; });
+    document.querySelectorAll('.lim-tab').forEach(function(b){ b.style.background='#f5f5f5'; b.style.color='#666'; });
+    if(el){ el.style.background=(id==='didim')?'#c9a040':(id==='quick')?'#6b7280':'#2563eb'; el.style.color='#fff'; }
+    if(id==='quick') renderQuick();
+  };
+  window.limSel = function(el, group, val){
+    if(el && el.parentElement){ el.parentElement.querySelectorAll('.tx-opt').forEach(function(o){o.classList.remove('sel')}); el.classList.add('sel'); }
+    LM[group] = (group==='bankYears'||group==='ddYears') ? Number(val) : val;
+  };
+
+  // ---- 은행 주담대 ----
+  window.limCalcBank = function(){
+    if(!RULES){ renderMsg('limResBank','규정 데이터를 불러오지 못했습니다 (오프라인 첫 실행 시 온라인 1회 필요)','#dc2626'); return; }
+    const f = regionFlags(LM.bankRegion);
+    const input = {
+      housePrice: manToWon('lmPrice'),
+      isMetro: f.isMetro, isRegulated: f.isRegulated,
+      isFirstHome: chk('lmFirst'),
+      annualIncome: manToWon('lmIncome'),
+      creditBalance: manToWon('lmCredit'),
+      creditRate: numv('lmCreditRate') || 5.0,
+      existingAnnualDebt: manToWon('lmOtherDebt'),
+      rate: numv('lmRate'),
+      years: LM.bankYears,
+      seniorLien: manToWon('lmSenior'),
+      deposit: manToWon('lmDeposit'),
+    };
+    if(!input.housePrice || !input.annualIncome || !input.rate){ renderMsg('limResBank','주택가격 · 연소득 · 대출금리를 입력하세요'); return; }
+    const r = calcBankMortgage(input, RULES);
+    const fin = r.detail.filter(d=>isFinite(d.amt));
+    const maxAmt = Math.max.apply(null, fin.map(d=>d.amt));
+    const bars = fin.map(d=>barRow(d.basis, d.amt, d.basis===r.bindingBasis, maxAmt)).join('');
+    let h = '<div class="loan-big">'+fmtEokMan(r.limit)+'</div>'
+      + '<div class="loan-sub">최종 대출가능 한도 (백만원 단위 반올림)</div>'
+      + bindingBadge(r.bindingBasis)
+      + '<div class="loan-grid">'
+      +   '<div class="loan-box"><div class="lb-label">DSR 산정금리</div><div class="lb-val">'+r.dsrCalcRate.toFixed(1)+'%</div></div>'
+      +   '<div class="loan-box"><div class="lb-label">월 상환액(원리금균등)</div><div class="lb-val">'+Math.round(r.monthly).toLocaleString()+'원</div></div>'
+      + '</div>'
+      + '<div style="font-size:11px;color:#888;text-align:center;margin:-4px 0 14px;">산정금리 '+r.dsrCalcRate.toFixed(1)+'% = 대출금리 '+input.rate+'% + 스트레스 '+r.stressAdd+'%p</div>'
+      + '<div style="font-size:13px;font-weight:700;color:#555;margin-bottom:10px;">📊 기준별 한도 비교</div>'
+      + bars + disclaimer();
+    const el=$('limResBank'); el.className='loan-summary show'; el.innerHTML=h;
+  };
+
+  // ---- 신생아특례 디딤돌 ----
+  window.limCalcDidim = function(){
+    if(!RULES){ renderMsg('limResDidim','규정 데이터를 불러오지 못했습니다','#dc2626'); return; }
+    const f = regionFlags(LM.ddRegion);
+    const input = {
+      housePrice: manToWon('ddPrice'),
+      isMetro: f.isMetro, isRegulated: false,
+      isFirstHome: chk('ddFirst'),
+      annualIncome: manToWon('ddIncome'),
+      dualIncome: chk('ddDual'),
+      birthWithin2yrs: chk('ddBirth'),
+      noHouse: chk('ddNoHouse'),
+      isRefinance: chk('ddRefi'),
+      netAsset: manToWon('ddAsset'),
+      areaM2: numv('ddArea'),
+      existingAnnualInterest: manToWon('ddOtherInterest'),
+      rate: numv('ddRate'),
+      years: LM.ddYears,
+    };
+    if(!input.housePrice || !input.annualIncome || !input.rate || !input.areaM2){ renderMsg('limResDidim','주택가격 · 전용면적 · 연소득 · 대출금리를 입력하세요'); return; }
+    const r = calcNewbornDidimdol(input, RULES);
+    const el=$('limResDidim'); el.className='loan-summary show';
+    if(!r.eligible){
+      let h = '<div style="text-align:center;font-size:18px;font-weight:900;color:#dc2626;margin-bottom:10px;">❌ 신청 부적격</div>';
+      h += '<div style="font-size:12px;color:#888;text-align:center;margin-bottom:12px;">아래 요건 미충족 — 은행 주담대 탭으로 검토하세요</div>';
+      h += r.fails.map(function(m){ return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:6px;font-size:13px;color:#b91c1c;"><span>•</span><span>'+m+'</span></div>'; }).join('');
+      h += disclaimer();
+      el.innerHTML = h; return;
+    }
+    const fin = r.detail.filter(d=>isFinite(d.amt));
+    const maxAmt = Math.max.apply(null, fin.map(d=>d.amt));
+    const bars = fin.map(d=>barRow(d.basis, d.amt, d.basis===r.bindingBasis, maxAmt)).join('');
+    let h = '<div style="text-align:center;font-size:13px;font-weight:800;color:#059669;margin-bottom:6px;">✅ 신청 적격</div>'
+      + '<div class="loan-big" style="color:#c9a040;">'+fmtEokMan(r.limit)+'</div>'
+      + '<div class="loan-sub">최종 대출가능 한도 (백만원 단위 반올림)</div>'
+      + bindingBadge(r.bindingBasis)
+      + '<div class="loan-grid">'
+      +   '<div class="loan-box"><div class="lb-label">월 상환액(원리금균등)</div><div class="lb-val">'+Math.round(r.monthly).toLocaleString()+'원</div></div>'
+      +   '<div class="loan-box"><div class="lb-label">적용 DTI</div><div class="lb-val">'+Math.round(RULES.didimdol_newborn.limit.dti*100)+'% · DSR 미적용</div></div>'
+      + '</div>'
+      + '<div style="font-size:13px;font-weight:700;color:#555;margin-bottom:10px;">📊 기준별 한도 비교</div>'
+      + bars + disclaimer();
+    el.innerHTML = h;
+  };
+
+  // ---- 조견표 (엔진으로 실시간 산출 — 하드코딩 없음) ----
+  function renderQuick(){
+    const box = $('limQuickBox'); if(!box || !RULES) return;
+    const b = RULES.bank_mortgage;
+    const rateRows = [2,3,4,5,7].map(function(rt){
+      const m = Math.round(monthlyPayment(1e8, rt, 30)/1e4);
+      return '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;">'+rt+'%</td><td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">'+m.toLocaleString()+'만원</td></tr>';
+    }).join('');
+    const mMetro = principalFromAnnualPayment(1e8*b.dsr_limit, 4+b.stress_dsr.수도권_규제지역_주담대, 30)/1e8;
+    const mLocal = principalFromAnnualPayment(1e8*b.dsr_limit, 4+b.stress_dsr.지방_비규제_주담대, 30)/1e8;
+    box.innerHTML =
+      '<h3 style="font-size:15px;font-weight:800;margin:0 0 4px;">📋 빠른 조견표 <span style="font-size:11px;color:#999;font-weight:400;">(암산 교육용)</span></h3>'
+      + '<div style="font-size:12px;font-weight:700;color:#2563eb;margin:14px 0 6px;">💵 1억당 월상환 (30년 원리금균등)</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:13px;"><tbody>'+rateRows+'</tbody></table>'
+      + '<div style="font-size:12px;font-weight:700;color:#2563eb;margin:16px 0 6px;">📐 DSR 역산 배수 (명목 4%, 30년, DSR '+Math.round(b.dsr_limit*100)+'%)</div>'
+      + '<div style="display:flex;flex-direction:column;gap:6px;">'
+      +   '<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#fef2f2;border-radius:8px;font-size:13px;"><span>수도권·규제 <span style="color:#888;">(스트레스+'+b.stress_dsr.수도권_규제지역_주담대+' → 산정 '+(4+b.stress_dsr.수도권_규제지역_주담대).toFixed(2)+'%)</span></span><b style="color:#dc2626;">연소득 × 약 '+mMetro.toFixed(1)+'배</b></div>'
+      +   '<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#ecfdf5;border-radius:8px;font-size:13px;"><span>지방 비규제 <span style="color:#888;">(스트레스+'+b.stress_dsr.지방_비규제_주담대+' → 산정 '+(4+b.stress_dsr.지방_비규제_주담대).toFixed(2)+'%)</span></span><b style="color:#059669;">연소득 × 약 '+mLocal.toFixed(1)+'배</b></div>'
+      + '</div>'
+      + '<div style="font-size:12px;font-weight:700;color:#2563eb;margin:16px 0 6px;">⚠️ 신용대출 잠식</div>'
+      + '<div style="font-size:12px;color:#555;line-height:1.7;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;">잔액 <b>1억 초과</b> 시 스트레스 <b>'+b.stress_dsr.신용대출_기타+'%p</b> 가산 · <b>'+b.credit_loan_maturity_years+'년 만기</b> 원리금 환산 → DSR 소진.<br>신용대출 1억 ≈ 주담대 한도 약 <b>3~4억 감소</b> (지역·금리 따라 상이)</div>'
+      + '<div style="font-size:12px;font-weight:700;color:#2563eb;margin:16px 0 6px;">🏦 기금대출(디딤돌 등)</div>'
+      + '<div style="font-size:12px;color:#555;line-height:1.7;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;"><b>DSR 미적용 · DTI '+Math.round(RULES.didimdol_newborn.limit.dti*100)+'%</b> → 저소득 고객은 기금부터 검토</div>'
+      + '<div style="margin-top:14px;font-size:11px;color:#aaa;text-align:center;">기준일 '+RULES.meta.version+'</div>';
+  }
 </script>
 </body>
 </html>
