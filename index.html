@@ -628,6 +628,8 @@ function calcAcq(){
   }else if(S.prop==='commercial'){a=4;n=0.2;e=0.4;lb='상가·사무실 4%'}
   else if(S.prop==='land'){a=4;n=0.2;e=0.4;lb='토지 4%'}
   else if(S.prop==='farm'){a=3;n=0;e=0.4;lb='농지 3%'}
+  // 농어촌특별세: 국민주택규모(전용 85㎡ 이하) 주택은 비과세. 85㎡ 초과만 부과(일반0.2/8%중과0.6/12%중과1.0).
+  if(['apt','house','officetel'].includes(S.prop)){ n = (S.area==='big') ? (a>=12?1:(a>=8?0.6:0.2)) : 0; }
   var at=Math.round(price*a/100),nt=Math.round(price*n/100),et=Math.round(price*e/100),tot=at+nt+et,fn='';
   if(S.first&&['apt','house','officetel'].includes(S.prop)&&S.buyer==='personal'&&S.cnt==='1'&&price<=120000*10000){var d=Math.min(at,2000000);at-=d;tot-=d;fn='<div class="tx-row grn"><span class="tl">🎉 생애최초 감면</span><span class="tv">-'+fmt(d)+'원</span></div>'}
   var tr=(a+n+e).toFixed(2);
