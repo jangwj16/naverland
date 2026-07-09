@@ -867,6 +867,12 @@ function showDetail(item) {
   box += '<button id="dm-briefing" style="flex:1;padding:13px;background:linear-gradient(135deg,#bf953f,#d4a84b);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">📋 브리핑시트</button>';
   box += '</div>';
 
+  // 길안내: 티맵 / 카카오맵 (매물 좌표로 내비 시작)
+  box += '<div style="display:flex;gap:10px;margin-bottom:14px;">';
+  box += '<button id="dm-tmap" style="flex:1;padding:13px;background:#1a1a68;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🧭 티맵 길안내</button>';
+  box += '<button id="dm-kakao" style="flex:1;padding:13px;background:#ffe812;color:#3c1e1e;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗺️ 카카오맵 길안내</button>';
+  box += '</div>';
+
   // 비공개 메모 — 길면 탭하여 모달로 전체보기 (2026-05-19)
   box += '<div style="background:#f8f9fa;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">';
   box += '<div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px;">🔒 비공개 메모</div>';
@@ -910,6 +916,17 @@ function showDetail(item) {
   }
 
   el.querySelector('#dm-close').onclick = function(){ el.remove(); };
+  // 길안내 — 매물 좌표(위/경도)로 티맵·카카오 내비
+  var _navName = (item.building_name || (item.address||'').replace(/\s*제?\s*[\d,]+\s*층.*$/,'').replace(/\s*외\s*\d+\s*필지/,'').trim() || '매물');
+  var _nLat = parseFloat(item.latitude)||0, _nLng = parseFloat(item.longitude)||0;
+  el.querySelector('#dm-kakao').onclick = function(){
+    if(_nLat && _nLng) window.open('https://map.kakao.com/link/to/'+encodeURIComponent(_navName)+','+_nLat+','+_nLng,'_blank');
+    else window.open('https://map.kakao.com/link/search/'+encodeURIComponent(item.address||''),'_blank');
+  };
+  el.querySelector('#dm-tmap').onclick = function(){
+    if(!(_nLat && _nLng)){ alert('이 매물은 좌표 정보가 없어 티맵 안내가 어렵습니다.\n카카오맵으로 주소 검색을 이용하세요.'); return; }
+    window.openTmapNav(_nLat, _nLng, _navName);
+  };
   if(nid) el.querySelector('#dm-naver').onclick = function(){ var naverPath = (item.type_normalized === '지식산업센터') ? 'offices' : 'houses'; window.open('https://fin.land.naver.com/articles/'+nid,'_blank'); };
   el.querySelector('#dm-briefing').onclick = function(){
     el.remove();
@@ -918,6 +935,22 @@ function showDetail(item) {
     window.open(bp,'_blank');
   };
 }
+
+// 티맵 앱 길안내 — 앱 스킴(goalx=경도, goaly=위도). 미설치 시 스토어로 폴백.
+window.openTmapNav = function(lat, lng, name){
+  var scheme = 'tmap://route?goalname='+encodeURIComponent(name)+'&goalx='+lng+'&goaly='+lat;
+  var ua = navigator.userAgent||'';
+  var store = /iPhone|iPad|iPod/i.test(ua)
+    ? 'https://apps.apple.com/kr/app/id431589174'
+    : 'https://play.google.com/store/apps/details?id=com.skt.tmap.ku';
+  var opened = false;
+  var mark = function(){ opened = true; };
+  document.addEventListener('visibilitychange', function h(){ if(document.hidden){ mark(); document.removeEventListener('visibilitychange', h); } });
+  window.addEventListener('pagehide', mark, {once:true});
+  window.addEventListener('blur', mark, {once:true});
+  var t = setTimeout(function(){ if(!opened) window.open(store, '_blank'); }, 1600);
+  try { location.href = scheme; } catch(e){ clearTimeout(t); window.open(store, '_blank'); }
+};
 
 // 비공개 메모 — 클릭 시 별도 모달 팝업으로 전체보기 (2026-05-19)
 window.showMemoModal = function(div) {
