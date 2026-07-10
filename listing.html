@@ -917,7 +917,7 @@ function showDetail(item) {
 
   el.querySelector('#dm-close').onclick = function(){ el.remove(); };
   // 길안내 — 매물 좌표(위/경도)로 티맵·카카오 내비
-  var _navName = (item.building_name || (item.address||'').replace(/\s*제?\s*[\d,]+\s*층.*$/,'').replace(/\s*외\s*\d+\s*필지/,'').trim() || '매물');
+  var _navName = ((item.address||'').replace(/\s*제?\s*[\d,]+\s*층.*$/,'').replace(/\s*외\s*\d+\s*필지/,'').trim() || item.building_name || '매물');
   var _nLat = parseFloat(item.latitude)||0, _nLng = parseFloat(item.longitude)||0;
   el.querySelector('#dm-kakao').onclick = function(){
     if(_nLat && _nLng) window.open('https://map.kakao.com/link/to/'+encodeURIComponent(_navName)+','+_nLat+','+_nLng,'_blank');
@@ -936,20 +936,25 @@ function showDetail(item) {
   };
 }
 
-// 티맵 앱 길안내 — 앱 스킴(goalx=경도, goaly=위도). 미설치 시 스토어로 폴백.
+// 티맵 앱 길안내 — 안드로이드는 intent://(Chrome이 tmap:// 직접호출 차단), iOS는 tmap://. 미설치 시 스토어/카카오 폴백.
 window.openTmapNav = function(lat, lng, name){
-  var scheme = 'tmap://route?goalname='+encodeURIComponent(name)+'&goalx='+lng+'&goaly='+lat;
   var ua = navigator.userAgent||'';
-  var store = /iPhone|iPad|iPod/i.test(ua)
-    ? 'https://apps.apple.com/kr/app/id431589174'
-    : 'https://play.google.com/store/apps/details?id=com.skt.tmap.ku';
-  var opened = false;
-  var mark = function(){ opened = true; };
-  document.addEventListener('visibilitychange', function h(){ if(document.hidden){ mark(); document.removeEventListener('visibilitychange', h); } });
-  window.addEventListener('pagehide', mark, {once:true});
-  window.addEventListener('blur', mark, {once:true});
-  var t = setTimeout(function(){ if(!opened) window.open(store, '_blank'); }, 1600);
-  try { location.href = scheme; } catch(e){ clearTimeout(t); window.open(store, '_blank'); }
+  var q = 'goalname='+encodeURIComponent(name)+'&goalx='+lng+'&goaly='+lat;
+  if(/Android/i.test(ua)){
+    var fb = encodeURIComponent('https://play.google.com/store/apps/details?id=com.skt.tmap.ku');
+    location.href = 'intent://route?'+q+'#Intent;scheme=tmap;package=com.skt.tmap.ku;S.browser_fallback_url='+fb+';end';
+    return;
+  }
+  if(/iPhone|iPad|iPod/i.test(ua)){
+    var opened = false, mark = function(){ opened = true; };
+    document.addEventListener('visibilitychange', function h(){ if(document.hidden){ mark(); document.removeEventListener('visibilitychange', h); } });
+    window.addEventListener('pagehide', mark, {once:true});
+    var t = setTimeout(function(){ if(!opened) window.open('https://apps.apple.com/kr/app/id431589174', '_blank'); }, 1500);
+    location.href = 'tmap://route?'+q;
+    return;
+  }
+  // PC 등: 티맵 웹 경로안내 미지원 → 카카오맵 길찾기로 폴백
+  window.open('https://map.kakao.com/link/to/'+encodeURIComponent(name)+','+lat+','+lng, '_blank');
 };
 
 // 비공개 메모 — 클릭 시 별도 모달 팝업으로 전체보기 (2026-05-19)
