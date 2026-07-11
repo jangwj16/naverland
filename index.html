@@ -238,6 +238,7 @@
     <button class="sub-tab" onclick="switchSubTab('limit',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏦 대출한도</button>
     <button class="sub-tab" onclick="switchSubTab('fee',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🤝 중개보수</button>
     <button class="sub-tab" onclick="switchSubTab('acq',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏠 취득세</button>
+    <button class="sub-tab" onclick="switchSubTab('rate',this);loadBankRates()" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏦 은행금리</button>
   </div>
   <div id="sub-acq" style="display:none;">
   <div class="tx-card"><h3>🏠 취득세 계산</h3>
@@ -279,6 +280,16 @@
     <div id="resAcq" class="tx-result"></div>
   </div>
   </div><!-- /sub-acq -->
+
+  <div id="sub-rate" style="display:none;">
+  <div class="tx-card"><h3>🏦 은행별 가계대출 평균금리</h3>
+    <div style="font-size:11px;color:#888;margin:-4px 0 12px;">전국은행연합회 공시 · 신규취급 평균금리(개인 신용·담보에 따라 실제 적용 금리 상이)</div>
+    <div id="brProdTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+    <div id="brMeta" style="font-size:11px;color:#999;margin-bottom:8px;"></div>
+    <div id="brTable"><div style="text-align:center;padding:24px;color:#999;">불러오는 중…</div></div>
+    <div style="margin-top:12px;text-align:right;"><a href="https://portal.kfb.or.kr/compare/loan_household_new.php" target="_blank" rel="noopener" style="font-size:11px;color:#2563eb;font-weight:700;text-decoration:none;">은행연합회 원본 ↗</a></div>
+  </div>
+  </div><!-- /sub-rate -->
 
   <div id="sub-fee" style="display:none;">
   <div class="tx-card"><h3>🤝 중개보수(복비) 계산</h3>
@@ -529,13 +540,51 @@
 <!-- ========== 대출계산기 탭 ========== -->
 <script>
 function switchSubTab(id,el){
-  ['loan','limit','fee','acq'].forEach(function(t){
+  ['loan','limit','fee','acq','rate'].forEach(function(t){
     var d=document.getElementById('sub-'+t);
     if(d) d.style.display=(t===id)?'block':'none';
   });
   var btns=el.parentElement.querySelectorAll('.sub-tab');
   btns.forEach(function(b){b.style.background='#f5f5f5';b.style.color='#666';});
   el.style.background='#c9a040';el.style.color='#fff';
+}
+
+// 🏦 은행별 가계대출 평균금리 (은행연합회 공시, 주1회 서버 갱신)
+var _brData=null, _brProd=null;
+function loadBankRates(){
+  if(_brData){ _brRender(); return; }
+  fetch('https://diahouse.kr/nrank-api/rank/bank-rates',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.products||!d.products.length){ document.getElementById('brTable').innerHTML='<div style="text-align:center;padding:24px;color:#e11;">금리 데이터를 불러오지 못했습니다.</div>'; return; }
+      _brData=d; _brProd=(d.products[0]||{}).key; _brRender();
+    })
+    .catch(function(){ document.getElementById('brTable').innerHTML='<div style="text-align:center;padding:24px;color:#e11;">네트워크 오류 — 잠시 후 다시 시도하세요.</div>'; });
+}
+function _brSelProd(k){ _brProd=k; _brRender(); }
+function _brRender(){
+  var d=_brData; if(!d) return;
+  var tabs=d.products.map(function(p){
+    var on=(p.key===_brProd);
+    return '<button onclick="_brSelProd(\''+p.key+'\')" style="padding:7px 11px;border:none;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:'+(on?'#c9a040':'#f0f0f0')+';color:'+(on?'#fff':'#555')+';">'+p.label+'</button>';
+  }).join('');
+  document.getElementById('brProdTabs').innerHTML=tabs;
+  var upd=(d.updated_at||'').slice(0,10);
+  document.getElementById('brMeta').innerHTML='기준월 <b>'+(d.month||'-')+'</b> · 갱신 '+upd+' · 낮은 금리순';
+  var prod=d.products.filter(function(p){return p.key===_brProd;})[0]||{banks:[]};
+  var banks=prod.banks||[];
+  if(!banks.length){ document.getElementById('brTable').innerHTML='<div style="text-align:center;padding:20px;color:#999;">해당 상품 공시 데이터 없음</div>'; return; }
+  var min=banks[0].rate, max=banks[banks.length-1].rate;
+  var rows=banks.map(function(b,i){
+    var top=(i<3), hi=(b.rate===max);
+    var bg=top?'#fff8ec':(hi?'#fdecec':'#fff');
+    var badge=top?'<span style="display:inline-block;min-width:18px;text-align:center;background:#c9a040;color:#fff;border-radius:9px;font-size:10px;font-weight:800;padding:1px 5px;margin-right:6px;">'+(i+1)+'</span>':'<span style="display:inline-block;min-width:18px;text-align:center;color:#bbb;font-size:11px;margin-right:6px;">'+(i+1)+'</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-bottom:1px solid #f0f0f0;background:'+bg+';">'
+      +'<div style="font-size:13px;color:#222;">'+badge+b.bank+'</div>'
+      +'<div style="font-size:14px;font-weight:800;color:'+(top?'#b8860b':(hi?'#d33':'#333'))+';">'+b.rate.toFixed(2)+'<span style="font-size:10px;font-weight:600;color:#999;">%</span></div></div>';
+  }).join('');
+  document.getElementById('brTable').innerHTML='<div style="border:1px solid #eee;border-radius:8px;overflow:hidden;">'+rows
+    +'</div><div style="font-size:11px;color:#aaa;margin-top:6px;">최저 '+min.toFixed(2)+'% ~ 최고 '+max.toFixed(2)+'% ('+banks.length+'개 은행)</div>';
 }
 function switchTab(id,el){
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
