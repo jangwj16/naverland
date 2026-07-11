@@ -1310,5 +1310,132 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   });
 })();
 </script>
+
+<script>
+/* === 재개발 개발계획 오버레이 v3 하이브리드 (PWA 포팅 2026-07-11) ===
+   diahouse search.html 원본을 PWA(naverland)로 이식. Vercel 별도 도메인이라
+   API는 절대경로(https://diahouse.kr/nrank-api/...). CORS map 에 naverland.vercel.app 허용됨.
+   폴리곤(서울 의제처리구역 SHP) + 정비몽땅 마커. 뷰포트 컬링. */
+(function(){
+  var NRANK='https://diahouse.kr/nrank-api';
+  function typeColor(t){ t=t||'';
+    if(/재정비촉진|촉진/.test(t)) return '#ec4899';
+    if(/재건축/.test(t)) return '#8b5cf6';
+    if(/도시환경/.test(t)) return '#f97316';
+    if(/가로주택/.test(t)) return '#14b8a6';
+    if(/지역주택/.test(t)) return '#eab308';
+    if(/역세권/.test(t)) return '#3b82f6';
+    if(/주거환경/.test(t)) return '#22c55e';
+    if(/리모델|기타/.test(t)) return '#94a3b8';
+    if(/재개발/.test(t)) return '#ef4444';
+    return '#94a3b8';
+  }
+  function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var R={on:false, polys:null, marks:null, loading:false, dP:{}, dM:{}, iw:null, btn:null, legend:null, bound:false, labelMode:null};
+
+  function ensureBtn(){
+    var canvas=document.getElementById('mapCanvas');
+    if(!canvas || !window.MAP || !MAP.map) return;
+    if(R.btn && document.body.contains(R.btn)) return;
+    canvas.style.position='relative';
+    var b=document.createElement('button');
+    b.id='redevToggle'; b.type='button'; b.textContent='🏗️ 개발계획';
+    b.style.cssText='position:absolute;top:12px;right:12px;z-index:20;background:#fff;border:2px solid #ef4444;color:#ef4444;font-weight:800;font-size:13px;padding:8px 12px;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);font-family:inherit;';
+    b.onclick=toggle; canvas.appendChild(b); R.btn=b;
+    var lg=document.createElement('div');
+    lg.style.cssText='position:absolute;top:54px;right:12px;z-index:20;background:rgba(255,255,255,.97);border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:11px;line-height:1.7;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;';
+    var types=[['재개발','#ef4444'],['재건축','#8b5cf6'],['재정비촉진','#ec4899'],['도시환경정비','#f97316'],['가로주택·모아타운','#14b8a6'],['지역주택','#eab308'],['주거환경','#22c55e'],['역세권','#3b82f6']];
+    lg.innerHTML='<b>정비사업 유형</b><br>'+types.map(function(k){return '<span style="display:inline-block;width:10px;height:10px;background:'+k[1]+';border-radius:2px;margin-right:5px;"></span>'+k[0];}).join('<br>')+'<br><span style="color:#64748b;font-size:10px;">경계=공식구역 · 라벨=진행단계</span>';
+    canvas.appendChild(lg); R.legend=lg;
+    if(R.on){ b.style.background='#ef4444'; b.style.color='#fff'; lg.style.display='block'; }
+  }
+  function toggle(){
+    R.on=!R.on;
+    R.btn.style.background=R.on?'#ef4444':'#fff';
+    R.btn.style.color=R.on?'#fff':'#ef4444';
+    R.legend.style.display=R.on?'block':'none';
+    if(R.on){ load(function(){ bindIdle(); cull(); }); } else { clearAll(); }
+  }
+  function load(cb){
+    if(R.polys && R.marks){ cb(); return; }
+    if(R.loading) return;
+    R.loading=true; R.btn.textContent='🏗️ 불러오는 중…';
+    Promise.all([
+      fetch(NRANK+'/rank/redevelop-polygons',{cache:'force-cache'}).then(function(r){return r.json();}),
+      fetch(NRANK+'/rank/redevelop',{cache:'force-cache'}).then(function(r){return r.json();})
+    ]).then(function(a){
+      R.polys=a[0].zones||[]; R.marks=a[1].zones||[];
+      R.loading=false; R.btn.textContent='🏗️ 개발계획'; cb();
+    }).catch(function(e){ R.loading=false; R.on=false; R.btn.textContent='🏗️ 개발계획'; R.btn.style.background='#fff'; R.btn.style.color='#ef4444'; R.legend.style.display='none'; alert('개발계획 데이터를 불러오지 못했습니다.'); });
+  }
+  function bindIdle(){
+    if(R.bound || !MAP.map) return;
+    kakao.maps.event.addListener(MAP.map,'idle',function(){ if(R.on) cull(); });
+    R.bound=true;
+  }
+  function getIW(){ if(!R.iw) R.iw=new kakao.maps.InfoWindow({removable:true}); return R.iw; }
+  function cull(){
+    if(!MAP.map) return;
+    var bd=MAP.map.getBounds(), sw=bd.getSouthWest(), ne=bd.getNorthEast();
+    var s=sw.getLat(),w=sw.getLng(),n=ne.getLat(),e=ne.getLng();
+    var lvl=MAP.map.getLevel();
+    var lblMode=lvl<=6;
+    // 폴리곤 (경계) — bbox 교집합
+    var visP={};
+    for(var i=0;i<R.polys.length;i++){ var bb=R.polys[i].bbox; if(!(bb[2]<s||bb[0]>n||bb[3]<w||bb[1]>e)) visP[i]=1; }
+    for(var k in R.dP){ if(!visP[k]){ R.dP[k].forEach(function(p){p.setMap(null);}); delete R.dP[k]; } }
+    for(var pi in visP){ drawPoly(pi); }
+    // 마커 (전 구역+단계) — 점 in bounds
+    var lblChanged = (R.labelMode!==null && R.labelMode!==lblMode);
+    if(lblChanged){ for(var mk in R.dM){ R.dM[mk].setMap(null); delete R.dM[mk]; } }
+    R.labelMode=lblMode;
+    var visM={};
+    for(var j=0;j<R.marks.length;j++){ var z=R.marks[j]; if(z.lat>=s&&z.lat<=n&&z.lng>=w&&z.lng<=e) visM[j]=1; }
+    for(var mk2 in R.dM){ if(!visM[mk2]){ R.dM[mk2].setMap(null); delete R.dM[mk2]; } }
+    var cnt=Object.keys(visM).length;
+    var doLabel = lblMode && cnt<=120;
+    for(var mj in visM){ drawMark(mj, doLabel); }
+  }
+  function drawPoly(idx){
+    if(R.dP[idx]) return;
+    var z=R.polys[idx], col=typeColor(z.type), arr=[];
+    z.paths.forEach(function(ring){
+      var path=ring.map(function(p){return new kakao.maps.LatLng(p[0],p[1]);});
+      var pg=new kakao.maps.Polygon({path:path,strokeWeight:2,strokeColor:col,strokeOpacity:0.85,fillColor:col,fillOpacity:0.18});
+      pg.setMap(MAP.map);
+      kakao.maps.event.addListener(pg,'click',function(m){
+        getIW().setContent('<div style="padding:9px 12px;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div>'+(z.gu?'<div style="color:#64748b;">📍 '+esc(z.gu)+'</div>':'')+'</div>');
+        R.iw.setPosition(m.latLng); R.iw.setMap(MAP.map);
+      });
+      arr.push(pg);
+    });
+    R.dP[idx]=arr;
+  }
+  function drawMark(idx, label){
+    if(R.dM[idx]) return;
+    var z=R.marks[idx], col=typeColor(z.biz_type);
+    var el=document.createElement('div');
+    if(label){
+      el.style.cssText='background:'+col+';color:#fff;padding:2px 7px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3);font-family:inherit;white-space:nowrap;cursor:pointer;text-align:center;';
+      el.innerHTML='<div style="font-size:11px;font-weight:800;line-height:1.25;">'+esc(z.name.length>16?z.name.slice(0,15)+'…':z.name)+'</div>'+(z.stage?'<div style="font-size:9px;opacity:.95;line-height:1.1;">'+esc(z.stage)+'</div>':'');
+    } else {
+      el.style.cssText='width:11px;height:11px;background:'+col+';border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;';
+    }
+    el.onclick=function(){
+      getIW().setContent('<div style="padding:9px 12px;min-width:180px;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.biz_type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div><div style="color:#64748b;">📍 '+esc(z.gu)+' '+esc(z.jibun)+'</div><a href="https://cleanup.seoul.go.kr/cleanup/bsnssttus/lscrMainIndx.do" target="_blank" rel="noopener" style="display:inline-block;margin-top:5px;color:#2563eb;font-weight:700;text-decoration:none;">정비몽땅 ↗</a></div>');
+      R.iw.setPosition(new kakao.maps.LatLng(z.lat,z.lng)); R.iw.setMap(MAP.map);
+    };
+    var ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(z.lat,z.lng),content:el,yAnchor:label?1:0.5,xAnchor:0.5,zIndex:label?7:6,clickable:true});
+    ov.setMap(MAP.map);
+    R.dM[idx]=ov;
+  }
+  function clearAll(){
+    for(var k in R.dP){ R.dP[k].forEach(function(p){p.setMap(null);}); } R.dP={};
+    for(var m in R.dM){ R.dM[m].setMap(null); } R.dM={};
+    if(R.iw) R.iw.setMap(null); R.labelMode=null;
+  }
+  setInterval(ensureBtn, 800);
+})();
+</script>
 </body>
 </html>
