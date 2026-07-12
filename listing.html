@@ -1331,7 +1331,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     return '#94a3b8';
   }
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  var R={on:false, polys:null, marks:null, loading:false, dP:{}, dM:{}, iw:null, btn:null, legend:null, bound:false, labelMode:null};
+  var R={on:false, polys:null, marks:null, loading:false, dP:{}, dM:{}, dC:{}, iw:null, btn:null, legend:null, bound:false, labelMode:null};
 
   function ensureBtn(){
     var canvas=document.getElementById('mapCanvas');
@@ -1345,7 +1345,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     var lg=document.createElement('div');
     lg.style.cssText='position:absolute;top:54px;right:12px;z-index:20;background:rgba(255,255,255,.97);border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:11px;line-height:1.7;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;';
     var types=[['재개발','#ef4444'],['재건축','#8b5cf6'],['재정비촉진','#ec4899'],['도시환경정비','#f97316'],['가로주택·모아타운','#14b8a6'],['지역주택','#eab308'],['주거환경','#22c55e'],['역세권','#3b82f6']];
-    lg.innerHTML='<b>정비사업 유형</b><br>'+types.map(function(k){return '<span style="display:inline-block;width:10px;height:10px;background:'+k[1]+';border-radius:2px;margin-right:5px;"></span>'+k[0];}).join('<br>')+'<br><span style="color:#64748b;font-size:10px;">경계=공식구역 · 라벨=진행단계</span>';
+    lg.innerHTML='<b>정비사업 유형</b><br>'+types.map(function(k){return '<span style="display:inline-block;width:10px;height:10px;background:'+k[1]+';border-radius:2px;margin-right:5px;"></span>'+k[0];}).join('<br>')+'<br><span style="color:#64748b;font-size:10px;">경계=공식구역 · 라벨=진행단계<br>점선원 ○ = 신통 대략범위(면적기준)</span>';
     canvas.appendChild(lg); R.legend=lg;
     if(R.on){ b.style.background='#ef4444'; b.style.color='#fff'; lg.style.display='block'; }
   }
@@ -1391,7 +1391,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     R.labelMode=lblMode;
     var visM={};
     for(var j=0;j<R.marks.length;j++){ var z=R.marks[j]; if(z.lat>=s&&z.lat<=n&&z.lng>=w&&z.lng<=e) visM[j]=1; }
-    for(var mk2 in R.dM){ if(!visM[mk2]){ R.dM[mk2].setMap(null); delete R.dM[mk2]; } }
+    for(var mk2 in R.dM){ if(!visM[mk2]){ R.dM[mk2].setMap(null); delete R.dM[mk2]; if(R.dC[mk2]){ R.dC[mk2].setMap(null); delete R.dC[mk2]; } } }
     var cnt=Object.keys(visM).length;
     var doLabel = lblMode && cnt<=120;
     for(var mj in visM){ drawMark(mj, doLabel); }
@@ -1412,8 +1412,16 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     R.dP[idx]=arr;
   }
   function drawMark(idx, label){
-    if(R.dM[idx]) return;
     var z=R.marks[idx], col=typeColor(z.biz_type);
+    // 🆕 (2026-07-12) 신통 후보지 = 면적 기반 '대략 구역 원'(경계 폴리곤 없어 큰 구역이 점으로 보이던 것 보완).
+    if(!R.dC[idx] && /신속/.test(z.biz_type||'') && z.area_m2){
+      var _a=parseFloat(z.area_m2);
+      if(_a>0){
+        var circ=new kakao.maps.Circle({center:new kakao.maps.LatLng(z.lat,z.lng),radius:Math.sqrt(_a/Math.PI),strokeWeight:1,strokeColor:col,strokeOpacity:0.7,strokeStyle:'shortdash',fillColor:col,fillOpacity:0.12});
+        circ.setMap(MAP.map); R.dC[idx]=circ;
+      }
+    }
+    if(R.dM[idx]) return;
     var el=document.createElement('div');
     if(label){
       el.style.cssText='background:'+col+';color:#fff;padding:2px 7px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3);font-family:inherit;white-space:nowrap;cursor:pointer;text-align:center;';
@@ -1422,7 +1430,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       el.style.cssText='width:11px;height:11px;background:'+col+';border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;';
     }
     el.onclick=function(){
-      getIW().setContent('<div style="padding:9px 12px;min-width:180px;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.biz_type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div><div style="color:#64748b;">📍 '+esc(z.gu)+' '+esc(z.jibun)+'</div><a href="https://cleanup.seoul.go.kr/cleanup/bsnssttus/lscrMainIndx.do" target="_blank" rel="noopener" style="display:inline-block;margin-top:5px;color:#2563eb;font-weight:700;text-decoration:none;">정비몽땅 ↗</a></div>');
+      getIW().setContent('<div style="padding:9px 12px;min-width:180px;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.biz_type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div><div style="color:#64748b;">📍 '+esc(z.gu)+' '+esc(z.jibun)+'</div>'+(z.area_m2?'<div style="color:#64748b;">📐 면적 약 '+Number(z.area_m2).toLocaleString()+'㎡</div>':'')+'<a href="https://cleanup.seoul.go.kr/cleanup/bsnssttus/lscrMainIndx.do" target="_blank" rel="noopener" style="display:inline-block;margin-top:5px;color:#2563eb;font-weight:700;text-decoration:none;">정비몽땅 ↗</a></div>');
       R.iw.setPosition(new kakao.maps.LatLng(z.lat,z.lng)); R.iw.setMap(MAP.map);
     };
     var ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(z.lat,z.lng),content:el,yAnchor:label?1:0.5,xAnchor:0.5,zIndex:label?7:6,clickable:true});
@@ -1432,6 +1440,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
   function clearAll(){
     for(var k in R.dP){ R.dP[k].forEach(function(p){p.setMap(null);}); } R.dP={};
     for(var m in R.dM){ R.dM[m].setMap(null); } R.dM={};
+    for(var c in R.dC){ R.dC[c].setMap(null); } R.dC={};
     if(R.iw) R.iw.setMap(null); R.labelMode=null;
   }
   setInterval(ensureBtn, 800);
