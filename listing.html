@@ -1405,7 +1405,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       var pg=new kakao.maps.Polygon({path:path,strokeWeight:2,strokeColor:col,strokeOpacity:0.85,fillColor:col,fillOpacity:0.18});
       pg.setMap(MAP.map);
       kakao.maps.event.addListener(pg,'click',function(m){
-        getIW().setContent('<div style="padding:9px 12px;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div>'+(z.gu?'<div style="color:#64748b;">📍 '+esc(z.gu)+'</div>':'')+'</div>');
+        getIW().setContent('<div style="padding:9px 12px;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div>'+(z.gu?'<div style="color:#64748b;">📍 '+esc(z.gu)+'</div>':'')+(z.img?'<div style="margin-top:6px;"><img src="'+z.img+'" style="width:240px;max-width:62vw;border-radius:6px;border:1px solid #ddd;" loading="lazy"></div>':'')+(z.link?'<a href="'+z.link+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:5px;color:#2563eb;font-weight:700;text-decoration:none;">출처(정비몽땅) ↗</a>':'')+'</div>');
         R.iw.setPosition(m.latLng); R.iw.setMap(MAP.map);
       });
       arr.push(pg);
