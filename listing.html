@@ -1374,7 +1374,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     kakao.maps.event.addListener(MAP.map,'idle',function(){ if(R.on) cull(); });
     R.bound=true;
   }
-  function getIW(){ if(!R.iw) R.iw=new kakao.maps.InfoWindow({removable:true}); return R.iw; }
+  function getIW(){ if(!R.iw) R.iw=new kakao.maps.InfoWindow({removable:true, zIndex:99999}); return R.iw; }
   function cull(){
     if(!MAP.map) return;
     var bd=MAP.map.getBounds(), sw=bd.getSouthWest(), ne=bd.getNorthEast();
