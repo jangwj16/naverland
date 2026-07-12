@@ -1319,6 +1319,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
 (function(){
   var NRANK='https://diahouse.kr/nrank-api';
   function typeColor(t){ t=t||'';
+    if(/공공/.test(t)) return '#0891b2';
     if(/재정비촉진|촉진/.test(t)) return '#ec4899';
     if(/재건축/.test(t)) return '#8b5cf6';
     if(/도시환경/.test(t)) return '#f97316';
@@ -1344,7 +1345,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     b.onclick=toggle; canvas.appendChild(b); R.btn=b;
     var lg=document.createElement('div');
     lg.style.cssText='position:absolute;top:54px;right:12px;z-index:20;background:rgba(255,255,255,.97);border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:11px;line-height:1.7;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;';
-    var types=[['재개발','#ef4444'],['재건축','#8b5cf6'],['재정비촉진','#ec4899'],['도시환경정비','#f97316'],['가로주택·모아타운','#14b8a6'],['지역주택','#eab308'],['주거환경','#22c55e'],['역세권','#3b82f6']];
+    var types=[['재개발','#ef4444'],['공공재개발','#0891b2'],['재건축','#8b5cf6'],['재정비촉진','#ec4899'],['도시환경정비','#f97316'],['가로주택·모아타운','#14b8a6'],['지역주택','#eab308'],['주거환경','#22c55e'],['역세권','#3b82f6']];
     lg.innerHTML='<b>정비사업 유형</b><br>'+types.map(function(k){return '<span style="display:inline-block;width:10px;height:10px;background:'+k[1]+';border-radius:2px;margin-right:5px;"></span>'+k[0];}).join('<br>')+'<br><span style="color:#64748b;font-size:10px;">경계=공식구역 · 라벨=진행단계<br>점선원 ○ = 신통 대략범위(면적기준)</span>';
     canvas.appendChild(lg); R.legend=lg;
     if(R.on){ b.style.background='#ef4444'; b.style.color='#fff'; lg.style.display='block'; }
