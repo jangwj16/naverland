@@ -1362,8 +1362,8 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     if(R.loading) return;
     R.loading=true; R.btn.textContent='🏗️ 불러오는 중…';
     Promise.all([
-      fetch(NRANK+'/rank/redevelop-polygons?v=3',{cache:'force-cache'}).then(function(r){return r.json();}),
-      fetch(NRANK+'/rank/redevelop?v=3',{cache:'force-cache'}).then(function(r){return r.json();})
+      fetch(NRANK+'/rank/redevelop-polygons?v=4',{cache:'force-cache'}).then(function(r){return r.json();}),
+      fetch(NRANK+'/rank/redevelop?v=4',{cache:'force-cache'}).then(function(r){return r.json();})
     ]).then(function(a){
       R.polys=a[0].zones||[]; R.marks=a[1].zones||[];
       R.loading=false; R.btn.textContent='🏗️ 개발계획'; cb();
