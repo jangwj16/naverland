@@ -17,8 +17,10 @@
     .header{text-align:center;padding:16px 10px 0}
     .logo img{max-width:80px;height:auto}
     h1{font-size:20px;margin:10px 0 0}
-    .tabs{display:flex;background:#1a1a2e;margin-top:12px}
-    .tab-btn{flex:1;padding:10px 2px;text-align:center;color:#888;font-size:11px;font-weight:bold;cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap;overflow:hidden}
+    .tabs{display:flex;background:#1a1a2e;margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+    .tabs::-webkit-scrollbar{height:3px}
+    .tabs::-webkit-scrollbar-thumb{background:#c9a040;border-radius:3px}
+    .tab-btn{flex:0 0 auto;padding:10px 16px;text-align:center;color:#888;font-size:12px;font-weight:bold;cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap}
     .tab-btn.active{color:#fff;border-bottom-color:#c9a040}
     .tab-btn:hover{color:#ccc}
     .tab-content{display:none;padding:20px 16px;max-width:700px;margin:0 auto}
@@ -100,7 +102,7 @@
   <div class="tab-btn" id="pwa-tab-listing" onclick="location.href='listing.html'">🏠 매물</div>
   <div class="tab-btn" id="pwa-tab-tax" onclick="switchTab('tax',this)">🧮 계산</div>
   <div class="tab-btn" id="pwa-tab-contract" onclick="switchTab('contract',this)">📝 계약</div>
-  <div class="tab-btn" id="pwa-tab-building" onclick="location.href='building.html'">🏛️ 건축물</div>
+  <div class="tab-btn" id="pwa-tab-building" onclick="location.href='building.html'">🏛️ 건축물&토지대장</div>
 </div>
 <script>
   // 권한 없는 탭 자동 숨김 (master 는 전부 표시)
