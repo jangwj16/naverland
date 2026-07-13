@@ -69,9 +69,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
 <body>
 <div class="header">
   <a href="index.html">&#8592;</a>
-  <span>&#127970; 건축물대장</span>
+  <span>&#127970; 건축물 &amp; 토지대장</span>
 </div>
 <div class="container">
+  <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid #e5e7eb;overflow-x:auto;">
+    <button id="pt-bd" onclick="switchPwaSubtab('bd')" style="flex:0 0 auto;padding:10px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px 8px 0 0;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">🏢 건축물대장</button>
+    <button id="pt-ln" onclick="switchPwaSubtab('ln')" style="flex:0 0 auto;padding:10px 16px;background:#e5e7eb;color:#555;border:none;border-radius:8px 8px 0 0;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">🏞️ 토지대장</button>
+    <button id="pt-ls" onclick="switchPwaSubtab('ls')" style="flex:0 0 auto;padding:10px 16px;background:#e5e7eb;color:#555;border:none;border-radius:8px 8px 0 0;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">🧩 대지지분</button>
+  </div>
+  <div id="pwa-bd-content">
   <div class="sec-title">&#127970; 건축물대장 조회</div>
   <div style="background:#f0f4ff; padding:20px; border-radius:10px; margin-bottom:20px;">
     <div style="margin-bottom:12px;"><span class="label">주소 검색 (동 + 번지)</span></div>
@@ -96,6 +102,35 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-ser
   </div>
   <div id="bd-result" style="margin-top:15px;">
     <div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">주소를 검색하고 선택해주세요.</div>
+  </div>
+  </div><!-- /pwa-bd-content -->
+
+  <!-- 토지대장 -->
+  <div id="pwa-ln-content" style="display:none;">
+    <div class="sec-title">&#127966; 토지대장 조회 (V-World 연속지적도)</div>
+    <div style="background:#f0fdf4; padding:20px; border-radius:10px; margin-bottom:20px;">
+      <div style="margin-bottom:12px;"><span class="label">주소 검색 (동 + 번지)</span></div>
+      <div style="position:relative;">
+        <input type="text" id="ln-addr" placeholder="예: 화곡동 346-9" style="width:100%;padding:14px 16px;border:2px solid #16a34a;border-radius:8px;font-size:16px;box-sizing:border-box;margin-bottom:10px;" onkeyup="lnAddrKeyup(event)" autocomplete="off">
+        <button class="btn-blue" style="width:100%;border-radius:8px;padding:12px;font-size:16px;background:#16a34a;" onclick="lnAddrSearch()">&#128269; 검색</button>
+        <div id="ln-addr-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;max-height:300px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+      </div>
+      <div id="ln-result" style="display:none;margin-top:20px;padding:18px;background:#fff;border:2px solid #16a34a;border-radius:10px;"></div>
+    </div>
+  </div>
+
+  <!-- 대지지분 -->
+  <div id="pwa-ls-content" style="display:none;">
+    <div class="sec-title">&#129513; 대지지분 조회 (대지권등록부 &middot; 공유지연명부)</div>
+    <div style="background:#faf5ff; padding:20px; border-radius:10px; margin-bottom:20px;">
+      <div style="margin-bottom:12px;"><span class="label">주소 검색 (동 + 번지)</span><div style="font-size:12px;color:#888;margin-top:4px;">집합건물(빌라&middot;아파트) 호별 대지권 지분 / 공유토지 소유자 구성</div></div>
+      <div style="position:relative;">
+        <input type="text" id="ls-addr" placeholder="예: 대치동 316" style="width:100%;padding:14px 16px;border:2px solid #7c3aed;border-radius:8px;font-size:16px;box-sizing:border-box;margin-bottom:10px;" onkeyup="lsAddrKeyup(event)" autocomplete="off">
+        <button class="btn-blue" style="width:100%;border-radius:8px;padding:12px;font-size:16px;background:#7c3aed;" onclick="lsAddrSearch()">&#128269; 검색</button>
+        <div id="ls-addr-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;max-height:300px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+      </div>
+      <div id="ls-result" style="display:none;margin-top:20px;padding:18px;background:#fff;border:2px solid #7c3aed;border-radius:10px;overflow-x:auto;"></div>
+    </div>
   </div>
 </div>
 <script>
@@ -569,6 +604,113 @@ var PWA_TK=(new URLSearchParams(location.search)).get('tk')||'dia2026pwa';
         function bdLoadBjdong(){}
 
         function bdClearForm(){document.getElementById('bd-sido').value='';document.getElementById('bd-sigungu').innerHTML='<option value="">선택</option>';document.getElementById('bd-bjdong').innerHTML='<option value="">선택 (없으면 생략)</option>';document.getElementById('bd-bun').value='';document.getElementById('bd-ji').value='';document.getElementById('bd-result').innerHTML='<div style="color:#0066cc;background:#e7f3ff;padding:15px;border-radius:8px;border-left:4px solid #0066cc;">시도 → 시군구 → 읍면동 선택 후 본번 입력하고 조회하세요.</div>';}
+
+        // ========== 서브탭 전환 (건축물대장/토지대장/대지지분) ==========
+        function switchPwaSubtab(sub){
+            var map={bd:{btn:'pt-bd',c:'pwa-bd-content',on:'#2563eb'},ln:{btn:'pt-ln',c:'pwa-ln-content',on:'#16a34a'},ls:{btn:'pt-ls',c:'pwa-ls-content',on:'#7c3aed'}};
+            Object.keys(map).forEach(function(k){
+                var t=map[k],btn=document.getElementById(t.btn),c=document.getElementById(t.c);
+                if(!btn||!c)return;
+                if(k===sub){btn.style.background=t.on;btn.style.color='#fff';c.style.display='';}
+                else{btn.style.background='#e5e7eb';btn.style.color='#555';c.style.display='none';}
+            });
+        }
+
+        // ========== 공용: PWA 주소검색 → 콜백(sigCd,bjdCd,bun,ji,label) ==========
+        function pwaAddrSearch(inputId, listId, onPick){
+            var q=document.getElementById(inputId).value.trim();
+            var listDiv=document.getElementById(listId);
+            if(!q||q.length<2){listDiv.style.display='none';return;}
+            fetch('https://diahouse.kr/api/pwa/addr-search?token='+PWA_TK+'&q='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(data){
+                if(!data.success||!data.documents||data.documents.length===0){listDiv.innerHTML='<div style="padding:15px;color:#666;text-align:center;">검색 결과가 없습니다</div>';listDiv.style.display='block';return;}
+                var html='';
+                data.documents.forEach(function(doc){
+                    var addr=doc.address;if(!addr)return;
+                    var ad=addr.address_name||'';
+                    var sigCd=addr.b_code?addr.b_code.substring(0,5):'';
+                    var bjdCd=addr.b_code?addr.b_code.substring(5,10):'';
+                    var bun=addr.main_address_no||'';
+                    var ji=addr.sub_address_no||'0';
+                    html+='<div class="bd-addr-item" data-sg="'+sigCd+'" data-bj="'+bjdCd+'" data-mn="'+bun+'" data-sn="'+ji+'" data-dp="'+ad.replace(/"/g,'&quot;')+'"><div style="font-size:14px;font-weight:bold;color:#333;">'+ad+'</div></div>';
+                });
+                listDiv.innerHTML=html;listDiv.style.display='block';
+                listDiv.querySelectorAll('.bd-addr-item').forEach(function(it){
+                    it.addEventListener('click',function(){onPick(this.dataset.sg,this.dataset.bj,this.dataset.mn,this.dataset.sn,this.dataset.dp);});
+                });
+            }).catch(function(e){listDiv.innerHTML='<div style="padding:15px;color:#dc3545;">검색 오류: '+e.message+'</div>';listDiv.style.display='block';});
+        }
+
+        // ========== 토지대장 ==========
+        var lnTimer=null;
+        function lnAddrKeyup(e){if(e.key==='Enter'){lnAddrSearch();return;}clearTimeout(lnTimer);lnTimer=setTimeout(lnAddrSearch,500);}
+        function lnAddrSearch(){pwaAddrSearch('ln-addr','ln-addr-list',lnSelect);}
+        async function lnSelect(sigCd,bjdCd,bun,ji,label){
+            document.getElementById('ln-addr-list').style.display='none';
+            document.getElementById('ln-addr').value=label;
+            var rd=document.getElementById('ln-result');
+            rd.innerHTML='<div style="text-align:center;color:#666;">조회중...</div>';rd.style.display='block';
+            try{
+                var url='https://diahouse.kr/api/pwa/land-info?token='+PWA_TK+'&sigunguCd='+sigCd+'&bjdongCd='+bjdCd+'&bun='+bun+'&ji='+(ji||'0');
+                var data=await (await fetch(url)).json();
+                if(!data.success){rd.innerHTML='<div style="color:#c00;font-weight:600;">❌ '+(data.message||'조회 실패')+'</div><div style="font-size:12px;color:#666;margin-top:6px;">PNU 시도: '+((data.pnu_tried||[]).join(', '))+'</div>';return;}
+                var jiga=data.jiga?Number(data.jiga).toLocaleString()+' 원/㎡':'-';
+                rd.innerHTML='<div style="display:grid;grid-template-columns:110px 1fr;gap:8px 12px;font-size:14px;">'+
+                    '<div style="font-weight:600;color:#15803d;">PNU</div><div>'+(data.pnu||'-')+' <span style="color:#888;font-size:12px;">('+(data.pnu_type||'')+')</span></div>'+
+                    '<div style="font-weight:600;color:#15803d;">주소</div><div>'+(data.addr||'-')+'</div>'+
+                    '<div style="font-weight:600;color:#15803d;">지번</div><div>'+(data.jibun||'-')+'</div>'+
+                    '<div style="font-weight:600;color:#15803d;">공시지가</div><div style="color:#dc2626;font-weight:600;">'+jiga+'</div>'+
+                    '<div style="font-weight:600;color:#15803d;">기준</div><div>'+(data.gosi_year||'-')+'-'+(data.gosi_month||'-')+'</div>'+
+                    '</div>';
+            }catch(e){rd.innerHTML='<div style="color:#c00;">조회 오류: '+e.message+'</div>';}
+        }
+
+        // ========== 대지지분 ==========
+        var lsTimer=null;
+        function lsAddrKeyup(e){if(e.key==='Enter'){lsAddrSearch();return;}clearTimeout(lsTimer);lsTimer=setTimeout(lsAddrSearch,500);}
+        function lsAddrSearch(){pwaAddrSearch('ls-addr','ls-addr-list',lsSelect);}
+        async function lsSelect(sigCd,bjdCd,bun,ji,label){
+            document.getElementById('ls-addr-list').style.display='none';
+            document.getElementById('ls-addr').value=label;
+            var rd=document.getElementById('ls-result');
+            rd.innerHTML='<div style="text-align:center;color:#666;">조회중... (대지권등록부·공유지연명부)</div>';rd.style.display='block';
+            try{
+                var url='https://diahouse.kr/api/pwa/land-share?token='+PWA_TK+'&sigunguCd='+sigCd+'&bjdongCd='+bjdCd+'&bun='+bun+'&ji='+(ji||'0');
+                var data=await (await fetch(url)).json();
+                if(!data.success){rd.innerHTML='<div style="color:#c00;font-weight:600;">❌ '+(data.message||'조회 실패')+'</div><div style="font-size:12px;color:#666;margin-top:6px;">PNU 시도: '+((data.pnu_tried||[]).join(', '))+'</div>';return;}
+                var area=data.total_area?Number(data.total_area).toLocaleString()+' ㎡ ('+(data.total_area/3.305785).toFixed(1)+'평)':'-';
+                var head='<div style="display:grid;grid-template-columns:118px 1fr;gap:7px 12px;font-size:14px;margin-bottom:14px;">'+
+                    '<div style="font-weight:700;color:#6d28d9;">PNU</div><div>'+(data.pnu||'-')+' <span style="color:#888;font-size:12px;">('+(data.pnu_type||'')+')</span></div>'+
+                    '<div style="font-weight:700;color:#6d28d9;">주소</div><div>'+(data.addr||'-')+' '+(data.jibun||'')+'</div>'+
+                    '<div style="font-weight:700;color:#6d28d9;">지목</div><div>'+(data.jimok||'-')+'</div>'+
+                    '<div style="font-weight:700;color:#6d28d9;">전체 대지면적</div><div style="color:#dc2626;font-weight:700;">'+area+'</div>'+
+                    '<div style="font-weight:700;color:#6d28d9;">소유/공유인수</div><div>'+(data.owner_type||'-')+' / '+(data.coowner_count||'-')+'명</div>'+
+                    '</div>';
+                var body='';var lr=data.landrights||[];
+                if(lr.length>0){
+                    body+='<div style="font-weight:700;color:#6d28d9;margin:6px 0 8px;">🏢 집합건물 호별 대지권 지분 ('+lr.length+'호)</div>';
+                    body+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:#f3e8ff;">'+
+                        '<th style="padding:6px;border:1px solid #ddd;">건물</th><th style="padding:6px;border:1px solid #ddd;">동</th><th style="padding:6px;border:1px solid #ddd;">층</th><th style="padding:6px;border:1px solid #ddd;">호</th><th style="padding:6px;border:1px solid #ddd;">지분율</th><th style="padding:6px;border:1px solid #ddd;">대지지분</th></tr></thead><tbody>';
+                    lr.forEach(function(x){
+                        var sa=(x.share_area!=null)?x.share_area.toFixed(2)+'㎡ ('+(x.share_area/3.305785).toFixed(2)+'평)':'-';
+                        body+='<tr><td style="padding:6px;border:1px solid #eee;">'+(x.building||'-')+'</td>'+
+                            '<td style="padding:6px;border:1px solid #eee;text-align:center;">'+(x.dong||'-')+'</td>'+
+                            '<td style="padding:6px;border:1px solid #eee;text-align:center;">'+(x.floor||'-')+'</td>'+
+                            '<td style="padding:6px;border:1px solid #eee;text-align:center;font-weight:600;">'+(x.ho||'-')+'</td>'+
+                            '<td style="padding:6px;border:1px solid #eee;text-align:center;">'+(x.qota_rate||'-')+'</td>'+
+                            '<td style="padding:6px;border:1px solid #eee;text-align:right;color:#dc2626;font-weight:600;white-space:nowrap;">'+sa+'</td></tr>';
+                    });
+                    body+='</tbody></table>';
+                }else{
+                    body+='<div style="padding:12px;background:#fef9c3;border-radius:8px;color:#854d0e;font-size:13px;">집합건물 대지권등록부 없음 (단독/일반 토지). 아래 공유 정보 참고.</div>';
+                }
+                var cn=(data.coowner_indiv||0)+(data.coowner_corp||0);
+                if(cn>0){
+                    body+='<div style="font-weight:700;color:#6d28d9;margin:14px 0 6px;">👥 공유지연명부</div>'+
+                        '<div style="font-size:13px;color:#444;">총 <b>'+cn+'명</b> 공유 — 개인 '+(data.coowner_indiv||0)+'명, 법인 '+(data.coowner_corp||0)+'명 <span style="color:#888;">(성명·개별지분은 개인정보로 미제공)</span></div>';
+                }
+                rd.innerHTML=head+body;
+            }catch(e){rd.innerHTML='<div style="color:#c00;">조회 오류: '+e.message+'</div>';}
+        }
 
 
 </script>
