@@ -648,9 +648,41 @@ function renderQlCards(items, el){
       var encMemo = encodeURIComponent(r.private_memo);
       html+='<div onclick="event.stopPropagation();window.showMemoModal(this)" data-memo="'+encMemo+'" style="font-size:11px;color:#94a3b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;border-top:1px dashed #eef2f7;padding-top:4px;">📝 '+r.private_memo.substring(0,40)+(r.private_memo.length>40?' … 탭하여 전체보기':'')+'</div>';
     }
+    // 🧭 길안내 (티맵/카카오) — 좌표 있으면 내비, 없으면 주소검색. 카드 클릭(네이버) 막기 위해 stopPropagation (대표 요청 2026-07-19)
+    var _la=parseFloat(r.latitude)||0, _ln=parseFloat(r.longitude)||0;
+    var _ea=encodeURIComponent(r.address||r.address_group||'').replace(/'/g,'%27');
+    html+='<div style="display:flex;gap:6px;margin-top:8px;">';
+    html+='<button onclick="event.stopPropagation();qlNav(\'tmap\','+_la+','+_ln+',\''+_ea+'\')" style="flex:1;padding:9px;background:#1a1a68;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🧭 티맵</button>';
+    html+='<button onclick="event.stopPropagation();qlNav(\'kakao\','+_la+','+_ln+',\''+_ea+'\')" style="flex:1;padding:9px;background:#ffe812;color:#3c1e1e;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🗺️ 카카오맵</button>';
+    html+='</div>';
     html+='</div>';
   });
   el.innerHTML=html;
+}
+// 🧭 검색결과 카드 길안내 (index.html 전용 — listing.html 과 동일 로직 복제)
+function qlNav(kind, lat, lng, encAddr){
+  var addr=decodeURIComponent(encAddr||''); var name=addr||'매물';
+  if(kind==='kakao'){
+    if(lat&&lng) window.open('https://map.kakao.com/link/to/'+encodeURIComponent(name)+','+lat+','+lng,'_blank');
+    else window.open('https://map.kakao.com/link/search/'+encodeURIComponent(addr),'_blank');
+  } else {
+    if(lat&&lng) openTmapNav(lat,lng,name);
+    else openTmapSearch(addr);
+  }
+}
+// 티맵 앱 길안내 — 안드로이드 intent://(Chrome이 tmap:// 차단), iOS tmap://. 미설치 시 스토어 폴백.
+function openTmapNav(lat, lng, name){
+  var ua=navigator.userAgent||''; var q='goalname='+encodeURIComponent(name)+'&goalx='+lng+'&goaly='+lat;
+  if(/Android/i.test(ua)){ var fb=encodeURIComponent('https://play.google.com/store/apps/details?id=com.skt.tmap.ku'); location.href='intent://route?'+q+'#Intent;scheme=tmap;package=com.skt.tmap.ku;S.browser_fallback_url='+fb+';end'; return; }
+  if(/iPhone|iPad|iPod/i.test(ua)){ var opened=false; window.addEventListener('pagehide',function(){opened=true;},{once:true}); setTimeout(function(){ if(!opened) window.open('https://apps.apple.com/kr/app/id431589174','_blank'); },1500); location.href='tmap://route?'+q; return; }
+  window.open('https://map.kakao.com/link/to/'+encodeURIComponent(name)+','+lat+','+lng,'_blank');
+}
+// 티맵 주소검색 — 좌표 없는 매물용
+function openTmapSearch(query){
+  query=query||''; var ua=navigator.userAgent||''; var q='name='+encodeURIComponent(query);
+  if(/Android/i.test(ua)){ var fb=encodeURIComponent('https://play.google.com/store/apps/details?id=com.skt.tmap.ku'); location.href='intent://search?'+q+'#Intent;scheme=tmap;package=com.skt.tmap.ku;S.browser_fallback_url='+fb+';end'; return; }
+  if(/iPhone|iPad|iPod/i.test(ua)){ var opened=false; window.addEventListener('pagehide',function(){opened=true;},{once:true}); setTimeout(function(){ if(!opened) window.open('https://apps.apple.com/kr/app/id431589174','_blank'); },1500); location.href='tmap://search?'+q; return; }
+  window.open('https://map.kakao.com/link/search/'+encodeURIComponent(query),'_blank');
 }
 function qlDoSearch(q,mode){
   var el=document.getElementById('ql-result');
