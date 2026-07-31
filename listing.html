@@ -471,11 +471,13 @@ function buildTypePanel(){
   var p=document.getElementById("panel-type");p.innerHTML="";
   addTitle(p,"매물유형 (중복선택 가능)","type");
   var g=document.createElement("div");g.className="type-grid";g.id="typeGrid";p.appendChild(g);
-  var allBtn=document.createElement("div");allBtn.className="type-btn sel";allBtn.textContent="전체";
+  var allBtn=document.createElement("div");allBtn.className="type-btn"+(F.types.length===0?" sel":"");allBtn.textContent="전체";
   allBtn.onclick=function(e){e.stopPropagation();F.types=[];g.querySelectorAll(".type-btn").forEach(function(b){b.classList.remove("sel");});allBtn.classList.add("sel");};
   g.appendChild(allBtn);
   TYPES.forEach(function(t){
-    var btn=document.createElement("div");btn.className="type-btn";btn.textContent=t;
+    // 🔧 (2026-07-31) 패널 재빌드 시 현재 F.types 를 .sel 로 복원 — 안 하면 URL/이전선택으로 이미
+    //   빌라/연립 등이 담겨있어도 화면엔 미선택으로 보여 사용자가 모르고 다른 유형 추가→둘 다 적용됨.
+    var btn=document.createElement("div");btn.className="type-btn"+(F.types.indexOf(t)>=0?" sel":"");btn.textContent=t;
     btn.onclick=function(e){
       e.stopPropagation();allBtn.classList.remove("sel");
       var idx=F.types.indexOf(t);
