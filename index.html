@@ -630,13 +630,24 @@ function searchByMemo(){
   qlDoSearch(v,'memo');
 }
 // 검색결과 카드 렌더링 (주소/메모/매물번호 검색 공용 — 비공개메모 포함)
+// 🔧 (2026-07-31 대표) 네이버 링크 = 구버전(new.land). 신버전(fin.land/m.land) 대신.
+//   ⚠️ 구버전은 매물번호만으론 404 — 지도좌표(ms=위도,경도,줌)가 필수. 유형/거래코드는 스캔 TYPE_CODE_MAP 동일.
+function _naverUrlV2(r){
+  var T={'빌라/연립':'VL:YR:DSD','단독/다가구':'DDDGG','전원주택':'JWJT','아파트':'APT','오피스텔':'OPST','상가주택':'SGJT','상가':'SG:SMS','사무실':'SMS:OFC','지식산업센터':'JK'};
+  var B={'매매':'A1','전세':'B1','월세':'B2'};
+  var a=T[r.type_normalized]||'VL:YR:DSD', b=B[r.trade_type]||'A1';
+  var la=parseFloat(r.latitude)||0, ln=parseFloat(r.longitude)||0;
+  var nid=r.naver_id||r.article_id||'';
+  return (la&&ln) ? ('https://new.land.naver.com/houses?ms='+la+','+ln+',18&a='+a+'&b='+b+'&e=RETAIL&articleNo='+nid)
+                  : ('https://new.land.naver.com/houses?articleNo='+nid);
+}
 function renderQlCards(items, el){
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">검색 결과가 없습니다</div>';return;}
   var html='<div style="font-size:13px;color:#666;margin-bottom:8px;">검색 결과 <b style="color:#2563eb;">'+items.length+'</b>건</div>';
   items.forEach(function(r){
     var price=r.trade_type==='매매'?(r.price?Number(r.price).toLocaleString()+'만':'-'):(r.deposit?Number(r.deposit).toLocaleString()+'만':'-');
     var statusColor=r.status==='노출중'?'#10b981':'#94a3b8';
-    html+='<div onclick="window.open(\'https://m.land.naver.com/article/info/'+r.naver_id+'\',\'_blank\')" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:6px;cursor:pointer;">';
+    html+='<div onclick="window.open(\''+_naverUrlV2(r)+'\',\'_blank\')" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:6px;cursor:pointer;">';
     html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
     html+='<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+statusColor+'20;color:'+statusColor+';font-weight:600;">'+r.status+'</span>';
     html+='<span style="font-size:11px;color:#94a3b8;">'+(r.sub_account_name||'')+'</span></div>';
