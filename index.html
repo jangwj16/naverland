@@ -241,6 +241,7 @@
     <button class="sub-tab" onclick="switchSubTab('fee',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🤝 중개보수</button>
     <button class="sub-tab" onclick="switchSubTab('acq',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏠 취득세</button>
     <button class="sub-tab" onclick="switchSubTab('rate',this);loadBankRates()" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">🏦 은행금리</button>
+    <button class="sub-tab" onclick="switchSubTab('card',this)" style="flex:1;padding:10px 3px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:#f5f5f5;color:#666;">💳 카드소득</button>
   </div>
   <div id="sub-acq" style="display:none;">
   <div class="tx-card"><h3>🏠 취득세 계산</h3>
@@ -292,6 +293,16 @@
     <div style="margin-top:12px;text-align:right;"><a href="https://portal.kfb.or.kr/compare/loan_household_new.php" target="_blank" rel="noopener" style="font-size:11px;color:#2563eb;font-weight:700;text-decoration:none;">은행연합회 원본 ↗</a></div>
   </div>
   </div><!-- /sub-rate -->
+
+  <div id="sub-card" style="display:none;">
+  <div class="tx-card"><h3>💳 카드추정소득 계산</h3>
+    <div style="font-size:11px;color:#888;margin:-4px 0 12px;">소득 증빙이 어려운 고객의 카드사용액 기반 추정 연소득 (참고용)</div>
+    <div class="tx-field"><label>월평균 카드사용액 (만원)</label><input type="text" id="cardMonthly" placeholder="예: 200 (월 200만원)" inputmode="numeric"></div>
+    <div class="tx-field"><label>적용 배수</label><input type="text" id="cardMult" value="3" placeholder="예: 3" inputmode="decimal"><div style="font-size:10px;color:#aaa;margin-top:3px;">추정연소득 = 연간 카드사용액 × 배수. 배수는 기관·상담 기준마다 다름 — 기본 3배(수정 가능).</div></div>
+    <button class="tx-btn" onclick="calcCardIncome()">추정소득 계산</button>
+    <div id="resCard" class="tx-result"></div>
+  </div>
+  </div><!-- /sub-card -->
 
   <div id="sub-fee" style="display:none;">
   <div class="tx-card"><h3>🤝 중개보수(복비) 계산</h3>
@@ -542,7 +553,7 @@
 <!-- ========== 대출계산기 탭 ========== -->
 <script>
 function switchSubTab(id,el){
-  ['loan','limit','fee','acq','rate'].forEach(function(t){
+  ['loan','limit','fee','acq','rate','card'].forEach(function(t){
     var d=document.getElementById('sub-'+t);
     if(d) d.style.display=(t===id)?'block':'none';
   });
@@ -817,6 +828,38 @@ function calcAcq(){
   var tr=(a+n+e).toFixed(2);
   r.innerHTML='<div class="tx-total">'+fmt(tot)+'원</div><div class="tx-row hi"><span class="tl">적용세율</span><span class="tv">'+lb+' (합계 '+tr+'%)</span></div><div class="tx-row"><span class="tl">취득세 ('+a.toFixed(2)+'%)</span><span class="tv">'+fmt(at)+'원</span></div><div class="tx-row"><span class="tl">농특세 ('+n.toFixed(2)+'%)</span><span class="tv">'+fmt(nt)+'원</span></div><div class="tx-row"><span class="tl">교육세 ('+e.toFixed(2)+'%)</span><span class="tv">'+fmt(et)+'원</span></div>'+fn+'<div class="tx-row tot"><span class="tl">총 납부세액</span><span class="tv">'+fmt(tot)+'원</span></div>';
   r.className='tx-result show';
+}
+function calcCardIncome(){
+  var monthly=parseFloat((document.getElementById('cardMonthly').value||'0').replace(/[^0-9.]/g,''))||0;
+  var mult=parseFloat((document.getElementById('cardMult').value||'0').replace(/[^0-9.]/g,''))||0;
+  var r=document.getElementById('resCard');
+  if(!monthly){r.className='tx-result show';r.innerHTML='<p style="color:#999;text-align:center">월평균 카드사용액을 입력하세요</p>';return}
+  if(!mult){mult=3;document.getElementById('cardMult').value='3';}
+  var annualUse=Math.round(monthly*12);
+  var estAnnual=Math.round(annualUse*mult);
+  var estMonthly=Math.round(estAnnual/12);
+  window.__cardEstAnnual=estAnnual;
+  r.innerHTML='<div class="tx-total">'+fmt(estAnnual)+'만원</div>'
+    +'<div class="tx-row hi"><span class="tl">추정 연소득</span><span class="tv">약 '+fmt(estAnnual)+'만원</span></div>'
+    +'<div class="tx-row"><span class="tl">월평균 카드사용액</span><span class="tv">'+fmt(monthly)+'만원</span></div>'
+    +'<div class="tx-row"><span class="tl">연간 카드사용액 (×12)</span><span class="tv">'+fmt(annualUse)+'만원</span></div>'
+    +'<div class="tx-row"><span class="tl">적용 배수</span><span class="tv">×'+mult+'</span></div>'
+    +'<div class="tx-row tot"><span class="tl">추정 월소득</span><span class="tv">'+fmt(estMonthly)+'만원</span></div>'
+    +'<div style="background:#fef9f0;border:1px solid #f0d9a0;border-radius:8px;padding:10px 12px;font-size:11px;color:#8a6d3b;margin-top:12px;line-height:1.6;">🟡 카드사용액 기반 <b>추정치</b>입니다. 소득 인정 기준·배수는 금융기관마다 다르며 실제 대출심사 결과와 다를 수 있습니다. <b>전문가(은행·세무사) 확인 필요.</b></div>'
+    +'<button class="tx-btn" style="margin-top:10px;background:#2563eb;" onclick="cardToLimit()">→ 이 추정소득으로 대출한도 계산</button>';
+  r.className='tx-result show';
+}
+function cardToLimit(){
+  var v=window.__cardEstAnnual||0;
+  if(!v){return}
+  var inc=document.getElementById('lmIncome');
+  if(inc){inc.value=v;}
+  var target=null;
+  document.querySelectorAll('#tab-tax .sub-tab').forEach(function(b){
+    var oc=b.getAttribute('onclick')||'';
+    if(oc.indexOf("'limit'")>=0) target=b;
+  });
+  if(target){switchSubTab('limit',target);}
 }
 function feeToggle(){
   var isRent = (S.deal === 'rent');
