@@ -551,8 +551,9 @@ function switchSubTab(id,el){
   el.style.background='#c9a040';el.style.color='#fff';
 }
 
-// 🏦 은행별 가계대출 평균금리 (은행연합회 공시, 주1회 서버 갱신)
-var _brData=null, _brProd=null;
+// 🏦 은행별 가계대출 신용점수별 금리 (은행연합회 신규취급 공시, 주1회 서버 갱신)
+var _brData=null, _brProd=null, _brExpand={};
+function _brToggle(i){ _brExpand[i]=!_brExpand[i]; _brRender(); }
 function loadBankRates(){
   if(_brData){ _brRender(); return; }
   fetch('https://diahouse.kr/nrank-api/rank/bank-rates',{cache:'no-store'})
@@ -563,7 +564,7 @@ function loadBankRates(){
     })
     .catch(function(){ document.getElementById('brTable').innerHTML='<div style="text-align:center;padding:24px;color:#e11;">네트워크 오류 — 잠시 후 다시 시도하세요.</div>'; });
 }
-function _brSelProd(k){ _brProd=k; _brRender(); }
+function _brSelProd(k){ _brProd=k; _brExpand={}; _brRender(); }
 function _brRender(){
   var d=_brData; if(!d) return;
   var tabs=d.products.map(function(p){
@@ -572,21 +573,39 @@ function _brRender(){
   }).join('');
   document.getElementById('brProdTabs').innerHTML=tabs;
   var upd=(d.updated_at||'').slice(0,10);
-  document.getElementById('brMeta').innerHTML='기준월 <b>'+(d.month||'-')+'</b> · 갱신 '+upd+' · 낮은 금리순';
+  document.getElementById('brMeta').innerHTML='기준월 <b>'+(d.month||'-')+'</b> · '+(d.basis||'신규취급 기준')+' · 갱신 '+upd+' · 낮은 금리순';
   var prod=d.products.filter(function(p){return p.key===_brProd;})[0]||{banks:[]};
   var banks=prod.banks||[];
+  var labels=d.score_labels||[];
   if(!banks.length){ document.getElementById('brTable').innerHTML='<div style="text-align:center;padding:20px;color:#999;">해당 상품 공시 데이터 없음</div>'; return; }
   var min=banks[0].rate, max=banks[banks.length-1].rate;
   var rows=banks.map(function(b,i){
     var top=(i<3), hi=(b.rate===max);
     var bg=top?'#fff8ec':(hi?'#fdecec':'#fff');
     var badge=top?'<span style="display:inline-block;min-width:18px;text-align:center;background:#c9a040;color:#fff;border-radius:9px;font-size:10px;font-weight:800;padding:1px 5px;margin-right:6px;">'+(i+1)+'</span>':'<span style="display:inline-block;min-width:18px;text-align:center;color:#bbb;font-size:11px;margin-right:6px;">'+(i+1)+'</span>';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-bottom:1px solid #f0f0f0;background:'+bg+';">'
-      +'<div style="font-size:13px;color:#222;">'+badge+b.bank+'</div>'
+    var hasBands=b.bands&&b.bands.length;
+    var open=_brExpand[i];
+    var sub=(b.score&&b.score!=='0')?'<span style="font-size:10px;color:#aaa;margin-left:6px;">신용'+b.score+'·'+(b.cb||'')+'</span>':'';
+    var caret=hasBands?'<span style="font-size:10px;color:#c9a040;margin-left:5px;">'+(open?'▲':'▼')+'</span>':'';
+    var head='<div'+(hasBands?' onclick="_brToggle('+i+')" style="cursor:pointer;':' style="')+'display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-bottom:1px solid #f0f0f0;background:'+bg+';">'
+      +'<div style="font-size:13px;color:#222;">'+badge+b.bank+sub+caret+'</div>'
       +'<div style="font-size:14px;font-weight:800;color:'+(top?'#b8860b':(hi?'#d33':'#333'))+';">'+b.rate.toFixed(2)+'<span style="font-size:10px;font-weight:600;color:#999;">%</span></div></div>';
+    var detail='';
+    if(open&&hasBands){
+      var cells=b.bands.map(function(v,j){
+        var dash=(v==='-'||v==='');
+        return '<div style="flex:1 0 30%;text-align:center;padding:5px 2px;border:1px solid #f0e6cc;border-radius:5px;background:#fffdf7;">'
+          +'<div style="font-size:9px;color:#999;line-height:1.2;">'+(labels[j]||'')+'</div>'
+          +'<div style="font-size:12px;font-weight:700;color:'+(dash?'#ccc':'#7a5c10')+';">'+(dash?'-':v)+'</div></div>';
+      }).join('');
+      detail='<div style="padding:8px 10px;background:#faf6ea;border-bottom:1px solid #f0f0f0;">'
+        +'<div style="font-size:10px;color:#999;margin-bottom:5px;">신용점수 구간별 금리(%) · CB '+(b.cb||'-')+' 기준</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:4px;">'+cells+'</div></div>';
+    }
+    return head+detail;
   }).join('');
   document.getElementById('brTable').innerHTML='<div style="border:1px solid #eee;border-radius:8px;overflow:hidden;">'+rows
-    +'</div><div style="font-size:11px;color:#aaa;margin-top:6px;">최저 '+min.toFixed(2)+'% ~ 최고 '+max.toFixed(2)+'% ('+banks.length+'개 은행)</div>';
+    +'</div><div style="font-size:11px;color:#aaa;margin-top:6px;">최저 '+min.toFixed(2)+'% ~ 최고 '+max.toFixed(2)+'% ('+banks.length+'개 은행) · 은행행 탭하면 신용점수별 금리</div>';
 }
 function switchTab(id,el){
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
