@@ -779,7 +779,8 @@ function renderItems(){
     var tc=item.trade_type==="매매"?"b-sell":item.trade_type==="전세"?"b-jeon":"b-wol";
     var n=start+i+1;
     var addrFull = (item.address||"");
-    var bldName = item.building_name||"";
+    var _bp = bldParts(item);
+    var bldName = _bp.name;
     var area = item.net_area ? item.net_area+"\u33A1" : "";
     var roomInfo = "";
     if(item.room_count){roomInfo="방"+item.room_count;if(item.bath_count)roomInfo+=" 욕"+item.bath_count;}
@@ -787,11 +788,62 @@ function renderItems(){
     if(roomInfo) roomInfo = "<span style='color:#10b981;font-size:10px;'>"+roomInfo+"</span>";
     var areaInfo = area ? "<span style='color:#888;font-size:10px;'>"+area+"</span>" : "";
     var subInfo = [areaInfo, roomInfo].filter(function(x){return x;}).join(" ");
-    tr.innerHTML="<td>"+n+"</td><td style='font-size:11px;'>"+(item.trade_type||"-")+"<br><span style='color:#888;font-size:10px;'>"+(item.type_normalized||"")+"</span></td><td class='addr-cell' style='text-align:left;white-space:normal;'><div style='font-size:12px;font-weight:600;color:#2563eb;'>"+bldName+"</div><div style='font-size:11px;color:#ccc;'>"+addrFull+"</div></td><td style='text-align:right;white-space:nowrap;'><div class='price-cell'>"+fmtPr(item)+"</div><div>"+subInfo+"</div></td>";
+    tr.innerHTML="<td>"+n+"</td><td style='font-size:11px;'>"+(item.trade_type||"-")+"<br><span style='color:#888;font-size:10px;'>"+(item.type_normalized||"")+"</span></td><td class='addr-cell' style='text-align:left;white-space:normal;'><div style='font-size:12px;font-weight:600;color:#2563eb;'>"+_eh(bldName)+(_bp.unit?"<span style='margin-left:5px;padding:0 6px;border-radius:8px;background:#1e3a8a;color:#bfdbfe;font-size:11px;font-weight:700;'>"+_eh(_bp.unit)+"</span>":"")+"</div><div style='font-size:11px;color:#ccc;'>"+addrFull+"</div></td><td style='text-align:right;white-space:nowrap;'><div class='price-cell'>"+fmtPr(item)+"</div><div>"+subInfo+"</div></td>";
     tbody.appendChild(tr);
   });
   renderPg(cp,tp);
   }catch(e){alert("렌더링오류: "+e.message);}
+}
+
+
+/* 🏢 (2026-08-23 대표 요청) 매물검색 목록에 건물명·동·호실 표시.
+   - 건물명: building_name 우선(꼬리 층/호 제거). 빈값이면(노출중 27%) 주소에서 추출.
+   - 동/호 : building_dong / ho_nm 우선, 없으면 주소에서 파싱.
+   - 주소 셀 말줄임(nowrap+ellipsis)에 뒤쪽 건물명/호실이 잘리던 것도 함께 해소. */
+function _eh(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function _bldClean(s){
+  return (s||"").replace(/\([^)]*\)/g,"")
+                .replace(/외\s*\d*\s*필지/g," ")
+                .replace(/제?\s*지하?\s*\d+\s*층.*$/,"")
+                .replace(/제?\s*\d+\s*층.*$/,"")
+                .replace(/제?\s*\d+\s*호.*$/,"")
+                .replace(/제?\s*\d+\s*동\s*$/,"")
+                .replace(/\s+/g," ").trim();
+}
+/* DB building_name 이 깨진 경우(예 "제", "더 골드시티제 층") — 주소 폴백을 쓰는 편이 낫다. */
+function _bldBad(s){
+  if(!s || s.length<2) return true;
+  if(/층/.test(s)) return true;                 /* "제 층", "지층 전체", "…제지하층" */
+  if(/^제(\s|$)/.test(s)) return true;          /* "제", "제 호", "제 가호" */
+  if(/^제[가-힣]{0,2}호$/.test(s)) return true;  /* "제가호" */
+  if(/(^|\s)호$/.test(s)) return true;          /* "… 호"  ("삼호" 같은 정상 이름은 통과) */
+  return false;
+}
+function bldParts(item){
+  var addr=(item.address||"");
+  var bn=_bldClean(item.building_name||"");
+  if(_bldBad(bn)){
+    /* 폴백: region_small(법정동) 뒤부터 잘라낸다. 토큰 추측은 "대명가" 같은 건물명을
+       행정구역으로 오인하고, "…동 <건물명> 1동 502호"(번지 없는 단지형/아파트 주소)에서는
+       '스토리'의 '리'를 리(里)로 잡아 건물명이 "동"으로 뭉개졌다. */
+    var s=addr.replace(/\([^)]*\)/g,"").replace(/외\s*\d*\s*필지/g," ");
+    var rs=(item.region_small||"").trim();
+    var t=s, k=rs?s.indexOf(rs):-1;
+    if(k>=0) t=s.slice(k+rs.length);
+    else{ var m=s.match(/[가-힣]+(?:동|읍|면|리|가)\s+\d+(?:-\d+)?\s*(.*)$/); t=m?m[1]:s; }
+    t=t.replace(/^\s*\d+(?:-\d+)?\s*/,"");
+    var alt=_bldClean(t);
+    if(!_bldBad(alt)) bn=alt;              /* 주소본이 멀쩡할 때만 교체 */
+    else if(_bldBad(bn)) bn=(alt.length>bn.length?alt:bn);
+    if(_bldBad(bn)) bn="";                 /* 둘 다 쓰레기면 아예 비운다 — 깨진 이름보다 없는 게 낫다 */
+  }
+  var dong=(item.building_dong||"").toString().trim();
+  if(!dong){ var dm=addr.match(/(?:제\s*)?(\d+)\s*동/); if(dm)dong=dm[1]; }
+  if(dong && !/동$/.test(dong)) dong=dong+"동";
+  var ho=(item.ho_nm||"").toString().trim();
+  if(!ho){ var hm=addr.match(/(?:제\s*)?(\d+)\s*호/); if(hm)ho=hm[1]; }
+  if(ho && !/호$/.test(ho)) ho=ho+"호";
+  return {name:bn, unit:[dong,ho].filter(Boolean).join(" ")};
 }
 
 function fmtPr(item){var p=item.price||0;if(item.trade_type==="월세")return fmtM(item.deposit||0)+"/"+fmtM(item.monthly_rent||0);return fmtM(p);}
