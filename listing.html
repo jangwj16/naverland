@@ -800,6 +800,9 @@ function renderItems(){
    - 건물명: building_name 우선(꼬리 층/호 제거). 빈값이면(노출중 27%) 주소에서 추출.
    - 동/호 : building_dong / ho_nm 우선, 없으면 주소에서 파싱.
    - 주소 셀 말줄임(nowrap+ellipsis)에 뒤쪽 건물명/호실이 잘리던 것도 함께 해소. */
+
+/* 지도 카드용 한 줄 라벨 — "그라티아스토리 502호" */
+function _bldLabel(item){var p=bldParts(item);return _eh([p.name,p.unit].filter(Boolean).join(" "));}
 function _eh(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function _bldClean(s){
   return (s||"").replace(/\([^)]*\)/g,"")
@@ -827,9 +830,13 @@ function bldParts(item){
        행정구역으로 오인하고, "…동 <건물명> 1동 502호"(번지 없는 단지형/아파트 주소)에서는
        '스토리'의 '리'를 리(里)로 잡아 건물명이 "동"으로 뭉개졌다. */
     var s=addr.replace(/\([^)]*\)/g,"").replace(/외\s*\d*\s*필지/g," ");
-    var rs=(item.region_small||"").trim();
-    var t=s, k=rs?s.indexOf(rs):-1;
-    if(k>=0) t=s.slice(k+rs.length);
+    /* 자를 기준: ①address_group("중화동 305-47") ②법정동명 ③정규식.
+       지도 API(/api/map/listings)는 region_small 을 안 주고 address_group 만 준다. */
+    var ag=(item.address_group||"").trim();
+    var rs=(item.region_small||"").trim() || (ag?ag.split(" ")[0]:"");
+    var t=s, k=ag?s.indexOf(ag):-1;
+    if(k<0 && rs) k=s.indexOf(rs), k=(k>=0?k+rs.length:-1); else if(k>=0) k=k+ag.length;
+    if(k>=0) t=s.slice(k);
     else{ var m=s.match(/[가-힣]+(?:동|읍|면|리|가)\s+\d+(?:-\d+)?\s*(.*)$/); t=m?m[1]:s; }
     t=t.replace(/^\s*\d+(?:-\d+)?\s*/,"");
     var alt=_bldClean(t);
@@ -837,10 +844,11 @@ function bldParts(item){
     else if(_bldBad(bn)) bn=(alt.length>bn.length?alt:bn);
     if(_bldBad(bn)) bn="";                 /* 둘 다 쓰레기면 아예 비운다 — 깨진 이름보다 없는 게 낫다 */
   }
-  var dong=(item.building_dong||"").toString().trim();
+  /* ho_nm/building_dong = /api/listings, dong/ho = /api/map/listings (필드명이 다르다) */
+  var dong=(item.building_dong||item.dong||"").toString().trim();
   if(!dong){ var dm=addr.match(/(?:제\s*)?(\d+)\s*동/); if(dm)dong=dm[1]; }
   if(dong && !/동$/.test(dong)) dong=dong+"동";
-  var ho=(item.ho_nm||"").toString().trim();
+  var ho=(item.ho_nm||item.ho||"").toString().trim();
   if(!ho){ var hm=addr.match(/(?:제\s*)?(\d+)\s*호/); if(hm)ho=hm[1]; }
   if(ho && !/호$/.test(ho)) ho=ho+"호";
   return {name:bn, unit:[dong,ho].filter(Boolean).join(" ")};
@@ -1201,7 +1209,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       '<div class="mcard-price">'+pinPrice(it)+'</div>'+
       '<div class="mcard-sub">'+(it.address_group||"")+'</div>'+
       '<div class="mcard-sub">'+((it.net_area?it.net_area+"m²":"")+(floorTxt?" · "+floorTxt:""))+'</div>'+
-      '<div class="mcard-sub">'+(it.building_name||"")+'</div>'+
+      '<div class="mcard-sub" style="color:var(--pri);font-weight:700;">'+_bldLabel(it)+'</div>'+
       // 🔒 비공개(중개사) 메모 — 카드에 미리보기(50자), 전체는 상세모달. web search.html 과 동일 (2026-07-02)
       (it.private_memo ? '<div class="mcard-memo" title="'+_esc(it.private_memo)+'">📝 '+_esc(it.private_memo.length>50?it.private_memo.slice(0,50)+'…':it.private_memo)+'</div>' : '')+
       '<div class="mcard-acts"><a class="mcard-act" href="javascript:void(0)" onclick="MAP.route('+it.id+')">🗺️ 길찾기</a><a class="mcard-act" href="javascript:void(0)" onclick="MAP._detail('+it.id+')">📄 상세</a></div>';
