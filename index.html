@@ -671,6 +671,71 @@ function _naverUrlV2(r){
   return (la&&ln) ? ('https://new.land.naver.com/houses?ms='+la+','+ln+',18&a='+a+'&b='+b+'&e=RETAIL&articleNo='+nid)
                   : ('https://new.land.naver.com/houses?articleNo='+nid);
 }
+/* 🏢 (2026-08-23 대표 요청) 매물검색 목록에 건물명·동·호실 표시.
+   - 건물명: building_name 우선(꼬리 층/호 제거). 빈값이면(노출중 27%) 주소에서 추출.
+   - 동/호 : building_dong / ho_nm 우선, 없으면 주소에서 파싱.
+   - 주소 셀 말줄임(nowrap+ellipsis)에 뒤쪽 건물명/호실이 잘리던 것도 함께 해소. */
+
+/* 지도 카드용 한 줄 라벨 — "그라티아스토리 502호" */
+function _bldLabel(item){var p=bldParts(item);return _eh([p.name,p.unit].filter(Boolean).join(" "));}
+function _eh(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function _bldClean(s){
+  return (s||"").replace(/\([^)]*\)/g,"")
+                .replace(/외\s*\d*\s*필지/g," ")
+                .replace(/제?\s*지하?\s*\d+\s*층.*$/,"")
+                .replace(/제?\s*\d+\s*층.*$/,"")
+                .replace(/제?\s*\d+\s*호.*$/,"")
+                .replace(/제?\s*\d+\s*동\s*$/,"")
+                .replace(/\s+/g," ").trim();
+}
+/* DB building_name 이 깨진 경우(예 "제", "더 골드시티제 층") — 주소 폴백을 쓰는 편이 낫다. */
+function _bldBad(s){
+  if(!s || s.length<2) return true;
+  if(/층/.test(s)) return true;                 /* "제 층", "지층 전체", "…제지하층" */
+  if(/^제(\s|$)/.test(s)) return true;          /* "제", "제 호", "제 가호" */
+  if(/^제[가-힣]{0,2}호$/.test(s)) return true;  /* "제가호" */
+  if(/(^|\s)호$/.test(s)) return true;          /* "… 호"  ("삼호" 같은 정상 이름은 통과) */
+  if(/(^|\s)제$/.test(s)) return true;          /* "호원캐슬 제" ("국제" 같은 정상 이름은 통과) */
+  return false;
+}
+function bldParts(item){
+  var addr=(item.address||"");
+  /* 지번 뒤쪽(tail)만 남긴 뒤 건물명·동·호를 전부 여기서 찾는다.
+     ⚠️ 주소 전체에서 /(\d+)\s*호/ 를 찾으면 번지 뒷자리 + '호'로 시작하는 건물명이 걸린다.
+        "갈현동 488-2 호원캐슬 제202호" → "2호"(정답 202) / "응암동 124-41 동건" → "41동".
+     자를 기준: ①address_group("중화동 305-47") ②법정동명 ③정규식.
+     지도 API(/api/map/listings)는 region_small 을 안 주고 address_group 만 준다.
+     ⚠️ ag 로 자른 경우엔 번지를 또 지우면 안 된다 — "중곡동 608-6 601호"의 601 이 사라진다. */
+  var s=addr.replace(/\([^)]*\)/g,"").replace(/외\s*\d*\s*필지/g," ");
+  var ag=(item.address_group||"").trim();
+  var rs=(item.region_small||"").trim() || (ag?ag.split(" ")[0]:"");
+  var t=s, k=-1, cutAg=false;
+  if(ag){ k=s.indexOf(ag); if(k>=0){ k+=ag.length; cutAg=true; } }
+  if(k<0 && rs){ k=s.indexOf(rs); k=(k>=0?k+rs.length:-1); }
+  if(k>=0) t=s.slice(k);
+  else{ var m=s.match(/[가-힣]+(?:동|읍|면|리|가)\s+\d+(?:-\d+)?\s*(.*)$/); t=m?m[1]:s; }
+  if(!cutAg) t=t.replace(/^\s*\d+(?:-\d+)?\s*/,"");   /* 동명으로만 잘랐으면 번지가 남아있다 */
+
+  var bn=_bldClean(item.building_name||"");
+  if(_bldBad(bn)){
+    var alt=_bldClean(t);
+    if(!_bldBad(alt)) bn=alt;              /* 주소본이 멀쩡할 때만 교체 */
+    else bn=(alt.length>bn.length?alt:bn);
+    if(_bldBad(bn)) bn="";                 /* 둘 다 쓰레기면 아예 비운다 */
+  }
+  /* 명시적 "N동/N호" 가 tail 에 있으면 그게 최우선(가장 권위 있음).
+     없으면 DB 값 — ho_nm/building_dong = /api/listings, dong/ho = /api/map/listings. */
+  var dm=t.match(/(?:제\s*)?(\d+)\s*동/);
+  var dong=(dm?dm[1]:"") || (item.building_dong||item.dong||"").toString().trim();
+  dong=dong.replace(/^0+(?=\d)/,"");                    /* "0420" -> "420" */
+  if(dong && !/동$/.test(dong)) dong=dong+"동";
+  var hm=t.match(/(?:제\s*)?(\d+)\s*호/);
+  var ho=(hm?hm[1]:"") || (item.ho_nm||item.ho||"").toString().trim();
+  ho=ho.replace(/^0+(?=\d)/,"");
+  if(ho && !/호$/.test(ho)) ho=ho+"호";
+  return {name:bn, unit:[dong,ho].filter(Boolean).join(" ")};
+}
+
 function renderQlCards(items, el){
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">검색 결과가 없습니다</div>';return;}
   var html='<div style="font-size:13px;color:#666;margin-bottom:8px;">검색 결과 <b style="color:#2563eb;">'+items.length+'</b>건</div>';
@@ -682,6 +747,9 @@ function renderQlCards(items, el){
     html+='<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+statusColor+'20;color:'+statusColor+';font-weight:600;">'+r.status+'</span>';
     html+='<span style="font-size:11px;color:#94a3b8;">'+(r.sub_account_name||'')+'</span></div>';
     html+='<div style="font-size:14px;font-weight:600;margin-bottom:2px;">'+(r.address_group||r.address||'-')+'</div>';
+    /* 🏢 (2026-08-25 대표) 지번만 나오고 건물명·호실이 안 보이던 것 — 매물검색과 같은 규칙으로 한 줄 추가 */
+    var _bl=_bldLabel(r);
+    if(_bl) html+='<div style="font-size:13px;font-weight:700;color:#2563eb;margin-bottom:2px;">'+_bl+'</div>';
     html+='<div style="font-size:16px;font-weight:800;color:#111;margin-bottom:2px;">'+(r.trade_type||'')+' '+price+'</div>';
     html+='<div style="font-size:12px;color:#64748b;">'+(r.type_normalized||'')+' | 전용'+(r.net_area||'-')+'㎡ | 방'+(r.room_count||'-')+'</div>';
     if(r.private_memo){
