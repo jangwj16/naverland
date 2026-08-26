@@ -241,7 +241,10 @@ if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
 var API="https://diahouse.kr/api/listings-protected",PS=50,cp=1,searched=false;
 // 토큰 헬퍼 (login.html 에서 저장한 dia_token 사용)
 function _diaHeaders(){var h={};var t=localStorage.getItem('dia_token');if(t)h['Authorization']='Bearer '+t;return h;}
-var F={trade:"매매",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[],search:""};
+/* 🔧 (2026-08-26 대표) 첫 진입·초기화 시 지역 기본값 = 서울시 은평구.
+   기존엔 지역 미선택(rl/rm 빈값)이라 전체 매물이 잡혀 엉뚱한 지역이 먼저 보였다. */
+var DEF_RL="서울시", DEF_RM="은평구";
+var F={trade:"매매",types:[],rl:DEF_RL,rm:DEF_RM,rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[],search:""};
 var allItems=[],sortCol="",sortDir="asc",dedupCount=0;
 
 var REGIONS={"경기도":{"고양시 덕양구":["덕은동","향동동","삼송동","성석동","내유동","동산동","행신동","화정동","풍동","원흥동","지축동","신원동","대장동","토당동","원당동","창릉동"],"고양시 일산동구":["식사동","백석동","마두동","정발산동","장항동","중산동"],"고양시 일산서구":["대화동","주엽동","탄현동","일산동","덕이동"],"파주시":["야당동","금촌동","교하동","운정동","목동동","와동동","문발동","당하동","하지석동","상지석동","동패동"],"김포시":["장기동","구래동","풍무동","걸포동","사우동","마산동"],"부천시 원미구":["상동","중동","심곡동","역곡동","원미동","도당동"],"부천시 소사구":["소사본동","범박동","심곡본동","옥길동"],"부천시 오정구":["오정동","내동","여월동","원종동","고강동"],"안산시 상록구":["사동","본오동","일동","이동","성포동","선부동"],"안산시 단원구":["고잔동","원곡동","초지동"],"양주시":["옥정동","회정동","덕정동"]},"서울시":{"은평구":["응암동","역촌동","갈현동","구산동","신사동","불광동","녹번동","대조동","증산동","수색동","진관동"],"서대문구":["홍은동","북가좌동","남가좌동","연희동","홍제동"],"마포구":["상암동","성산동","연남동","합정동","서교동","망원동","공덕동"],"강서구":[],"구로구":[],"강북구":[],"도봉구":[],"중랑구":[]},"인천시":{"서구":[],"미추홀구":[],"남동구":[],"부평구":[],"강화군":[]},"충청남도":{"서천군":[],"아산시":[]}};
@@ -309,6 +312,10 @@ function buildFilterBar(){
   });
   buildAllPanels();
   if(F.search) updChip("search","🔍 "+F.search);
+  /* 🔧 (2026-08-26) 기본 지역(은평구)이 F 에 이미 들어있으므로 칩 라벨도 맞춰준다.
+     안 하면 칩엔 "지역"이라 떠 있는데 결과는 은평구로 걸러져 사용자가 헷갈린다. */
+  if(F.rs||F.rm||F.rl) updChip("region", F.rs||F.rm||F.rl);
+  if(F.trade) updChip("trade", F.trade);
   updateFilterCount();
 }
 
@@ -468,7 +475,7 @@ function addRI(parent,text,sel,handler){var d=document.createElement("div");d.cl
 function selSido(v){F.rl=v;F.rm="";F.rs="";var g=document.getElementById("col-gugun");g.innerHTML='<div class="region-col-title">구/군</div>';document.getElementById("col-dong").innerHTML='<div class="region-col-title">동/읍/면</div>';if(!v)return;addRI(g,"전체",true,function(){selGu("");});Object.keys(REGIONS[v]).forEach(function(gu){addRI(g,gu,false,function(){selGu(gu);});});}
 function selGu(v){F.rm=v;F.rs="";var d=document.getElementById("col-dong");d.innerHTML='<div class="region-col-title">동/읍/면</div>';if(!v||!F.rl)return;var ds=REGIONS[F.rl][v]||[];if(!ds.length)return;addRI(d,"전체",true,function(){F.rs="";});ds.forEach(function(dong){addRI(d,dong,false,function(){F.rs=dong;});});}
 function applyRegion(){var l="지역";if(F.rs)l=F.rs;else if(F.rm)l=F.rm;else if(F.rl)l=F.rl;updChip("region",l);closeP("region");doSearch(1);}
-function resetRegion(){F.rl="";F.rm="";F.rs="";buildRegionList();updChip("region","지역");}
+function resetRegion(){F.rl=DEF_RL;F.rm=DEF_RM;F.rs="";buildRegionList();updChip("region",(DEF_RM||DEF_RL||"지역"));}
 
 // ===== 매물유형 (중복선택) =====
 function buildTypePanel(){
@@ -878,10 +885,10 @@ function renderPg(cur,total){
 }
 
 function resetAll(){
-  F={trade:"",types:[],rl:"",rm:"",rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[],search:""};
+  F={trade:"",types:[],rl:DEF_RL,rm:DEF_RM,rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[],search:""};
   var _kw=document.getElementById("s_keyword"); if(_kw)_kw.value="";
   ["search","trade","price","region","type","room","area","year","fac"].forEach(function(n){
-    var defs={search:"🔍",trade:"거래유형",price:"가격대",region:"지역",type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};
+    var defs={search:"🔍",trade:"거래유형",price:"가격대",region:(DEF_RM||DEF_RL||"지역"),type:"매물유형",room:"방/욕실",area:"면적",year:"사용승인일",fac:"시설옵션"};
     updChip(n,defs[n]);
   });
   allItems=[];sortCol="";sortDir="asc";searched=false;
@@ -1122,7 +1129,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
    ======================================================================= */
 (function(){
   var MAP=window.MAP={active:false,map:null,geocoder:null,overlays:[],detailItems:[],shown:0,selectedId:null,cache:{},debTimer:null,io:null,_lastRegion:"",_lastQs:"",_meOv:null};
-  var CENTER={lat:37.6584,lng:126.8320}, INIT_LEVEL=8, PAGE=50;
+  var CENTER={lat:37.6027,lng:126.9291}, INIT_LEVEL=8, PAGE=50;   /* 2026-08-26: 은평구 중심 */
   var API_MAP="https://diahouse.kr/api/map-listings-protected";
 
   function buildParams(extra){
