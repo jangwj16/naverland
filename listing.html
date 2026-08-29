@@ -191,7 +191,7 @@ tbody tr{cursor:pointer;}
 @media (max-width:480px){.dm-photos{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
-<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v28</span></div>
+<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v29</span></div>
 <div class="filter-bar"><div class="filter-row" id="filterRow"></div><button id="btnResetAll" type="button" title="필터 초기화" onclick="resetAll()">초기화</button></div>
 <!-- ===== 🗺️ 지도 뷰 + 바텀시트 — 매물 탭 진입 시 항상 지도 (리스트는 ?view=list 디버그용) ===== -->
 <div id="mapWrap">
@@ -241,9 +241,10 @@ if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
 var API="https://diahouse.kr/api/listings-protected",PS=50,cp=1,searched=false;
 // 토큰 헬퍼 (login.html 에서 저장한 dia_token 사용)
 function _diaHeaders(){var h={};var t=localStorage.getItem('dia_token');if(t)h['Authorization']='Bearer '+t;return h;}
-/* 🔧 (2026-08-26 대표) 첫 진입·초기화 시 지역 기본값 = 서울시 은평구.
-   기존엔 지역 미선택(rl/rm 빈값)이라 전체 매물이 잡혀 엉뚱한 지역이 먼저 보였다. */
-var DEF_RL="서울시", DEF_RM="은평구";
+/* 🔧 (2026-08-29 대표) 지역 선택은 '전체'가 기본이다 — 드롭다운을 은평구로 미리 골라두지 말 것.
+   대표가 원한 건 '지도 초기 화면만 서울 쪽'이며, 그건 아래 CENTER 좌표가 담당한다.
+   (2026-08-26 에 기본값을 은평구로 박아넣었던 것을 되돌림) */
+var DEF_RL="", DEF_RM="";
 var F={trade:"매매",types:[],rl:DEF_RL,rm:DEF_RM,rs:"",pmin:"",pmax:"",amin:"",amax:"",rooms:"",roomMode:"exact",baths:"",bathMode:"exact",yearMax:"",facs:[],search:""};
 var allItems=[],sortCol="",sortDir="asc",dedupCount=0;
 
@@ -312,8 +313,7 @@ function buildFilterBar(){
   });
   buildAllPanels();
   if(F.search) updChip("search","🔍 "+F.search);
-  /* 🔧 (2026-08-26) 기본 지역(은평구)이 F 에 이미 들어있으므로 칩 라벨도 맞춰준다.
-     안 하면 칩엔 "지역"이라 떠 있는데 결과는 은평구로 걸러져 사용자가 헷갈린다. */
+  /* 지역이 실제로 선택돼 있을 때만 칩 라벨을 맞춘다(기본은 '전체'라 '지역'으로 남는다). */
   if(F.rs||F.rm||F.rl) updChip("region", F.rs||F.rm||F.rl);
   if(F.trade) updChip("trade", F.trade);
   updateFilterCount();
@@ -1129,7 +1129,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
    ======================================================================= */
 (function(){
   var MAP=window.MAP={active:false,map:null,geocoder:null,overlays:[],detailItems:[],shown:0,selectedId:null,cache:{},debTimer:null,io:null,_lastRegion:"",_lastQs:"",_meOv:null};
-  var CENTER={lat:37.6027,lng:126.9291}, INIT_LEVEL=8, PAGE=50;   /* 2026-08-26: 은평구 중심 */
+  var CENTER={lat:37.6027,lng:126.9291}, INIT_LEVEL=8, PAGE=50;   /* 지도 첫 화면만 서울(은평 일대). 지역 필터와 무관 */
   var API_MAP="https://diahouse.kr/api/map-listings-protected";
 
   function buildParams(extra){
@@ -1418,6 +1418,19 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
 </script>
 
 <script>
+/* 재개발닷컴 링크 — 앱이 깔려 있으면 앱으로 열기 (2026-08-29 대표 요청)
+   . jaegebal.com 은 App Links(안드로이드) / Universal Links(iOS) 를 전 경로(/*)에 등록해 뒀다.
+     그래서 iOS·데스크톱은 https 그대로 두면 앱이 있으면 앱, 없으면 웹으로 알아서 열린다.
+   . 안드로이드는 브라우저가 그냥 웹 탭을 여는 경우가 있어 intent:// 로 앱을 명시한다.
+     앱이 없으면 S.browser_fallback_url 로 웹으로 되돌아간다.
+   . 기존 /search?q= 는 검색이 동작하지 않고 홈으로 빠져서(2026-08-29 확인)
+     실제로 존재하는 구역목록 /regions/{시군구코드} 로 바꿨다. */
+var JGB_GU={"종로구":"11110","중구":"11140","용산구":"11170","성동구":"11200","광진구":"11215","동대문구":"11230","중랑구":"11260","성북구":"11290","강북구":"11305","도봉구":"11320","노원구":"11350","은평구":"11380","서대문구":"11410","마포구":"11440","양천구":"11470","강서구":"11500","구로구":"11530","금천구":"11545","영등포구":"11560","동작구":"11590","관악구":"11620","서초구":"11650","강남구":"11680","송파구":"11710","강동구":"11740"};
+function jgbWebUrl(z){var c=JGB_GU[(z&&z.gu)||""];return c?("https://jaegebal.com/regions/"+c):"https://jaegebal.com/regions";}
+function jgbHref(u){
+  if(!/android/i.test(navigator.userAgent)) return u;
+  return "intent://"+u.replace(/^https?:[/][/]/,"")+"#Intent;scheme=https;package=com.jaegebal.app;S.browser_fallback_url="+encodeURIComponent(u)+";end";
+}
 /* === 재개발 개발계획 오버레이 v3 하이브리드 (PWA 포팅 2026-07-11) ===
    diahouse search.html 원본을 PWA(naverland)로 이식. Vercel 별도 도메인이라
    API는 절대경로(https://diahouse.kr/nrank-api/...). CORS map 에 naverland.vercel.app 허용됨.
@@ -1468,8 +1481,8 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     if(R.loading) return;
     R.loading=true; R.btn.textContent='🏗️ 불러오는 중…';
     Promise.all([
-      fetch(NRANK+'/rank/redevelop-polygons?v=4',{cache:'force-cache'}).then(function(r){return r.json();}),
-      fetch(NRANK+'/rank/redevelop?v=4',{cache:'force-cache'}).then(function(r){return r.json();})
+      fetch(NRANK+'/rank/redevelop-polygons?v=5',{cache:'force-cache'}).then(function(r){return r.json();}),
+      fetch(NRANK+'/rank/redevelop?v=5',{cache:'force-cache'}).then(function(r){return r.json();})
     ]).then(function(a){
       R.polys=a[0].zones||[]; R.marks=a[1].zones||[];
       R.loading=false; R.btn.textContent='🏗️ 개발계획'; cb();
@@ -1537,7 +1550,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       el.style.cssText='width:11px;height:11px;background:'+col+';border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;';
     }
     el.onclick=function(){
-      getIW().setContent('<div style="padding:9px 12px;width:225px;max-width:72vw;box-sizing:border-box;word-break:break-all;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.biz_type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div><div style="color:#64748b;">📍 '+esc(z.gu)+' '+esc(z.jibun)+'</div>'+(z.area_m2?'<div style="color:#64748b;">📐 면적 약 '+Number(z.area_m2).toLocaleString()+'㎡</div>':'')+'<div style="margin-top:9px;padding-bottom:4px;white-space:nowrap;line-height:2;"><a href="https://jaegebal.com/search?q='+encodeURIComponent(z.jibun||z.name||'')+'" target="_blank" rel="noopener" style="color:#fff;background:#7c3aed;padding:4px 9px;border-radius:5px;font-weight:700;text-decoration:none;margin-right:8px;">재개발닷컴 ↗</a><a href="https://cleanup.seoul.go.kr/cleanup/bsnssttus/lscrMainIndx.do" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700;text-decoration:none;">정비몽땅 ↗</a></div></div>');
+      getIW().setContent('<div style="padding:9px 12px;width:225px;max-width:72vw;box-sizing:border-box;word-break:break-all;font-family:inherit;font-size:12px;line-height:1.5;"><div style="font-weight:800;font-size:13px;">'+esc(z.name)+'</div><div><span style="color:'+col+';font-weight:800;">'+esc(z.biz_type)+'</span>'+(z.stage?' · '+esc(z.stage):'')+'</div><div style="color:#64748b;">📍 '+esc(z.gu)+' '+esc(z.jibun)+'</div>'+(z.area_m2?'<div style="color:#64748b;">📐 면적 약 '+Number(z.area_m2).toLocaleString()+'㎡</div>':'')+'<div style="margin-top:9px;padding-bottom:4px;white-space:nowrap;line-height:2;"><a href="'+jgbHref(jgbWebUrl(z))+'" target="_blank" rel="noopener" style="color:#fff;background:#7c3aed;padding:4px 9px;border-radius:5px;font-weight:700;text-decoration:none;margin-right:8px;">재개발닷컴 ↗</a><a href="https://cleanup.seoul.go.kr/cleanup/bsnssttus/lscrMainIndx.do" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700;text-decoration:none;">정비몽땅 ↗</a></div></div>');
       R.iw.setPosition(new kakao.maps.LatLng(z.lat,z.lng)); R.iw.setMap(MAP.map);
     };
     var ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(z.lat,z.lng),content:el,yAnchor:label?1:0.5,xAnchor:0.5,zIndex:label?7:6,clickable:true});
