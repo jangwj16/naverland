@@ -223,6 +223,9 @@ tbody tr{cursor:pointer;}
 </div>
 <div class="pagination" id="pagination"></div>
 <script>
+function _pfBadge(it){var aip=(it&&it.platform==="aipartner");
+  return "<span style=\"display:inline-block;font-size:10px;font-weight:700;padding:1px 5px;border-radius:8px;color:#fff;white-space:nowrap;background:"+(aip?"#eab308":"#2563eb")+"\" title=\""+(aip?"이실장(aipartner) 광고":"부동산포스 광고")+"\">"+(aip?"이실장":"포스")+"</span>";}
+
 // 🔐 다이아하우스 권한 enforce proxy 사용 (2026-05-13) — 직원 ID 별 시군구/메모 권한 자동 적용
 // 로그인 + PWA 탭 권한 가드
 if(localStorage.getItem("dia_login")!=="ok"){window.location.href="login.html";}
@@ -819,7 +822,7 @@ function renderItems(){
     if(roomInfo) roomInfo = "<span style='color:#10b981;font-size:10px;'>"+roomInfo+"</span>";
     var areaInfo = area ? "<span style='color:#888;font-size:10px;'>"+area+"</span>" : "";
     var subInfo = [areaInfo, roomInfo].filter(function(x){return x;}).join(" ");
-    tr.innerHTML="<td>"+n+"</td><td style='font-size:11px;'>"+(item.trade_type||"-")+"<br><span style='color:#888;font-size:10px;'>"+(item.type_normalized||"")+"</span></td><td class='addr-cell' style='text-align:left;white-space:normal;'><div style='font-size:12px;font-weight:600;color:#2563eb;'>"+_eh(bldName)+(_bp.unit?"<span style='margin-left:5px;padding:0 6px;border-radius:8px;background:#1e3a8a;color:#bfdbfe;font-size:11px;font-weight:700;'>"+_eh(_bp.unit)+"</span>":"")+"</div><div style='font-size:11px;color:#ccc;'>"+addrFull+"</div></td><td style='text-align:right;white-space:nowrap;'><div class='price-cell'>"+fmtPr(item)+"</div><div>"+subInfo+"</div></td>";
+    tr.innerHTML="<td>"+n+"</td><td style='font-size:11px;'>"+(item.trade_type||"-")+"<br><span style='color:#888;font-size:10px;'>"+(item.type_normalized||"")+"</span><br>"+_pfBadge(item)+"</td><td class='addr-cell' style='text-align:left;white-space:normal;'><div style='font-size:12px;font-weight:600;color:#2563eb;'>"+_eh(bldName)+(_bp.unit?"<span style='margin-left:5px;padding:0 6px;border-radius:8px;background:#1e3a8a;color:#bfdbfe;font-size:11px;font-weight:700;'>"+_eh(_bp.unit)+"</span>":"")+"</div><div style='font-size:11px;color:#ccc;'>"+addrFull+"</div></td><td style='text-align:right;white-space:nowrap;'><div class='price-cell'>"+fmtPr(item)+"</div><div>"+subInfo+"</div></td>";
     tbody.appendChild(tr);
   });
   renderPg(cp,tp);
@@ -1256,7 +1259,7 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     var body=document.createElement("div"); body.className="mcard-body";
     var floorTxt=it.floor?(it.floor+"층"):"";
     body.innerHTML=
-      '<div class="mcard-top"><span class="badge '+tc+'">'+(it.trade_type||"-")+'</span>'+(it.is_new?'<span class="mcard-new">NEW</span>':'')+'<span class="mcard-sub">'+(it.type_normalized||"")+'</span></div>'+
+      '<div class="mcard-top"><span class="badge '+tc+'">'+(it.trade_type||"-")+'</span>'+_pfBadge(it)+(it.is_new?'<span class="mcard-new">NEW</span>':'')+'<span class="mcard-sub">'+(it.type_normalized||"")+'</span></div>'+
       '<div class="mcard-price">'+pinPrice(it)+'</div>'+
       '<div class="mcard-sub">'+(it.address_group||"")+'</div>'+
       '<div class="mcard-sub">'+((it.net_area?it.net_area+"m²":"")+(floorTxt?" · "+floorTxt:""))+'</div>'+
