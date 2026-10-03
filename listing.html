@@ -1463,7 +1463,15 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
     if(q.get("view")==="list") return;   // 디버그: 리스트 모드 유지
     // URL 에 상태 없으면 직전 저장본(필터·위치) 복원 — 뒤로가기/재진입해도 검색 유지
     if(!q.get("lat") && !q.get("search") && !q.get("trade_type") && !q.get("type_normalized")){
-      try{ var saved=localStorage.getItem("dia_listing_qs"); if(saved){ q=new URLSearchParams(saved); } }catch(e){}
+      try{ var saved=localStorage.getItem("dia_listing_qs");
+        if(saved){ q=new URLSearchParams(saved);
+          // 📍 (2026-10-03 대표 "화성 향남으로 기본 이동") 저장본의 **지도 좌표는 버린다**.
+          //   앱을 새로 열면 늘 CENTER(은평 일대)에서 시작해야 한다.
+          //   필터(검색·거래유형·매물유형)는 그대로 살린다 — 하던 조건까지 잃으면 안 된다.
+          //   상세를 봤다가 뒤로 오는 경우는 URL 에 lat 이 있어 이 분기를 안 탄다.
+          var _dropSavedCenter=true;
+          if(_dropSavedCenter){ q.delete("lat"); q.delete("lng"); q.delete("zoom"); }
+        } }catch(e){}
     }
     if(q.get("lat")||q.get("search")||q.get("trade_type")||q.get("type_normalized")){ restoreFilters(q); if(q.get("lat")) MAP._restore={lat:parseFloat(q.get("lat")),lng:parseFloat(q.get("lng")),zoom:q.get("zoom")}; MAP.selectedId=q.get("selected")||null; }
     setTimeout(function(){ MAP.switch("map"); },60);
