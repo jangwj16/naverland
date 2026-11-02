@@ -162,14 +162,19 @@ tbody tr{cursor:pointer;}
 .pin-new{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#FF0000;color:#fff;font-size:8px;font-weight:800;padding:0 4px;border-radius:3px;}
 .cl-badge{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);position:relative;font-family:inherit;cursor:pointer;}
 .cl-new-dot{position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#FF0000;border:1.5px solid #fff;}
-#sheet{position:fixed;left:0;right:0;top:0;height:100vh;z-index:30;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 22px rgba(0,0,0,.2);transform:translateY(100%);transition:transform .25s ease;display:flex;flex-direction:column;}
+#sheet{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;z-index:30;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 22px rgba(0,0,0,.2);transform:translateY(100%);transition:transform .25s ease;display:flex;flex-direction:column;}
 #sheet.peek{transform:translateY(var(--peek,46vh));}/* 매물 수에 따라 --peek 를 바꿔 지도를 넓게 쓴다 (2026-10-09 대표 요청) */
 #sheet.expanded{transform:translateY(8vh);}
 #sheetHandle{padding:11px 0 7px;display:flex;justify-content:center;cursor:grab;touch-action:none;flex-shrink:0;}
 #sheetHandle::before{content:"";width:42px;height:5px;border-radius:3px;background:#cbd5e1;}
 #sheetHead{padding:2px 16px 10px;font-size:14px;font-weight:700;border-bottom:1px solid var(--bor);flex-shrink:0;display:flex;justify-content:space-between;align-items:center;}
 #sheetHead b{color:var(--pri);}
-#sheetCards{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px 40px;}
+#sheetCards{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px 12px 40px;}
+/* 🔧 (2026-11-02 대표 "매물목록에서 스크롤이 안 돼") 시트는 화면 높이만큼인데 peek/expanded 만큼 아래로 내려 보여준다.
+   그 내려간 만큼이 화면 밖이라 맨 끝까지 스크롤해도 마지막 카드 2~3개가 안 보였다(10건 실측: 마지막 카드 729~921px / 화면 664px).
+   → 내려간 높이만큼 아래 여백을 줘서 끝 카드가 화면 안으로 올라오게 한다. */
+#sheet.peek #sheetCards{padding-bottom:calc(var(--peek,46vh) + 40px);}
+#sheet.expanded #sheetCards{padding-bottom:calc(8vh + 40px);}
 .mcard{display:flex;gap:10px;padding:10px;border:1px solid var(--bor);border-radius:12px;margin-bottom:8px;background:#fff;}
 .mcard.active{border-color:var(--pri);background:var(--pri-l);}
 .mcard-img{width:80px;height:80px;border-radius:10px;object-fit:cover;background:#eef1f5;flex-shrink:0;}
@@ -191,7 +196,7 @@ tbody tr{cursor:pointer;}
 @media (max-width:480px){.dm-photos{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
-<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v30</span></div>
+<body><div style="background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:10px"><a href="index.html" style="color:#c9a040;text-decoration:none;font-size:20px">&#8592;</a><span style="color:#fff;font-size:15px;font-weight:bold">🏠 매물검색</span><span style="margin-left:auto;color:#8a8aa0;font-size:11px">v31</span></div>
 <div class="filter-bar"><div class="filter-row" id="filterRow"></div><button id="btnResetAll" type="button" title="필터 초기화" onclick="resetAll()">초기화</button></div>
 <!-- ===== 🗺️ 지도 뷰 + 바텀시트 — 매물 탭 진입 시 항상 지도 (리스트는 ?view=list 디버그용) ===== -->
 <div id="mapWrap">
@@ -1241,7 +1246,9 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       var el=document.createElement("div"); var sz=clusterSize(cl.count);
       el.className="cl-badge"; el.style.width=sz+"px"; el.style.height=sz+"px"; el.style.fontSize=Math.round(sz/3.2)+"px"; el.style.background=clusterColor(cl.count); el.textContent=cl.count;
       if(cl.has_new){ var d=document.createElement("div"); d.className="cl-new-dot"; el.appendChild(d); }
-      el.onclick=function(){ MAP.sheetClosed=false; var lv=MAP.map.getLevel(); MAP.map.setLevel(Math.max(3,lv-3),{anchor:new kakao.maps.LatLng(cl.latitude,cl.longitude)}); MAP.map.setCenter(new kakao.maps.LatLng(cl.latitude,cl.longitude)); };
+      el.addEventListener("touchstart",function(){ MAP._ovTs=Date.now(); },{passive:true});
+      el.addEventListener("mousedown",function(){ MAP._ovTs=Date.now(); });
+      el.onclick=function(){ MAP._ovTs=Date.now(); MAP.sheetClosed=false; var lv=MAP.map.getLevel(); MAP.map.setLevel(Math.max(3,lv-3),{anchor:new kakao.maps.LatLng(cl.latitude,cl.longitude)}); MAP.map.setCenter(new kakao.maps.LatLng(cl.latitude,cl.longitude)); };
       var ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(cl.latitude,cl.longitude),content:el,yAnchor:0.5,xAnchor:0.5}); ov.setMap(MAP.map); MAP.overlays.push(ov);
     });
   }
@@ -1264,7 +1271,9 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       else { lab.style.borderColor=tradeColor(it.trade_type); lab.style.color=tradeColor(it.trade_type); lab.textContent=nm; }
       w.appendChild(lab);
       if(arr.some(function(x){return x.is_new;})){ var nb=document.createElement("div"); nb.className="pin-new"; nb.textContent="NEW"; w.appendChild(nb); }
-      w.onclick=function(){ resetSheet(arr); openSheet("peek"); };  // 이 핀(건물)의 매물만
+      w.addEventListener("touchstart",function(){ MAP._ovTs=Date.now(); },{passive:true});
+      w.addEventListener("mousedown",function(){ MAP._ovTs=Date.now(); });
+      w.onclick=function(){ MAP._ovTs=Date.now(); resetSheet(arr); openSheet("peek"); };  // 이 핀(건물)의 매물만
       var ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(it.latitude,it.longitude),content:w,yAnchor:1,xAnchor:0.5}); ov.setMap(MAP.map); MAP.overlays.push(ov);
     });
   }
@@ -1468,6 +1477,8 @@ window.addEventListener("DOMContentLoaded",function(){buildFilterBar();buildTabl
       // 🆕 (2026-10-09 대표) 지도를 누르면 매물 시트를 닫는다 — 예전엔 ✕ 를 눌러야 했다.
       //   핀(마커) 클릭은 카카오가 따로 처리하므로 여기로 오지 않는다 → 핀을 누르면 다시 열린다.
       kakao.maps.event.addListener(MAP.map,"click",function(){
+        // (2026-11-02) 핀·클러스터를 누른 탭이 지도 click 으로도 와서 방금 연 목록을 닫던 것 차단
+        if(Date.now()-(MAP._ovTs||0)<700) return;
         try{ if(!MAP.sheetClosed) MAP.closeSheet(); }catch(e){}
       });
       setupGestures();
